@@ -16,7 +16,8 @@ import {
   RefreshCw, 
   Sun, 
   Moon, 
-  Monitor 
+  Monitor,
+  LayoutGrid,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { syncService, SyncStatus } from '../../services/syncService';
@@ -73,6 +74,11 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
     if (user?.roles?.includes('ROLE_PROFESSIONAL')) return 'Professionnel de Santé';
     return 'MindWell Connect';
   };
+
+  const isAdminOrMultiRole = Boolean(
+    user?.roles?.some((r: string) => r === 'ROLE_ADMIN' || r === 'ROLE_SUPER_ADMIN') ||
+    (Array.isArray(user?.spaces) && user.spaces.length > 1)
+  );
 
   const handleLogout = () => {
     Alert.alert(
@@ -212,6 +218,34 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
         <View style={styles.drawerItemsContainer}>
           <DrawerItemList {...props} />
         </View>
+
+        {/* Changer d'espace (Admin & Multi-rôles) */}
+        {isAdminOrMultiRole && (
+          <View style={styles.switchSpaceWrapper}>
+            <TouchableOpacity
+              style={[
+                styles.switchSpaceBtn,
+                {
+                  backgroundColor: isDark ? '#064e3b' : '#ecfdf5',
+                  borderColor: isDark ? '#059669' : '#a7f3d0',
+                },
+              ]}
+              onPress={() => {
+                props.navigation.closeDrawer();
+                router.push('/(auth)/space-selection');
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={styles.switchSpaceLeft}>
+                <LayoutGrid size={16} color="#00A651" style={{ marginRight: 8 }} />
+                <Text style={styles.switchSpaceText}>
+                  Changer d'espace
+                </Text>
+              </View>
+              <ChevronRight size={16} color="#00A651" />
+            </TouchableOpacity>
+          </View>
+        )}
       </DrawerContentScrollView>
 
       {/* Footer Area: Theme Switcher + Logos + Logout */}
@@ -404,6 +438,31 @@ const styles = StyleSheet.create({
   },
   drawerItemsContainer: {
     flex: 1,
+  },
+  switchSpaceWrapper: {
+    paddingHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  switchSpaceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  switchSpaceLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  switchSpaceText: {
+    color: '#00A651',
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
   },
   footer: {
     paddingHorizontal: 14,
