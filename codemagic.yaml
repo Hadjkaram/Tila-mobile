@@ -1,57 +1,54 @@
 workflows:
-  # Workflow pour générer l'APK / AAB Android
-  android-workflow:
-    name: Build Android (TILA)
-    max_build_duration: 60
-    instance_type: mac_mini_m2
-    environment:
-      node: 20.18.0
-      java: 17
-    scripts:
-      - name: Installer les dépendances npm
-        script: |
-          npm install --legacy-peer-deps
-      - name: Préparer le projet Expo (Prebuild)
-        script: |
-          npx expo prebuild --platform android --clean
-      - name: Compiler le package Android (Release APK)
-        script: |
-          cd android
-          ./gradlew assembleRelease
-    artifacts:
-      - android/app/build/outputs/**/*.apk
-      - android/app/build/outputs/**/*.aab
-
-  # Workflow pour compiler pour iOS (Simulator ou Device)
   ios-workflow:
-    name: Build iOS (TILA)
+    name: Build & Deploy iOS (TestFlight)
     max_build_duration: 60
     instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Codemagic TILA   # Le nom de la clé configurée à l'Étape 2
     environment:
       node: 20.18.0
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store      # Codemagic génère automatiquement certificats et profils
+        bundle_identifier: ci.tila.app
+      vars:
+        APP_STORE_APPLE_ID: 6742000000    # (Optionnel) L'Apple ID numérique de l'app si déjà créée sur App Store Connect
     scripts:
       - name: Installer les dépendances npm
         script: |
           npm install --legacy-peer-deps
+
       - name: Préparer le projet Expo (Prebuild)
         script: |
           npx expo prebuild --platform ios --clean
+
       - name: Installer les Pods CocoaPods
         script: |
           cd ios
           pod install
-      - name: Compiler l'application iOS (Debug/Simulator ou Unsigned Release)
+
+      - name: Initialiser les profils de signature automatique Apple
         script: |
-          xcodebuild build \
-            -workspace ios/TILA.xcworkspace \
-            -scheme TILA \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+          app-store-connect fetch-signing-files "ci.tila.app" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Appliquer les profils de signature à Xcode
+        script: |
+          xcode-project use-profiles
+
+      - name: Compiler le package iOS signé (.IPA)
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/TILA.xcworkspace" \
+            --scheme "TILA"
+
     artifacts:
-      - build/Build/Products/Release-iphoneos/*.app
-      - build/Build/Products/Release-iphoneos/*.ipa
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true        # Envoie directement sur TestFlight !
+        expire_in_days: 90
