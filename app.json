@@ -14,7 +14,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ci.tila.app"
+      "bundleIdentifier": "ci.tila.app",
+      "appleTeamId": "VOTRE_TEAM_ID"
     },
     "android": {
       "package": "ci.tila.app",
