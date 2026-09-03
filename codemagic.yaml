@@ -4,16 +4,14 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: Codemagic TILA   # Le nom de la clé configurée à l'Étape 2
+      app_store_connect: Codemagic TILA   # Le nom exact donné à votre intégration dans Codemagic Settings
     environment:
       node: 20.18.0
       xcode: latest
       cocoapods: default
       ios_signing:
-        distribution_type: app_store      # Codemagic génère automatiquement certificats et profils
+        distribution_type: app_store
         bundle_identifier: ci.tila.app
-      vars:
-        APP_STORE_APPLE_ID: 6742000000    # (Optionnel) L'Apple ID numérique de l'app si déjà créée sur App Store Connect
     scripts:
       - name: Installer les dépendances npm
         script: |
@@ -50,5 +48,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true        # Envoie directement sur TestFlight !
-        expire_in_days: 90
+        submit_to_testflight: true
