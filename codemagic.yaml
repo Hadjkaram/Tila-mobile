@@ -9,8 +9,9 @@ workflows:
       node: 20.18.0
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "ci.tila.app"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: ci.tila.app
     scripts:
       - name: Installer les dépendances npm
         script: |
@@ -25,14 +26,9 @@ workflows:
           cd ios
           pod install
 
-      - name: Créer et récupérer le certificat et profil de distribution Apple
+      - name: Appliquer les profils de signature Codemagic
         script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
-          xcode-project use-profiles --project "ios/TILA.xcodeproj"
+          xcode-project use-profiles --project ios/TILA.xcodeproj
 
       - name: Compiler le package iOS signé (.IPA)
         script: |
