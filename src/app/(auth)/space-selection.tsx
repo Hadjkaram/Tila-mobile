@@ -20,6 +20,8 @@ import {
   ChevronRight,
   Sparkles,
   ArrowLeft,
+  Building2,
+  Users,
 } from 'lucide-react-native';
 import { DashboardOption } from './login';
 
@@ -67,6 +69,39 @@ const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
     color: '#8b5cf6',
     bgLight: '#f5f3ff',
     icon: ArrowRightLeft,
+  },
+  {
+    id: 'census-agent',
+    title: 'Agent Sensibilisateur',
+    subtitle: 'Recensement terrain, ménages & vulnérabilités',
+    badge: 'Recensement',
+    type: 'CENSUS_AGENT',
+    route: '/(census-agent)/dashboard',
+    color: '#00A651',
+    bgLight: '#ecfdf5',
+    icon: Users,
+  },
+  {
+    id: 'ong-manager',
+    title: 'Responsable ONG',
+    subtitle: 'Supervision agents, validations & rapports d’activité',
+    badge: 'ONG',
+    type: 'ONG_MANAGER',
+    route: '/(ong-manager)/dashboard',
+    color: '#ea580c',
+    bgLight: '#fff7ed',
+    icon: Building2,
+  },
+  {
+    id: 'program-agent',
+    title: 'Agent Programme National (PNSM)',
+    subtitle: 'Indicateurs macro, alertes prioritaires & parcours 360°',
+    badge: 'Programme',
+    type: 'PROGRAM_AGENT',
+    route: '/(program-agent)/dashboard',
+    color: '#4f46e5',
+    bgLight: '#eef2ff',
+    icon: ShieldCheck,
   },
   {
     id: 'patient',
@@ -162,6 +197,45 @@ export default function SpaceSelectionScreen() {
                 color: '#8b5cf6',
                 bgLight: '#f5f3ff',
                 icon: ArrowRightLeft,
+              };
+            }
+            if (spacePath === '/recensement' || type === 'CENSUS_AGENT' || type === 'SENSIBILISATEUR') {
+              return {
+                id: space.id || 'census-agent',
+                title: space.label || space.name || 'Agent Sensibilisateur',
+                subtitle: 'Recensement terrain, ménages & vulnérabilités',
+                badge: 'Recensement',
+                type: 'CENSUS_AGENT',
+                route: '/(census-agent)/dashboard',
+                color: '#00A651',
+                bgLight: '#ecfdf5',
+                icon: Users,
+              };
+            }
+            if (spacePath === '/ong' || type === 'ONG_MANAGER' || type === 'RESPONSABLE_ONG') {
+              return {
+                id: space.id || 'ong-manager',
+                title: space.label || space.name || 'Responsable ONG',
+                subtitle: 'Supervision agents, validations & rapports',
+                badge: 'ONG',
+                type: 'ONG_MANAGER',
+                route: '/(ong-manager)/dashboard',
+                color: '#ea580c',
+                bgLight: '#fff7ed',
+                icon: Building2,
+              };
+            }
+            if (spacePath === '/agent-programme' || type === 'PROGRAM_AGENT') {
+              return {
+                id: space.id || 'program-agent',
+                title: space.label || space.name || 'Agent Programme National',
+                subtitle: 'Macro-surveillance & alertes sanitaires',
+                badge: 'Programme',
+                type: 'PROGRAM_AGENT',
+                route: '/(program-agent)/dashboard',
+                color: '#4f46e5',
+                bgLight: '#eef2ff',
+                icon: ShieldCheck,
               };
             }
             return {

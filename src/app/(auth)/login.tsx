@@ -25,6 +25,8 @@ import {
   LogOut,
   Eye,
   EyeOff,
+  Users,
+  Building2,
 } from 'lucide-react-native';
 import { apiClient, tokenService } from '../../services/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -88,6 +90,39 @@ const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
     color: '#8b5cf6',
     bgLight: '#f5f3ff',
     icon: ArrowRightLeft,
+  },
+  {
+    id: 'census-agent',
+    title: 'Agent Sensibilisateur',
+    subtitle: 'Recensement terrain, ménages & vulnérabilités',
+    badge: 'Recensement',
+    type: 'CENSUS_AGENT',
+    route: '/(census-agent)/dashboard',
+    color: '#00A651',
+    bgLight: '#ecfdf5',
+    icon: Users,
+  },
+  {
+    id: 'ong-manager',
+    title: 'Responsable ONG',
+    subtitle: 'Supervision agents, validations & rapports d’activité',
+    badge: 'ONG',
+    type: 'ONG_MANAGER',
+    route: '/(ong-manager)/dashboard',
+    color: '#ea580c',
+    bgLight: '#fff7ed',
+    icon: Building2,
+  },
+  {
+    id: 'program-agent',
+    title: 'Agent Programme National (PNSM)',
+    subtitle: 'Indicateurs macro, alertes prioritaires & parcours 360°',
+    badge: 'Programme',
+    type: 'PROGRAM_AGENT',
+    route: '/(program-agent)/dashboard',
+    color: '#4f46e5',
+    bgLight: '#eef2ff',
+    icon: ShieldCheck,
   },
   {
     id: 'patient',
@@ -157,6 +192,45 @@ function mapUserSpacesToDashboards(spaces: any[]): DashboardOption[] {
         color: '#8b5cf6',
         bgLight: '#f5f3ff',
         icon: ArrowRightLeft,
+      };
+    }
+    if (spacePath === '/recensement' || type === 'CENSUS_AGENT' || type === 'SENSIBILISATEUR') {
+      return {
+        id: space.id || 'census-agent',
+        title: space.label || space.name || 'Agent Sensibilisateur',
+        subtitle: 'Recensement terrain, ménages & vulnérabilités',
+        badge: 'Recensement',
+        type: 'CENSUS_AGENT',
+        route: '/(census-agent)/dashboard',
+        color: '#00A651',
+        bgLight: '#ecfdf5',
+        icon: Users,
+      };
+    }
+    if (spacePath === '/ong' || type === 'ONG_MANAGER' || type === 'RESPONSABLE_ONG') {
+      return {
+        id: space.id || 'ong-manager',
+        title: space.label || space.name || 'Responsable ONG',
+        subtitle: 'Supervision agents, validations & rapports',
+        badge: 'ONG',
+        type: 'ONG_MANAGER',
+        route: '/(ong-manager)/dashboard',
+        color: '#ea580c',
+        bgLight: '#fff7ed',
+        icon: Building2,
+      };
+    }
+    if (spacePath === '/agent-programme' || type === 'PROGRAM_AGENT') {
+      return {
+        id: space.id || 'program-agent',
+        title: space.label || space.name || 'Agent Programme National',
+        subtitle: 'Macro-surveillance & alertes sanitaires',
+        badge: 'Programme',
+        type: 'PROGRAM_AGENT',
+        route: '/(program-agent)/dashboard',
+        color: '#4f46e5',
+        bgLight: '#eef2ff',
+        icon: ShieldCheck,
       };
     }
     return {
@@ -262,13 +336,25 @@ export default function LoginScreen() {
           router.replace('/(health-agent)/dashboard');
         } else if (spacePath === '/espace-superviseur') {
           router.replace('/(supervisor)/dashboard');
-        } else if (spacePath === '/espace-agent-terrain-migrant') {
+        } else if (spacePath === '/espace-agent-terrain-migrant' || space.type === 'FIELD_AGENT') {
           router.replace('/(field-agent)/dashboard');
+        } else if (spacePath === '/recensement' || space.type === 'CENSUS_AGENT' || space.type === 'SENSIBILISATEUR') {
+          router.replace('/(census-agent)/dashboard');
+        } else if (spacePath === '/ong' || space.type === 'ONG_MANAGER' || space.type === 'RESPONSABLE_ONG') {
+          router.replace('/(ong-manager)/dashboard');
+        } else if (spacePath === '/agent-programme' || space.type === 'PROGRAM_AGENT') {
+          router.replace('/(program-agent)/dashboard');
         } else {
           router.replace('/(patient)/dashboard');
         }
       } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_PRO'))) {
         router.replace('/(specialist)/dashboard');
+      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_SENSIBILISATEUR') || r.includes('ROLE_CENSUS'))) {
+        router.replace('/(census-agent)/dashboard');
+      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_ONG'))) {
+        router.replace('/(ong-manager)/dashboard');
+      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_PROGRAM_AGENT') || r.includes('ROLE_PNSM'))) {
+        router.replace('/(program-agent)/dashboard');
       } else {
         await tokenService.setActiveContext('PATIENT');
         router.replace('/(patient)/dashboard');

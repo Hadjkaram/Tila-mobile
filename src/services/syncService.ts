@@ -2,11 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules, AppState, AppStateStatus } from 'react-native';
 import { agentService } from './agent';
 import { professionalService } from './professionals';
-import { tokenService } from './apiClient';
+import { apiClient, tokenService } from './apiClient';
 
 const QUEUE_STORAGE_KEY = '@offline_queue';
 
-export type SyncActionType = 'SUBMIT_ASSESSMENT' | 'CREATE_PATIENT';
+export type SyncActionType = 'SUBMIT_ASSESSMENT' | 'CREATE_PATIENT' | 'SUBMIT_RECENSEMENT';
 
 export interface QueueItem {
   id: string;
@@ -163,6 +163,8 @@ class SyncService {
         } else if (item.type === 'SUBMIT_ASSESSMENT') {
           const { questionnaireKey, ...restPayload } = item.payload;
           await agentService.submitEvaluation(questionnaireKey, restPayload);
+        } else if (item.type === 'SUBMIT_RECENSEMENT') {
+          await apiClient.post('/api/sensibilisateur/recensements', item.payload);
         }
 
         // Action successful -> remove from queue
