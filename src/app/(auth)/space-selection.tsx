@@ -19,7 +19,6 @@ import {
   Heart,
   ChevronRight,
   Sparkles,
-  ArrowLeft,
   Building2,
   Users,
 } from 'lucide-react-native';
@@ -288,14 +287,6 @@ export default function SpaceSelectionScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={[styles.innerContent, isTablet && styles.innerContentTablet]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.replace('/(auth)/login')}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={22} color="#334155" />
-        </TouchableOpacity>
-
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.badgeRow}>
@@ -387,15 +378,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     paddingTop: 24,
-  },
-  backButton: {
-    padding: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   header: {
     marginBottom: 20,
