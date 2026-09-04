@@ -26,6 +26,7 @@ import {
   Building,
 } from 'lucide-react-native';
 import { apiClient } from '../../services/apiClient';
+import { useTheme } from '../../context/ThemeContext';
 
 const SPECIALTY_OPTIONS = [
   'Psychologue Clinicien',
@@ -39,6 +40,7 @@ const SPECIALTY_OPTIONS = [
 
 export default function RegisterProScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
@@ -111,16 +113,16 @@ export default function RegisterProScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.cardSecondary }]}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color="#0f172a" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Espace Professionnel</Text>
+        <Text style={[styles.topBarTitle, { color: colors.text }]}>Espace Professionnel</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -133,26 +135,26 @@ export default function RegisterProScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <View style={styles.roleBadge}>
+          <View style={[styles.roleBadge, isDark && { backgroundColor: 'rgba(0,166,81,0.15)', borderColor: '#00A651' }]}>
             <Stethoscope size={14} color="#00A651" style={{ marginRight: 5 }} />
             <Text style={styles.roleBadgeText}>Praticien & Spécialiste</Text>
           </View>
-          <Text style={styles.title}>Inscription Praticien</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Inscription Praticien</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Rejoignez l'annuaire national TILA pour proposer vos consultations et accompagner les patients.
           </Text>
         </View>
 
-        <View style={styles.formCard}>
+        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.nameRow}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Prénom *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color="#94a3b8" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.text }]}>Prénom *</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <User size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   placeholder="Ex: Dr. Jean"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={firstName}
                   onChangeText={setFirstName}
                 />
@@ -160,13 +162,13 @@ export default function RegisterProScreen() {
             </View>
 
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Nom *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color="#94a3b8" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.text }]}>Nom *</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <User size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   placeholder="Ex: Koffi"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={lastName}
                   onChangeText={setLastName}
                 />
@@ -175,15 +177,15 @@ export default function RegisterProScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Professionnel *</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Email Professionnel *</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Mail size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="docteur.koffi@hopital.ci"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
               />
@@ -191,14 +193,14 @@ export default function RegisterProScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Téléphone Professionnel</Text>
-            <View style={styles.inputWrapper}>
-              <Phone size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Téléphone Professionnel</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Phone size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="+225 07 00 00 00 00"
                 keyboardType="phone-pad"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
               />
@@ -207,18 +209,28 @@ export default function RegisterProScreen() {
 
           {/* Spécialité */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Spécialité Principale</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Spécialité Principale</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.specialtyScroll}>
               {SPECIALTY_OPTIONS.map((spec) => {
                 const isSelected = specialty === spec;
                 return (
                   <TouchableOpacity
                     key={spec}
-                    style={[styles.specialtyPill, isSelected && styles.specialtyPillSelected]}
+                    style={[
+                      styles.specialtyPill,
+                      { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                      isSelected && (isDark ? { backgroundColor: 'rgba(0,166,81,0.2)', borderColor: '#00A651' } : styles.specialtyPillSelected),
+                    ]}
                     onPress={() => setSpecialty(spec)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.specialtyText, isSelected && styles.specialtyTextSelected]}>
+                    <Text
+                      style={[
+                        styles.specialtyText,
+                        { color: colors.textSecondary },
+                        isSelected && styles.specialtyTextSelected,
+                      ]}
+                    >
                       {spec}
                     </Text>
                   </TouchableOpacity>
@@ -229,13 +241,13 @@ export default function RegisterProScreen() {
 
           {/* Structure / Cabinet */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Établissement ou Cabinet d'exercice</Text>
-            <View style={styles.inputWrapper}>
-              <Building size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Établissement ou Cabinet d'exercice</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Building size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Ex: CHU de Treichville / Cabinet Privé"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={structure}
                 onChangeText={setStructure}
               />
@@ -244,14 +256,14 @@ export default function RegisterProScreen() {
 
           {/* Mot de passe */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mot de Passe * (min. 6 caractères)</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Mot de Passe * (min. 6 caractères)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={[styles.input, { paddingRight: 44 }]}
+                style={[styles.input, { color: colors.text, paddingRight: 44 }]}
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
               />
@@ -260,13 +272,13 @@ export default function RegisterProScreen() {
                 onPress={() => setShowPassword(!showPassword)}
                 activeOpacity={0.7}
               >
-                {showPassword ? <EyeOff size={18} color="#64748b" /> : <Eye size={18} color="#64748b" />}
+                {showPassword ? <EyeOff size={18} color={colors.textSecondary} /> : <Eye size={18} color={colors.textSecondary} />}
               </TouchableOpacity>
             </View>
           </View>
 
           {errorMessage ? (
-            <View style={styles.errorBox}>
+            <View style={[styles.errorBox, isDark && { backgroundColor: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }]}>
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
@@ -293,7 +305,7 @@ export default function RegisterProScreen() {
           onPress={() => router.push('/(auth)/login')}
           activeOpacity={0.7}
         >
-          <Text style={styles.loginLinkText}>
+          <Text style={[styles.loginLinkText, { color: colors.textSecondary }]}>
             Déjà inscrit ? <Text style={styles.loginLinkHighlight}>Se connecter</Text>
           </Text>
         </TouchableOpacity>

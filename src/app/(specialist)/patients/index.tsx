@@ -7,9 +7,11 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { professionalService } from '../../../services/professionals';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function PatientsListScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   // 1. Récupération de la liste complète des patients (avec persistance hors-ligne 7 jours)
@@ -56,33 +58,33 @@ export default function PatientsListScreen() {
 
     return (
       <TouchableOpacity 
-        style={styles.card}
+        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={() => router.push(`/(specialist)/patients/${item.id}`)}
         activeOpacity={0.7}
       >
         <View style={styles.cardLeft}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
             <User size={22} color="#00A651" />
           </View>
           <View style={styles.patientInfo}>
-            <Text style={styles.patientName}>{displayName}</Text>
+            <Text style={[styles.patientName, { color: colors.text }]}>{displayName}</Text>
             {!!contact && (
               <View style={styles.contactRow}>
                 {item.phone || item.phoneNumber ? (
-                  <Phone size={12} color="#64748b" style={{ marginRight: 4 }} />
+                  <Phone size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
                 ) : (
-                  <Mail size={12} color="#64748b" style={{ marginRight: 4 }} />
+                  <Mail size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
                 )}
-                <Text style={styles.contactInfo}>{contact}</Text>
+                <Text style={[styles.contactInfo, { color: colors.textSecondary }]}>{contact}</Text>
               </View>
             )}
-            {!!item.age && <Text style={styles.metaInfo}>{item.age} ans</Text>}
+            {!!item.age && <Text style={[styles.metaInfo, { color: colors.textMuted }]}>{item.age} ans</Text>}
             {!!item.internalPatientCode && (
               <Text style={styles.codeBadge}>{item.internalPatientCode}</Text>
             )}
           </View>
         </View>
-        <ChevronRight size={20} color="#cbd5e1" />
+        <ChevronRight size={20} color={colors.textMuted} />
       </TouchableOpacity>
     );
   };
@@ -90,7 +92,7 @@ export default function PatientsListScreen() {
   const renderSkeleton = () => (
     <View style={{ padding: 24 }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <View key={i} style={[styles.card, { padding: 0, paddingHorizontal: 16, paddingVertical: 12 }]}>
+        <View key={i} style={[styles.card, { padding: 0, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.card, borderColor: colors.border }]}>
           <Skeleton height={50} borderRadius={8} />
         </View>
       ))}
@@ -98,30 +100,30 @@ export default function PatientsListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Mes Patients</Text>
+          <Text style={[styles.title, { color: colors.headerText }]}>Mes Patients</Text>
           {allPatients.length > 0 && (
-            <View style={styles.countBadge}>
+            <View style={[styles.countBadge, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
               <Text style={styles.countText}>{filteredPatients.length} / {allPatients.length}</Text>
             </View>
           )}
         </View>
         
-        <View style={styles.searchContainer}>
-          <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { backgroundColor: colors.inputBg, borderColor: colors.border, borderWidth: 1 }]}>
+          <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Rechercher par nom, téléphone, code..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.textMuted}
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={clearSearch} style={styles.clearIcon}>
-              <X size={18} color="#94a3b8" />
+              <X size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -143,11 +145,11 @@ export default function PatientsListScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Inbox size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>
+              <Inbox size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {searchQuery ? "Aucun résultat" : "Aucun patient"}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {searchQuery 
                   ? `Aucun patient ne correspond à "${searchQuery}".`
                   : "Vous n'avez pas encore de patients dans votre répertoire."}

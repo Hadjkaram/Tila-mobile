@@ -81,25 +81,28 @@ export const OFFICIAL_ASSESSMENTS: AssessmentMeta[] = [
   },
 ];
 
+import { useTheme } from '../../context/ThemeContext';
+
 export default function AssessmentsListScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Header avec bouton retour et titre centré */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.cardSecondary }]}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color="#0f172a" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitles}>
-          <Text style={styles.headerMainTitle}>Mes Auto-Évaluations</Text>
-          <Text style={styles.headerSubTitle}>Outils Cliniques Certifiés TILA</Text>
+          <Text style={[styles.headerMainTitle, { color: colors.text }]}>Mes Auto-Évaluations</Text>
+          <Text style={[styles.headerSubTitle, { color: colors.textSecondary }]}>Outils Cliniques Certifiés TILA</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
@@ -112,13 +115,13 @@ export default function AssessmentsListScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Bannière d'information & Confidentialité */}
-        <View style={styles.infoBanner}>
-          <View style={styles.infoIconBox}>
+        <View style={[styles.infoBanner, isDark && { backgroundColor: 'rgba(0,166,81,0.15)', borderColor: '#00A651' }]}>
+          <View style={[styles.infoIconBox, isDark && { backgroundColor: colors.card }]}>
             <ShieldCheck size={20} color="#00A651" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.infoTitle}>100% Confidentiel & Gratuit</Text>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.text }]}>
               Ces questionnaires cliniques scientifiquement validés vous permettent de faire le point sur votre état émotionnel. Vos données restent strictement confidentielles.
             </Text>
           </View>
@@ -127,7 +130,7 @@ export default function AssessmentsListScreen() {
         {/* Titre de section */}
         <View style={styles.sectionHeader}>
           <Sparkles size={16} color="#00A651" style={{ marginRight: 6 }} />
-          <Text style={styles.sectionTitle}>Catalogue des Outils Cliniques</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Catalogue des Outils Cliniques</Text>
         </View>
 
         {/* Liste des 4 Cartes Cliniques */}
@@ -135,7 +138,7 @@ export default function AssessmentsListScreen() {
           {OFFICIAL_ASSESSMENTS.map((assessment) => (
             <TouchableOpacity
               key={assessment.id}
-              style={styles.card}
+              style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push(`/public-assessments/${assessment.id}`)}
               activeOpacity={0.8}
             >
@@ -144,7 +147,7 @@ export default function AssessmentsListScreen() {
                 <View
                   style={[
                     styles.iconContainer,
-                    { backgroundColor: assessment.bgLight },
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : assessment.bgLight },
                   ]}
                 >
                   <FileText size={22} color={assessment.color} />
@@ -160,7 +163,7 @@ export default function AssessmentsListScreen() {
                     style={[
                       styles.badgeDomain,
                       {
-                        backgroundColor: assessment.bgLight,
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : assessment.bgLight,
                         borderColor: assessment.color,
                       },
                     ]}
@@ -175,18 +178,18 @@ export default function AssessmentsListScreen() {
               </View>
 
               {/* Titre et sous-titre */}
-              <Text style={styles.cardTitle}>{assessment.title}</Text>
-              <Text style={styles.cardSubtitle}>{assessment.subtitle}</Text>
-              <Text style={styles.cardDescription}>{assessment.description}</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>{assessment.title}</Text>
+              <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{assessment.subtitle}</Text>
+              <Text style={[styles.cardDescription, { color: colors.textMuted }]}>{assessment.description}</Text>
 
               {/* Pied de carte avec durée et CTA */}
-              <View style={styles.cardFooter}>
+              <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
                 <View style={styles.metaRow}>
-                  <Clock size={13} color="#64748b" style={{ marginRight: 4 }} />
-                  <Text style={styles.metaText}>{assessment.duration}</Text>
-                  <Text style={styles.metaDot}>•</Text>
-                  <HelpCircle size={13} color="#64748b" style={{ marginRight: 4 }} />
-                  <Text style={styles.metaText}>
+                  <Clock size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>{assessment.duration}</Text>
+                  <Text style={[styles.metaDot, { color: colors.border }]}>•</Text>
+                  <HelpCircle size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
                     {assessment.questionsCount} questions
                   </Text>
                 </View>
@@ -203,8 +206,8 @@ export default function AssessmentsListScreen() {
         </View>
 
         {/* Note de bas de page médicale */}
-        <View style={styles.medicalNotice}>
-          <Text style={styles.medicalNoticeText}>
+        <View style={[styles.medicalNotice, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+          <Text style={[styles.medicalNoticeText, { color: colors.textSecondary }]}>
             Ces auto-évaluations sont des outils d'orientation et de sensibilisation. Elles ne constituent pas un diagnostic médical formel. En cas d'urgence ou de détresse sévère, contactez immédiatement un professionnel de santé.
           </Text>
         </View>

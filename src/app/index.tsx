@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import { Text } from '../components/Text';
 import { tokenService } from '../services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 
 export interface OnboardingStep {
   tag: string;
@@ -74,6 +75,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
 ];
 
 export default function OnboardingScreen() {
+  const { colors, isDark } = useTheme();
   const [step, setStep] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const { width } = useWindowDimensions();
@@ -128,7 +130,7 @@ export default function OnboardingScreen() {
   const isLastStep = step === ONBOARDING_STEPS.length - 1;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={[styles.innerContainer, isTablet && styles.innerContainerTablet]}>
         {/* Barre supérieure : Logos officiels libres & Bouton Passer */}
         <View style={styles.topBar}>
@@ -152,11 +154,11 @@ export default function OnboardingScreen() {
 
           {!isLastStep && (
             <TouchableOpacity
-              style={styles.skipButton}
+              style={[styles.skipButton, { backgroundColor: colors.cardSecondary }]}
               onPress={finishOnboarding}
               activeOpacity={0.7}
             >
-              <Text style={styles.skipButtonText}>Passer</Text>
+              <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Passer</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -167,13 +169,19 @@ export default function OnboardingScreen() {
           <View
             style={[
               styles.iconHaloOuter,
-              { backgroundColor: currentStep.bgLight, borderColor: currentStep.borderColor },
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : currentStep.bgLight,
+                borderColor: isDark ? colors.border : currentStep.borderColor,
+              },
             ]}
           >
             <View
               style={[
                 styles.iconHaloInner,
-                { backgroundColor: '#ffffff', borderColor: currentStep.borderColor },
+                {
+                  backgroundColor: colors.card,
+                  borderColor: isDark ? colors.border : currentStep.borderColor,
+                },
               ]}
             >
               <IconComponent size={44} color={currentStep.color} />
@@ -184,7 +192,10 @@ export default function OnboardingScreen() {
           <View
             style={[
               styles.tagPill,
-              { backgroundColor: currentStep.bgLight, borderColor: currentStep.borderColor },
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : currentStep.bgLight,
+                borderColor: isDark ? colors.border : currentStep.borderColor,
+              },
             ]}
           >
             <Sparkles size={11} color={currentStep.color} style={{ marginRight: 4 }} />
@@ -194,8 +205,8 @@ export default function OnboardingScreen() {
           </View>
 
           {/* Titre & Description */}
-          <Text style={styles.title}>{currentStep.title}</Text>
-          <Text style={styles.description}>{currentStep.description}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{currentStep.title}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{currentStep.description}</Text>
         </View>
 
         {/* Pied de page avec pagination et bouton d'action */}
@@ -209,6 +220,7 @@ export default function OnboardingScreen() {
                   key={index}
                   style={[
                     styles.dot,
+                    { backgroundColor: isDark ? '#334155' : '#cbd5e1' },
                     isActive && styles.dotActive,
                     isActive && { backgroundColor: currentStep.color },
                   ]}

@@ -23,8 +23,10 @@ import {
   PhoneCall,
 } from 'lucide-react-native';
 import { patientService, TeleconsultationItem, AppointmentItem } from '../../services/patient';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PatientTeleconsultation() {
+  const { colors, isDark } = useTheme();
   const [nextTeleconsultation, setNextTeleconsultation] = useState<TeleconsultationItem | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<AppointmentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,34 +69,34 @@ export default function PatientTeleconsultation() {
   const activeMeeting = upcomingAppointments.length > 0 ? upcomingAppointments[0] : null;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Carte Salle de Téléconsultation */}
-        <View style={styles.mainCard}>
-          <View style={styles.iconCircle}>
+        <View style={[styles.mainCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff' }]}>
             <Video size={28} color="#2563eb" />
           </View>
-          <Text style={styles.mainTitle}>Salle de Consultation Virtuelle</Text>
-          <Text style={styles.mainSubtitle}>
+          <Text style={[styles.mainTitle, { color: colors.text }]}>Salle de Consultation Virtuelle</Text>
+          <Text style={[styles.mainSubtitle, { color: colors.textSecondary }]}>
             Échangez en direct et en toute confidentialité avec votre médecin ou psychologue.
           </Text>
 
           {activeMeeting ? (
-            <View style={styles.meetingCard}>
+            <View style={[styles.meetingCard, { backgroundColor: colors.cardSecondary, borderColor: isDark ? colors.border : '#bfdbfe' }]}>
               <View style={styles.meetingHeader}>
-                <View style={styles.liveIndicator}>
+                <View style={[styles.liveIndicator, { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff' }]}>
                   <View style={styles.liveDot} />
                   <Text style={styles.liveText}>Séance programmée</Text>
                 </View>
-                <Text style={styles.meetingDate}>{activeMeeting.date || "Aujourd'hui"}</Text>
+                <Text style={[styles.meetingDate, { color: colors.textSecondary }]}>{activeMeeting.date || "Aujourd'hui"}</Text>
               </View>
 
-              <Text style={styles.doctorName}>{activeMeeting.professional || 'Médecin Référent'}</Text>
-              <Text style={styles.doctorSpecialty}>{activeMeeting.specialty || 'Santé mentale'}</Text>
+              <Text style={[styles.doctorName, { color: colors.text }]}>{activeMeeting.professional || 'Médecin Référent'}</Text>
+              <Text style={[styles.doctorSpecialty, { color: colors.textSecondary }]}>{activeMeeting.specialty || 'Santé mentale'}</Text>
 
               <View style={styles.timeRow}>
                 <Clock size={15} color="#2563eb" style={{ marginRight: 6 }} />
-                <Text style={styles.timeText}>Horaire : {activeMeeting.time || '10:00'} (45 min)</Text>
+                <Text style={[styles.timeText, { color: isDark ? '#60a5fa' : '#2563eb' }]}>Horaire : {activeMeeting.time || '10:00'} (45 min)</Text>
               </View>
 
               <TouchableOpacity
@@ -110,8 +112,8 @@ export default function PatientTeleconsultation() {
           ) : (
             <View style={styles.noMeetingBox}>
               <CheckCircle2 size={32} color="#00A651" style={{ marginBottom: 8 }} />
-              <Text style={styles.noMeetingTitle}>Aucune séance immédiate</Text>
-              <Text style={styles.noMeetingSub}>
+              <Text style={[styles.noMeetingTitle, { color: colors.text }]}>Aucune séance immédiate</Text>
+              <Text style={[styles.noMeetingSub, { color: colors.textSecondary }]}>
                 Votre prochain créneau de téléconsultation s'affichera ici dès validation par votre praticien.
               </Text>
             </View>
@@ -119,43 +121,43 @@ export default function PatientTeleconsultation() {
         </View>
 
         {/* 2. Conseils pour une consultation réussie */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
             <Sparkles size={18} color="#00A651" />
-            <Text style={styles.sectionTitle}>Recommandations pour la séance</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommandations pour la séance</Text>
           </View>
 
           <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
+            <View style={[styles.tipIcon, { backgroundColor: colors.inputBg }]}>
               <Headphones size={18} color="#2563eb" />
             </View>
             <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Lieu calme & écouteurs</Text>
-              <Text style={styles.tipSub}>
+              <Text style={[styles.tipTitle, { color: colors.text }]}>Lieu calme & écouteurs</Text>
+              <Text style={[styles.tipSub, { color: colors.textSecondary }]}>
                 Installez-vous dans un endroit discret où vous êtes libre de vous exprimer sereinement.
               </Text>
             </View>
           </View>
 
           <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
+            <View style={[styles.tipIcon, { backgroundColor: colors.inputBg }]}>
               <Wifi size={18} color="#00A651" />
             </View>
             <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Connexion Internet stable</Text>
-              <Text style={styles.tipSub}>
+              <Text style={[styles.tipTitle, { color: colors.text }]}>Connexion Internet stable</Text>
+              <Text style={[styles.tipSub, { color: colors.textSecondary }]}>
                 Privilégiez une connexion Wi-Fi ou une couverture 4G/5G pour une bonne fluidité audio et vidéo.
               </Text>
             </View>
           </View>
 
           <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
+            <View style={[styles.tipIcon, { backgroundColor: colors.inputBg }]}>
               <ShieldCheck size={18} color="#7c3aed" />
             </View>
             <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Confidentialité médicale garantie</Text>
-              <Text style={styles.tipSub}>
+              <Text style={[styles.tipTitle, { color: colors.text }]}>Confidentialité médicale garantie</Text>
+              <Text style={[styles.tipSub, { color: colors.textSecondary }]}>
                 Toutes les téléconsultations sont chiffrées de bout en bout et conformes au secret médical.
               </Text>
             </View>

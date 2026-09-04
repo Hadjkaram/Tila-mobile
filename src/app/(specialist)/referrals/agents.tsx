@@ -3,12 +3,11 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, useColor
 import { Stack, useRouter } from 'expo-router';
 import { User, Search, ChevronRight, Stethoscope } from 'lucide-react-native';
 import { useGetAgents } from '../../../hooks/useProfessionalApi';
-
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function AgentsList() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
   const { data: apiAgents, isLoading, isError } = useGetAgents();
@@ -21,12 +20,12 @@ export default function AgentsList() {
   );
 
   const theme = {
-    bg: isDark ? '#0f172a' : '#f8fafc',
-    card: isDark ? '#1e293b' : '#ffffff',
-    text: isDark ? '#f8fafc' : '#0f172a',
-    textSecondary: isDark ? '#94a3b8' : '#64748b',
-    border: isDark ? '#334155' : '#e2e8f0',
-    iconBg: isDark ? '#334155' : '#f1f5f9',
+    bg: colors.bgSecondary,
+    card: colors.card,
+    text: colors.text,
+    textSecondary: colors.textSecondary,
+    border: colors.border,
+    iconBg: colors.inputBg,
   };
 
   const renderSkeleton = () => (

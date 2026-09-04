@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Text } from '../../../components/Text';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { useGenerateDailyRoom, useStartSession } from '../../../hooks/useProfessionalApi';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { Camera, Mic, ArrowLeft } from 'lucide-react-native';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function VideoRoom() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
+  const { colors, isDark } = useTheme();
   
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -19,7 +20,6 @@ export default function VideoRoom() {
   const generateRoom = useGenerateDailyRoom();
   const startSession = useStartSession();
 
-  const isDark = colorScheme === 'dark';
   const bgColor = isDark ? '#0f172a' : '#000000'; // Usually black for video rooms
 
   // Initialize room only when permissions are granted
@@ -71,19 +71,19 @@ export default function VideoRoom() {
   // 2. Permissions not granted yet
   if (!cameraPermission.granted || !micPermission.granted) {
     return (
-      <View style={styles.permissionContainer}>
+      <View style={[styles.permissionContainer, { backgroundColor: colors.bgSecondary }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         
         <View style={styles.permissionContent}>
           <View style={styles.iconRow}>
-            <Camera size={48} color="#0f172a" style={{ marginRight: 16 }} />
-            <Mic size={48} color="#0f172a" />
+            <Camera size={48} color={colors.text} style={{ marginRight: 16 }} />
+            <Mic size={48} color={colors.text} />
           </View>
-          <Text style={styles.permissionTitle}>Autorisations requises</Text>
-          <Text style={styles.permissionText}>
+          <Text style={[styles.permissionTitle, { color: colors.text }]}>Autorisations requises</Text>
+          <Text style={[styles.permissionText, { color: colors.textSecondary }]}>
             Pour rejoindre la téléconsultation, l'application a besoin d'accéder à votre caméra et à votre microphone.
           </Text>
           <TouchableOpacity style={styles.primaryButton} onPress={requestAllPermissions}>

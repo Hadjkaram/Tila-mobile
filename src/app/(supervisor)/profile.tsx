@@ -31,9 +31,11 @@ import { tokenService } from '../../services/apiClient';
 import { syncService } from '../../services/syncService';
 import { useQuery } from '@tanstack/react-query';
 import { superviseurService } from '../../services/superviseur';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SupervisorProfileScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [userContext, setUserContext] = useState<any>(null);
   const [pushAlertsEnabled, setPushAlertsEnabled] = useState(true);
   const [smsAlertsEnabled, setSmsAlertsEnabled] = useState(true);
@@ -121,137 +123,137 @@ export default function SupervisorProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Top Header avec retour arrière vers le Dashboard */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backBtn}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Mon Profil</Text>
+        <Text style={[styles.topBarTitle, { color: colors.text }]}>Mon Profil</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Carte de Profil Principal */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarWrap}>
+        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatarWrap, isDark && { backgroundColor: 'rgba(37, 99, 235, 0.15)', borderColor: '#2563eb' }]}>
             <Text style={styles.avatarText}>
               {((firstName[0] || '') + (lastName[0] || 'S')).toUpperCase() || 'SP'}
             </Text>
           </View>
-          <Text style={styles.userName}>{fullName}</Text>
-          <Text style={styles.userSpecialty}>{specialty}</Text>
-          <View style={styles.roleBadge}>
+          <Text style={[styles.userName, { color: colors.text }]}>{fullName}</Text>
+          <Text style={[styles.userSpecialty, { color: colors.textSecondary }]}>{specialty}</Text>
+          <View style={[styles.roleBadge, isDark && { backgroundColor: colors.cardSecondary }]}>
             <Shield size={13} color="#2563eb" style={{ marginRight: 4 }} />
             <Text style={styles.roleBadgeText}>SUPERVISEUR CLINIQUE AGRÉÉ</Text>
           </View>
         </View>
 
         {/* 2. Coordonnées & Informations */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Coordonnées professionnelles</Text>
-          <View style={styles.infoRow}>
-            <Mail size={16} color="#64748b" style={{ marginRight: 10 }} />
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Coordonnées professionnelles</Text>
+          <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+            <Mail size={16} color={colors.textSecondary} style={{ marginRight: 10 }} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.infoLabel}>Adresse email</Text>
-              <Text style={styles.infoValue}>{email}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Adresse email</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{email}</Text>
             </View>
           </View>
-          <View style={styles.infoRow}>
-            <Phone size={16} color="#64748b" style={{ marginRight: 10 }} />
+          <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+            <Phone size={16} color={colors.textSecondary} style={{ marginRight: 10 }} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.infoLabel}>Numéro de téléphone</Text>
-              <Text style={styles.infoValue}>{phone}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Numéro de téléphone</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{phone}</Text>
             </View>
           </View>
         </View>
 
         {/* 3. Périmètre de Supervision */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
             <Building2 size={16} color="#00A651" />
-            <Text style={styles.sectionTitle}>Centres & Sites supervisés ({availableSites.length})</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Centres & Sites supervisés ({availableSites.length})</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Établissements et dispositifs mobiles placés sous votre autorité clinique.
           </Text>
 
           <View style={styles.sitesList}>
             {availableSites.map((site: string, index: number) => (
-              <View key={index} style={styles.siteBadgeItem}>
+              <View key={index} style={[styles.siteBadgeItem, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
                 <CheckCircle2 size={14} color="#00A651" style={{ marginRight: 8 }} />
-                <Text style={styles.siteBadgeItemText}>{site}</Text>
+                <Text style={[styles.siteBadgeItemText, { color: colors.text }]}>{site}</Text>
               </View>
             ))}
           </View>
         </View>
 
         {/* 4. Préférences d'Alertes et Notifications */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
             <Bell size={16} color="#ea580c" />
-            <Text style={styles.sectionTitle}>Notifications d'urgence vitale</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications d'urgence vitale</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             Canaux prioritaires pour la réception immédiate des alertes cliniques critiques.
           </Text>
 
-          <View style={styles.prefRow}>
+          <View style={[styles.prefRow, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={styles.prefTitle}>Alertes Push instantanées</Text>
-              <Text style={styles.prefSub}>Notification sonore pour toute idéation suicidaire</Text>
+              <Text style={[styles.prefTitle, { color: colors.text }]}>Alertes Push instantanées</Text>
+              <Text style={[styles.prefSub, { color: colors.textSecondary }]}>Notification sonore pour toute idéation suicidaire</Text>
             </View>
             <Switch
               value={pushAlertsEnabled}
               onValueChange={setPushAlertsEnabled}
-              trackColor={{ false: '#cbd5e1', true: '#00A651' }}
+              trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: '#00A651' }}
               thumbColor="#ffffff"
             />
           </View>
 
-          <View style={styles.prefRow}>
+          <View style={[styles.prefRow, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={styles.prefTitle}>Alerte SMS d'astreinte</Text>
-              <Text style={styles.prefSub}>SMS de secours si hors connexion internet</Text>
+              <Text style={[styles.prefTitle, { color: colors.text }]}>Alerte SMS d'astreinte</Text>
+              <Text style={[styles.prefSub, { color: colors.textSecondary }]}>SMS de secours si hors connexion internet</Text>
             </View>
             <Switch
               value={smsAlertsEnabled}
               onValueChange={setSmsAlertsEnabled}
-              trackColor={{ false: '#cbd5e1', true: '#00A651' }}
+              trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: '#00A651' }}
               thumbColor="#ffffff"
             />
           </View>
         </View>
 
         {/* 5. Données & Cache Local */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
-            <HardDrive size={16} color="#64748b" />
-            <Text style={styles.sectionTitle}>Données & Stockage</Text>
+            <HardDrive size={16} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Données & Stockage</Text>
           </View>
 
           <TouchableOpacity
-            style={styles.clearCacheBtn}
+            style={[styles.clearCacheBtn, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}
             onPress={handleClearCache}
             disabled={isClearingCache}
             activeOpacity={0.7}
           >
             {isClearingCache ? (
-              <ActivityIndicator size="small" color="#64748b" style={{ marginRight: 8 }} />
+              <ActivityIndicator size="small" color={colors.textSecondary} style={{ marginRight: 8 }} />
             ) : (
-              <Trash2 size={16} color="#64748b" style={{ marginRight: 8 }} />
+              <Trash2 size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
             )}
-            <Text style={styles.clearCacheBtnText}>Vider le cache des données locales</Text>
+            <Text style={[styles.clearCacheBtnText, { color: colors.textSecondary }]}>Vider le cache des données locales</Text>
           </TouchableOpacity>
         </View>
 
         {/* 6. Déconnexion */}
         <TouchableOpacity
-          style={styles.logoutBtn}
+          style={[styles.logoutBtn, isDark && { backgroundColor: 'rgba(220, 38, 38, 0.12)', borderColor: '#7f1d1d' }]}
           onPress={handleLogout}
           activeOpacity={0.85}
         >

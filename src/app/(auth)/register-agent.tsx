@@ -25,9 +25,11 @@ import {
   EyeOff,
 } from 'lucide-react-native';
 import { apiClient } from '../../services/apiClient';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function RegisterAgentScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
@@ -102,16 +104,16 @@ export default function RegisterAgentScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.topBar}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
+      <View style={[styles.topBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.cardSecondary }]}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color="#0f172a" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Espace Sensibilisateur</Text>
+        <Text style={[styles.topBarTitle, { color: colors.text }]}>Espace Sensibilisateur</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -124,26 +126,26 @@ export default function RegisterAgentScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <View style={styles.roleBadge}>
+          <View style={[styles.roleBadge, isDark && { backgroundColor: 'rgba(2,132,199,0.15)', borderColor: '#0284c7' }]}>
             <Users size={14} color="#0284c7" style={{ marginRight: 5 }} />
             <Text style={styles.roleBadgeText}>Sensibilisation & Dépistage</Text>
           </View>
-          <Text style={styles.title}>Inscription Sensibilisateur</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Inscription Sensibilisateur</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Agents rattachés à une ONG ou association partenaire pour les actions de terrain et de cohorte.
           </Text>
         </View>
 
-        <View style={styles.formCard}>
+        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.nameRow}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Prénom *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color="#94a3b8" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.text }]}>Prénom *</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <User size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   placeholder="Ex: Aminata"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={firstName}
                   onChangeText={setFirstName}
                 />
@@ -151,13 +153,13 @@ export default function RegisterAgentScreen() {
             </View>
 
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Nom *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color="#94a3b8" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.text }]}>Nom *</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <User size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   placeholder="Ex: Diallo"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={lastName}
                   onChangeText={setLastName}
                 />
@@ -166,15 +168,15 @@ export default function RegisterAgentScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email *</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Email *</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Mail size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="aminata.diallo@ong-partenaire.org"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
               />
@@ -182,14 +184,14 @@ export default function RegisterAgentScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Téléphone</Text>
-            <View style={styles.inputWrapper}>
-              <Phone size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Téléphone</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Phone size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="+225 05 00 00 00 00"
                 keyboardType="phone-pad"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
               />
@@ -198,13 +200,13 @@ export default function RegisterAgentScreen() {
 
           {/* Nom de l'ONG */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>ONG / Organisation de rattachement *</Text>
-            <View style={styles.inputWrapper}>
-              <Building2 size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>ONG / Organisation de rattachement *</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Building2 size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Ex: Alliance Côte d’Ivoire / Croix-Rouge"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={ongName}
                 onChangeText={setOngName}
               />
@@ -213,14 +215,14 @@ export default function RegisterAgentScreen() {
 
           {/* Mot de passe */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mot de Passe * (min. 6 caractères)</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Mot de Passe * (min. 6 caractères)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={[styles.input, { paddingRight: 44 }]}
+                style={[styles.input, { color: colors.text, paddingRight: 44 }]}
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
               />
@@ -229,13 +231,13 @@ export default function RegisterAgentScreen() {
                 onPress={() => setShowPassword(!showPassword)}
                 activeOpacity={0.7}
               >
-                {showPassword ? <EyeOff size={18} color="#64748b" /> : <Eye size={18} color="#64748b" />}
+                {showPassword ? <EyeOff size={18} color={colors.textSecondary} /> : <Eye size={18} color={colors.textSecondary} />}
               </TouchableOpacity>
             </View>
           </View>
 
           {errorMessage ? (
-            <View style={styles.errorBox}>
+            <View style={[styles.errorBox, isDark && { backgroundColor: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }]}>
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
@@ -262,7 +264,7 @@ export default function RegisterAgentScreen() {
           onPress={() => router.push('/(auth)/login')}
           activeOpacity={0.7}
         >
-          <Text style={styles.loginLinkText}>
+          <Text style={[styles.loginLinkText, { color: colors.textSecondary }]}>
             Déjà inscrit ? <Text style={styles.loginLinkHighlight}>Se connecter</Text>
           </Text>
         </TouchableOpacity>

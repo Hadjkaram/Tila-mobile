@@ -32,6 +32,7 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { referentialCache } from '../../services/referentialCache';
+import { useTheme } from '../../context/ThemeContext';
 
 interface DirectoryItem {
   id: string | number;
@@ -45,6 +46,7 @@ interface DirectoryItem {
 
 export default function PatientDirectory() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'specialist' | 'center'>('all');
   const [items, setItems] = useState<DirectoryItem[]>([]);
@@ -265,15 +267,15 @@ export default function PatientDirectory() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {/* 1. Barre de Recherche */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.border, borderWidth: 1 }]}>
+          <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Rechercher un médecin, centre, ville..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -281,33 +283,45 @@ export default function PatientDirectory() {
       </View>
 
       {/* 2. Filtres rapides */}
-      <View style={styles.filterRow}>
+      <View style={[styles.filterRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.filterBtn, activeFilter === 'all' && styles.filterBtnActive]}
+          style={[
+            styles.filterBtn,
+            { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+            activeFilter === 'all' && styles.filterBtnActive,
+          ]}
           onPress={() => setActiveFilter('all')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.filterBtnText, activeFilter === 'all' && styles.filterBtnTextActive]}>
+          <Text style={[styles.filterBtnText, { color: colors.textSecondary }, activeFilter === 'all' && styles.filterBtnTextActive]}>
             Tous ({items.length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterBtn, activeFilter === 'specialist' && styles.filterBtnActive]}
+          style={[
+            styles.filterBtn,
+            { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+            activeFilter === 'specialist' && styles.filterBtnActive,
+          ]}
           onPress={() => setActiveFilter('specialist')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.filterBtnText, activeFilter === 'specialist' && styles.filterBtnTextActive]}>
+          <Text style={[styles.filterBtnText, { color: colors.textSecondary }, activeFilter === 'specialist' && styles.filterBtnTextActive]}>
             Praticiens
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterBtn, activeFilter === 'center' && styles.filterBtnActive]}
+          style={[
+            styles.filterBtn,
+            { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+            activeFilter === 'center' && styles.filterBtnActive,
+          ]}
           onPress={() => setActiveFilter('center')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.filterBtnText, activeFilter === 'center' && styles.filterBtnTextActive]}>
+          <Text style={[styles.filterBtnText, { color: colors.textSecondary }, activeFilter === 'center' && styles.filterBtnTextActive]}>
             Établissements
           </Text>
         </TouchableOpacity>
@@ -317,7 +331,7 @@ export default function PatientDirectory() {
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#00A651" />
-          <Text style={styles.loadingText}>Recherche des praticiens et structures...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Recherche des praticiens et structures...</Text>
         </View>
       ) : (
         <ScrollView
@@ -328,10 +342,10 @@ export default function PatientDirectory() {
           }
         >
           {filteredItems.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Building2 size={44} color="#cbd5e1" style={{ marginBottom: 10 }} />
-              <Text style={styles.emptyTitle}>Aucun résultat trouvé</Text>
-              <Text style={styles.emptySub}>
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Building2 size={44} color={colors.textMuted} style={{ marginBottom: 10 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun résultat trouvé</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                 Essayez un autre mot-clé ou modifiez les filtres de recherche.
               </Text>
             </View>
@@ -340,12 +354,12 @@ export default function PatientDirectory() {
               const isCenter = item.type === 'center';
 
               return (
-                <View key={item.id || index} style={styles.card}>
+                <View key={item.id || index} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.cardHeader}>
                     <View
                       style={[
                         styles.iconWrap,
-                        { backgroundColor: isCenter ? '#eff6ff' : '#ecfdf5' },
+                        { backgroundColor: isCenter ? (isDark ? 'rgba(37,99,235,0.15)' : '#eff6ff') : (isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5') },
                       ]}
                     >
                       {isCenter ? (
@@ -355,19 +369,19 @@ export default function PatientDirectory() {
                       )}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <Text style={styles.itemSpecialty}>{item.specialtyOrType}</Text>
+                      <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+                      <Text style={[styles.itemSpecialty, { color: colors.textSecondary }]}>{item.specialtyOrType}</Text>
                     </View>
                     <View
                       style={[
                         styles.badgeType,
-                        { backgroundColor: isCenter ? '#f1f5f9' : '#dcfce7' },
+                        { backgroundColor: isCenter ? (isDark ? colors.cardSecondary : '#f1f5f9') : (isDark ? 'rgba(0,166,81,0.2)' : '#dcfce7') },
                       ]}
                     >
                       <Text
                         style={[
                           styles.badgeTypeText,
-                          { color: isCenter ? '#475569' : '#15803d' },
+                          { color: isCenter ? (isDark ? colors.textSecondary : '#475569') : (isDark ? '#4ade80' : '#15803d') },
                         ]}
                       >
                         {isCenter ? 'Centre' : 'Praticien Agréé'}
@@ -378,23 +392,23 @@ export default function PatientDirectory() {
                   <View style={styles.detailsBlock}>
                     {item.address ? (
                       <View style={styles.detailRow}>
-                        <MapPin size={14} color="#64748b" style={{ marginRight: 6 }} />
-                        <Text style={styles.detailText}>{item.address}</Text>
+                        <MapPin size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                        <Text style={[styles.detailText, { color: colors.textSecondary }]}>{item.address}</Text>
                       </View>
                     ) : null}
 
                     {/* Le numéro de téléphone n'est affiché QUE pour les centres d'accueil publics, JAMAIS pour les praticiens en accès libre */}
                     {isCenter && item.phone ? (
                       <View style={styles.detailRow}>
-                        <Phone size={14} color="#64748b" style={{ marginRight: 6 }} />
-                        <Text style={styles.detailText}>Accueil : {item.phone}</Text>
+                        <Phone size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
+                        <Text style={[styles.detailText, { color: colors.textSecondary }]}>Accueil : {item.phone}</Text>
                       </View>
                     ) : null}
 
                     {!isCenter && (
                       <View style={styles.protocolHintRow}>
                         <CheckCircle2 size={13} color="#00A651" style={{ marginRight: 5 }} />
-                        <Text style={styles.protocolHintText}>
+                        <Text style={[styles.protocolHintText, { color: isDark ? '#4ade80' : '#15803d' }]}>
                           Prise de rendez-vous obligatoire pour consultation & suivi
                         </Text>
                       </View>
@@ -406,7 +420,7 @@ export default function PatientDirectory() {
                     {/* Les centres ont le bouton d'appel d'accueil */}
                     {isCenter && item.phone && (
                       <TouchableOpacity
-                        style={styles.callCenterBtn}
+                        style={[styles.callCenterBtn, { backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : '#eff6ff', borderColor: isDark ? '#2563eb' : '#bfdbfe' }]}
                         onPress={() => handleCallCenter(item.phone)}
                         activeOpacity={0.8}
                       >
@@ -435,61 +449,73 @@ export default function PatientDirectory() {
       {/* Modal de Demande de Rendez-vous avec Praticien */}
       <Modal visible={appointmentModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
+          <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.modalTitle}>Demande de Rendez-vous</Text>
-                <Text style={styles.modalSubtitle}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Demande de Rendez-vous</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
                   Avec {selectedSpecialist?.name} ({selectedSpecialist?.specialtyOrType})
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setAppointmentModalVisible(false)}
-                style={styles.closeBtn}
+                style={[styles.closeBtn, { backgroundColor: colors.cardSecondary }]}
                 activeOpacity={0.7}
               >
-                <X size={18} color="#0f172a" />
+                <X size={18} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalBody} showsVerticalScrollIndicator={false}>
               {/* Type de Consultation */}
-              <Text style={styles.formSectionTitle}>Type de consultation</Text>
+              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Type de consultation</Text>
               <View style={styles.typeSelectorRow}>
                 <TouchableOpacity
-                  style={[styles.typeOption, consultationType === 'video' && styles.typeOptionActive]}
+                  style={[
+                    styles.typeOption,
+                    { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                    consultationType === 'video' && (isDark ? { backgroundColor: 'rgba(0,166,81,0.2)', borderColor: '#00A651' } : styles.typeOptionActive),
+                  ]}
                   onPress={() => setConsultationType('video')}
                   activeOpacity={0.8}
                 >
-                  <Video size={16} color={consultationType === 'video' ? '#00A651' : '#64748b'} style={{ marginRight: 6 }} />
-                  <Text style={[styles.typeOptionText, consultationType === 'video' && styles.typeOptionTextActive]}>
+                  <Video size={16} color={consultationType === 'video' ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
+                  <Text style={[styles.typeOptionText, { color: colors.textSecondary }, consultationType === 'video' && styles.typeOptionTextActive]}>
                     Téléconsultation
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.typeOption, consultationType === 'in-person' && styles.typeOptionActive]}
+                  style={[
+                    styles.typeOption,
+                    { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                    consultationType === 'in-person' && (isDark ? { backgroundColor: 'rgba(0,166,81,0.2)', borderColor: '#00A651' } : styles.typeOptionActive),
+                  ]}
                   onPress={() => setConsultationType('in-person')}
                   activeOpacity={0.8}
                 >
-                  <MapPin size={16} color={consultationType === 'in-person' ? '#00A651' : '#64748b'} style={{ marginRight: 6 }} />
-                  <Text style={[styles.typeOptionText, consultationType === 'in-person' && styles.typeOptionTextActive]}>
+                  <MapPin size={16} color={consultationType === 'in-person' ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
+                  <Text style={[styles.typeOptionText, { color: colors.textSecondary }, consultationType === 'in-person' && styles.typeOptionTextActive]}>
                     En Présentiel
                   </Text>
                 </TouchableOpacity>
               </View>
 
               {/* Créneau suggéré */}
-              <Text style={styles.formSectionTitle}>Date et créneau souhaité</Text>
+              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Date et créneau souhaité</Text>
               <View style={styles.dateSelectorRow}>
                 {['Demain à 10:00', 'Dans 2 jours à 14:30', 'Dans 3 jours à 16:00'].map((slot) => (
                   <TouchableOpacity
                     key={slot}
-                    style={[styles.dateSlotBtn, appointmentDate === slot && styles.dateSlotBtnActive]}
+                    style={[
+                      styles.dateSlotBtn,
+                      { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                      appointmentDate === slot && styles.dateSlotBtnActive,
+                    ]}
                     onPress={() => setAppointmentDate(slot)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.dateSlotText, appointmentDate === slot && styles.dateSlotTextActive]}>
+                    <Text style={[styles.dateSlotText, { color: colors.textSecondary }, appointmentDate === slot && styles.dateSlotTextActive]}>
                       {slot}
                     </Text>
                   </TouchableOpacity>
@@ -498,12 +524,12 @@ export default function PatientDirectory() {
 
               {/* DONNÉES D'AUTO-ÉVALUATION DU PATIENT */}
               {lastAssessment && (
-                <View style={styles.assessmentAttachCard}>
+                <View style={[styles.assessmentAttachCard, isDark && { backgroundColor: 'rgba(0,166,81,0.15)', borderColor: '#00A651' }]}>
                   <View style={styles.assessmentAttachHeader}>
                     <Sparkles size={16} color="#00A651" style={{ marginRight: 6 }} />
                     <Text style={styles.assessmentAttachTitle}>Auto-évaluation récente disponible</Text>
                   </View>
-                  <Text style={styles.assessmentAttachSub}>
+                  <Text style={[styles.assessmentAttachSub, isDark && { color: '#86efac' }]}>
                     Vous avez réalisé un test {lastAssessment.type} le {lastAssessment.date} avec un score de {lastAssessment.score} ({lastAssessment.level}).
                   </Text>
 
@@ -515,7 +541,7 @@ export default function PatientDirectory() {
                     <View style={[styles.checkboxSquare, includeAssessment && styles.checkboxSquareChecked]}>
                       {includeAssessment && <CheckCircle2 size={16} color="#ffffff" />}
                     </View>
-                    <Text style={styles.toggleAttachText}>
+                    <Text style={[styles.toggleAttachText, { color: colors.text }]}>
                       Transmettre ces résultats au praticien pour préparer la consultation
                     </Text>
                   </TouchableOpacity>
@@ -523,11 +549,11 @@ export default function PatientDirectory() {
               )}
 
               {/* Motif / Message */}
-              <Text style={styles.formSectionTitle}>Motif ou message pour le médecin (optionnel)</Text>
+              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Motif ou message pour le médecin (optionnel)</Text>
               <TextInput
-                style={styles.reasonInput}
+                style={[styles.reasonInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: Éprouve des troubles du sommeil et anxiété, suite à mon auto-évaluation..."
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={3}
                 value={appointmentReason}

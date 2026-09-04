@@ -16,6 +16,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { agentService } from '../../../services/agent';
+import { useTheme } from '../../../context/ThemeContext';
 
 interface ClinicalTool {
   key: string;
@@ -78,6 +79,7 @@ const CLINICAL_TOOLS: ClinicalTool[] = [
 
 export default function SpecialistEvaluationsCatalogScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   // Pre-fetch or sync backend questionnaires
   const { data: questionnaires, isLoading, refetch, isRefetching } = useQuery({
@@ -102,7 +104,7 @@ export default function SpecialistEvaluationsCatalogScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -111,14 +113,14 @@ export default function SpecialistEvaluationsCatalogScreen() {
         }
       >
         {/* Banner */}
-        <View style={styles.heroBanner}>
+        <View style={[styles.heroBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.heroHeader}>
-            <View style={styles.heroIconBox}>
+            <View style={[styles.heroIconBox, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5', borderColor: isDark ? '#00A651' : '#86efac' }]}>
               <ClipboardList size={26} color="#00A651" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.heroTitle}>Outils d'Évaluation Clinique</Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={[styles.heroTitle, { color: colors.text }]}>Outils d'Évaluation Clinique</Text>
+              <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
                 Sélectionnez une échelle validée pour évaluer un patient et calculer automatiquement ses scores.
               </Text>
             </View>
@@ -127,9 +129,9 @@ export default function SpecialistEvaluationsCatalogScreen() {
 
         {/* Section Title */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Questionnaires Disponibles</Text>
-          <View style={styles.toolCountBadge}>
-            <Text style={styles.toolCountText}>{CLINICAL_TOOLS.length} Outils</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Questionnaires Disponibles</Text>
+          <View style={[styles.toolCountBadge, { backgroundColor: colors.cardSecondary }]}>
+            <Text style={[styles.toolCountText, { color: colors.textSecondary }]}>{CLINICAL_TOOLS.length} Outils</Text>
           </View>
         </View>
 
@@ -137,30 +139,30 @@ export default function SpecialistEvaluationsCatalogScreen() {
         {CLINICAL_TOOLS.map((tool) => {
           const IconComponent = tool.icon;
           return (
-            <View key={tool.key} style={styles.card}>
+            <View key={tool.key} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.cardTopRow}>
-                <View style={[styles.toolIconContainer, { backgroundColor: tool.bgLight }]}>
+                <View style={[styles.toolIconContainer, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : tool.bgLight }]}>
                   <IconComponent size={28} color={tool.color} />
                 </View>
                 <View style={styles.cardTitleContainer}>
-                  <Text style={styles.toolName}>{tool.name}</Text>
-                  <Text style={styles.toolSub}>{tool.subtitle}</Text>
+                  <Text style={[styles.toolName, { color: colors.text }]}>{tool.name}</Text>
+                  <Text style={[styles.toolSub, { color: colors.textSecondary }]}>{tool.subtitle}</Text>
                 </View>
               </View>
 
-              <Text style={styles.toolDescription}>{tool.description}</Text>
+              <Text style={[styles.toolDescription, { color: colors.textSecondary }]}>{tool.description}</Text>
 
               {/* Tags and Duration */}
               <View style={styles.metaRow}>
-                <View style={styles.durationBadge}>
-                  <Clock size={13} color="#64748b" style={{ marginRight: 4 }} />
-                  <Text style={styles.durationText}>{tool.duration}</Text>
+                <View style={[styles.durationBadge, { backgroundColor: colors.cardSecondary }]}>
+                  <Clock size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.durationText, { color: colors.textSecondary }]}>{tool.duration}</Text>
                 </View>
 
                 <View style={styles.tagsContainer}>
                   {tool.tags.map((tag, idx) => (
-                    <View key={idx} style={styles.tagBadge}>
-                      <Text style={styles.tagText}>{tag}</Text>
+                    <View key={idx} style={[styles.tagBadge, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                      <Text style={[styles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
                     </View>
                   ))}
                 </View>

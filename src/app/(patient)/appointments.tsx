@@ -24,9 +24,11 @@ import {
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { patientService, AppointmentItem } from '../../services/patient';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PatientAppointments() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [upcomingAppointments, setUpcomingAppointments] = useState<AppointmentItem[]>([]);
   const [pastAppointments, setPastAppointments] = useState<AppointmentItem[]>([]);
@@ -84,25 +86,45 @@ export default function PatientAppointments() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {/* 1. Onglets Segmentés (À venir / Historique) */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.tabBtn, activeTab === 'upcoming' && styles.tabBtnActive]}
+          style={[
+            styles.tabBtn,
+            { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+            activeTab === 'upcoming' && styles.tabBtnActive,
+          ]}
           onPress={() => setActiveTab('upcoming')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabBtnText, activeTab === 'upcoming' && styles.tabBtnTextActive]}>
+          <Text
+            style={[
+              styles.tabBtnText,
+              { color: colors.textSecondary },
+              activeTab === 'upcoming' && styles.tabBtnTextActive,
+            ]}
+          >
             À venir ({upcomingAppointments.length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabBtn, activeTab === 'past' && styles.tabBtnActive]}
+          style={[
+            styles.tabBtn,
+            { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+            activeTab === 'past' && styles.tabBtnActive,
+          ]}
           onPress={() => setActiveTab('past')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabBtnText, activeTab === 'past' && styles.tabBtnTextActive]}>
+          <Text
+            style={[
+              styles.tabBtnText,
+              { color: colors.textSecondary },
+              activeTab === 'past' && styles.tabBtnTextActive,
+            ]}
+          >
             Historique ({pastAppointments.length})
           </Text>
         </TouchableOpacity>
@@ -112,7 +134,7 @@ export default function PatientAppointments() {
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#00A651" />
-          <Text style={styles.loadingText}>Chargement de vos rendez-vous...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement de vos rendez-vous...</Text>
         </View>
       ) : (
         <ScrollView
@@ -123,12 +145,12 @@ export default function PatientAppointments() {
           }
         >
           {currentList.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Calendar size={48} color="#cbd5e1" style={{ marginBottom: 12 }} />
-              <Text style={styles.emptyTitle}>
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Calendar size={48} color={colors.textMuted} style={{ marginBottom: 12 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {activeTab === 'upcoming' ? 'Aucun rendez-vous à venir' : 'Aucun rendez-vous passé'}
               </Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                 {activeTab === 'upcoming'
                   ? 'Planifiez une consultation avec un spécialiste de santé mentale TILA.'
                   : 'Vos consultations précédentes apparaîtront ici.'}
@@ -151,30 +173,30 @@ export default function PatientAppointments() {
               const isVideo = item.type !== 'in-person';
 
               return (
-                <View key={item.id || index} style={styles.card}>
+                <View key={item.id || index} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.cardHeader}>
-                    <View style={styles.doctorAvatar}>
+                    <View style={[styles.doctorAvatar, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
                       <Text style={styles.doctorInitials}>
                         {item.professional ? item.professional.substring(0, 2).toUpperCase() : 'DR'}
                       </Text>
                     </View>
                     <View style={styles.doctorInfo}>
-                      <Text style={styles.doctorName}>{item.professional || 'Praticien de santé'}</Text>
-                      <Text style={styles.doctorSpecialty}>{item.specialty || 'Santé mentale'}</Text>
+                      <Text style={[styles.doctorName, { color: colors.text }]}>{item.professional || 'Praticien de santé'}</Text>
+                      <Text style={[styles.doctorSpecialty, { color: colors.textSecondary }]}>{item.specialty || 'Santé mentale'}</Text>
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
                       <Text style={[styles.statusText, { color: status.text }]}>{status.label}</Text>
                     </View>
                   </View>
 
-                  <View style={styles.cardDetailsRow}>
+                  <View style={[styles.cardDetailsRow, { borderColor: colors.border }]}>
                     <View style={styles.detailItem}>
-                      <Calendar size={14} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.detailText}>{item.date || 'Date non fixée'}</Text>
+                      <Calendar size={14} color={colors.textMuted} style={{ marginRight: 4 }} />
+                      <Text style={[styles.detailText, { color: colors.textSecondary }]}>{item.date || 'Date non fixée'}</Text>
                     </View>
                     <View style={styles.detailItem}>
-                      <Clock size={14} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.detailText}>{item.time || '10:00'}</Text>
+                      <Clock size={14} color={colors.textMuted} style={{ marginRight: 4 }} />
+                      <Text style={[styles.detailText, { color: colors.textSecondary }]}>{item.time || '10:00'}</Text>
                     </View>
                     <View style={styles.detailItem}>
                       {isVideo ? (
@@ -182,7 +204,7 @@ export default function PatientAppointments() {
                       ) : (
                         <MapPin size={14} color="#00A651" style={{ marginRight: 4 }} />
                       )}
-                      <Text style={[styles.detailText, isVideo && { color: '#2563eb', fontWeight: '600' }]}>
+                      <Text style={[styles.detailText, { color: colors.textSecondary }, isVideo && { color: '#2563eb', fontWeight: '600' }]}>
                         {isVideo ? 'Téléconsultation' : 'Présentiel'}
                       </Text>
                     </View>
@@ -209,23 +231,23 @@ export default function PatientAppointments() {
       {/* Modal de Demande de Rendez-vous */}
       <Modal visible={bookingModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
+          <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View>
-                <Text style={styles.modalTitle}>Nouveau Rendez-vous</Text>
-                <Text style={styles.modalSubtitle}>Choisissez un spécialiste disponible</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Nouveau Rendez-vous</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Choisissez un spécialiste disponible</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setBookingModalVisible(false)}
-                style={styles.closeBtn}
+                style={[styles.closeBtn, { backgroundColor: colors.cardSecondary }]}
                 activeOpacity={0.7}
               >
-                <X size={20} color="#0f172a" />
+                <X size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.modalBody}>
-              <Text style={styles.modalInfoText}>
+              <Text style={[styles.modalInfoText, { color: colors.textSecondary }]}>
                 Pour programmer votre consultation, vous pouvez contacter directement l'un des spécialistes du réseau TILA ou vous adresser à votre agent de santé référent.
               </Text>
 

@@ -34,6 +34,7 @@ import {
   PrescriptionShareRecord,
 } from '../../services/prescriptionPdf';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../context/ThemeContext';
 
 const RECIPIENT_PRACTITIONERS = [
   { id: 'p1', name: 'Dr. Marc Kouamé', specialty: 'Psychiatre Adulte • CHU Cocody' },
@@ -50,6 +51,7 @@ const RECIPIENT_CENTRES = [
 ];
 
 export default function PatientPrescriptions() {
+  const { colors, isDark } = useTheme();
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionItem | null>(null);
   const [patientName, setPatientName] = useState<string>('Patient');
@@ -170,11 +172,11 @@ export default function PatientPrescriptions() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#00A651" />
-          <Text style={styles.loadingText}>Chargement de vos ordonnances...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement de vos ordonnances...</Text>
         </View>
       ) : (
         <ScrollView
@@ -185,21 +187,21 @@ export default function PatientPrescriptions() {
           }
         >
           {/* Info Banner */}
-          <View style={styles.headerCard}>
-            <View style={styles.iconCircle}>
+          <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.iconCircle, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
               <FileCheck size={26} color="#00A651" />
             </View>
-            <Text style={styles.headerTitle}>Mes Ordonnances Médicales</Text>
-            <Text style={styles.headerSub}>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Mes Ordonnances Médicales</Text>
+            <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
               Consultez vos prescriptions en cours, téléchargez-les en PDF officiel ou transmettez-les à vos praticiens.
             </Text>
           </View>
 
           {prescriptions.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Pill size={44} color="#cbd5e1" style={{ marginBottom: 10 }} />
-              <Text style={styles.emptyTitle}>Aucune ordonnance active</Text>
-              <Text style={styles.emptySub}>
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Pill size={44} color={colors.textMuted} style={{ marginBottom: 10 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune ordonnance active</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                 Vos ordonnances médicales prescrites lors de vos consultations apparaîtront ici.
               </Text>
             </View>
@@ -207,29 +209,29 @@ export default function PatientPrescriptions() {
             prescriptions.map((p, index) => (
               <TouchableOpacity
                 key={p.id || index}
-                style={styles.card}
+                style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => handleOpenPrescription(p)}
                 activeOpacity={0.8}
               >
                 <View style={styles.cardHeader}>
-                  <View style={styles.pillIconWrap}>
+                  <View style={[styles.pillIconWrap, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
                     <Pill size={18} color="#00A651" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.doctorName}>Dr. {p.doctorName || 'Médecin Référent'}</Text>
-                    <Text style={styles.dateText}>
+                    <Text style={[styles.doctorName, { color: colors.text }]}>Dr. {p.doctorName || 'Médecin Référent'}</Text>
+                    <Text style={[styles.dateText, { color: colors.textSecondary }]}>
                       Délivrée le {p.issuedAt || p.createdAt || 'N/A'}
                     </Text>
                   </View>
-                  <ChevronRight size={18} color="#94a3b8" />
+                  <ChevronRight size={18} color={colors.textMuted} />
                 </View>
 
                 {p.lines && p.lines.length > 0 && (
-                  <View style={styles.medicationsList}>
+                  <View style={[styles.medicationsList, { borderTopColor: colors.border }]}>
                     {p.lines.slice(0, 2).map((line, idx) => (
                       <View key={idx} style={styles.medicationSnippet}>
-                        <Text style={styles.medName}>• {line.medication}</Text>
-                        <Text style={styles.medPosology}>{line.posologie}</Text>
+                        <Text style={[styles.medName, { color: colors.text }]}>• {line.medication}</Text>
+                        <Text style={[styles.medPosology, { color: colors.textSecondary }]}>{line.posologie}</Text>
                       </View>
                     ))}
                     {p.lines.length > 2 && (
@@ -239,11 +241,11 @@ export default function PatientPrescriptions() {
                 )}
 
                 {/* Barre de boutons compacts sur la carte */}
-                <View style={styles.cardFooterRow}>
+                <View style={[styles.cardFooterRow, { borderTopColor: colors.border }]}>
                   <View style={styles.actionsPillsRow}>
                     {/* Petit bouton Télécharger PDF */}
                     <TouchableOpacity
-                      style={styles.smallPdfBtn}
+                      style={[styles.smallPdfBtn, isDark && { backgroundColor: 'rgba(0,166,81,0.15)', borderColor: '#00A651' }]}
                       onPress={() => handleDownloadPdf(p)}
                       activeOpacity={0.7}
                     >
@@ -253,7 +255,7 @@ export default function PatientPrescriptions() {
 
                     {/* Petit bouton Partager */}
                     <TouchableOpacity
-                      style={styles.smallShareBtn}
+                      style={[styles.smallShareBtn, isDark && { backgroundColor: 'rgba(37,99,235,0.15)', borderColor: '#2563eb' }]}
                       onPress={() => handleOpenShareModal(p)}
                       activeOpacity={0.7}
                     >
@@ -262,7 +264,7 @@ export default function PatientPrescriptions() {
                     </TouchableOpacity>
                   </View>
 
-                  <Text style={styles.cardViewText}>Détails →</Text>
+                  <Text style={[styles.cardViewText, { color: colors.textSecondary }]}>Détails →</Text>
                 </View>
               </TouchableOpacity>
             ))
@@ -273,11 +275,11 @@ export default function PatientPrescriptions() {
       {/* Modal Détail Ordonnance */}
       <Modal visible={!!selectedPrescription} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
+          <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.modalTitle}>Ordonnance Médicale</Text>
-                <Text style={styles.modalSubtitle}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Ordonnance Médicale</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
                   Prescrite par Dr. {selectedPrescription?.doctorName} pour {patientName}
                 </Text>
               </View>
@@ -285,7 +287,7 @@ export default function PatientPrescriptions() {
               {/* Boutons compacts d'action dans le Header du Modal */}
               <View style={styles.modalHeaderActions}>
                 <TouchableOpacity
-                  style={styles.modalHeaderIconBtn}
+                  style={[styles.modalHeaderIconBtn, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5', borderColor: isDark ? '#00A651' : '#a7f3d0' }]}
                   onPress={() => selectedPrescription && handleDownloadPdf(selectedPrescription)}
                   activeOpacity={0.7}
                 >
@@ -293,7 +295,7 @@ export default function PatientPrescriptions() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.modalHeaderIconBtn, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}
+                  style={[styles.modalHeaderIconBtn, { backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : '#eff6ff', borderColor: isDark ? '#2563eb' : '#bfdbfe' }]}
                   onPress={() => selectedPrescription && handleOpenShareModal(selectedPrescription)}
                   activeOpacity={0.7}
                 >
@@ -302,10 +304,10 @@ export default function PatientPrescriptions() {
 
                 <TouchableOpacity
                   onPress={() => setSelectedPrescription(null)}
-                  style={styles.closeBtn}
+                  style={[styles.closeBtn, { backgroundColor: colors.cardSecondary }]}
                   activeOpacity={0.7}
                 >
-                  <X size={18} color="#0f172a" />
+                  <X size={18} color={colors.text} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -313,37 +315,37 @@ export default function PatientPrescriptions() {
             <ScrollView contentContainerStyle={styles.modalBody} showsVerticalScrollIndicator={false}>
               {selectedPrescription && (
                 <>
-                  <View style={styles.prescriptionMetaBox}>
-                    <Text style={styles.metaLabel}>Date d'émission :</Text>
-                    <Text style={styles.metaVal}>
+                  <View style={[styles.prescriptionMetaBox, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Date d'émission :</Text>
+                    <Text style={[styles.metaVal, { color: colors.text }]}>
                       {selectedPrescription.issuedAt || selectedPrescription.createdAt || 'Non spécifiée'}
                     </Text>
-                    <Text style={[styles.metaLabel, { marginTop: 6 }]}>Patient bénéficiaire :</Text>
-                    <Text style={styles.metaVal}>{patientName}</Text>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary, marginTop: 6 }]}>Patient bénéficiaire :</Text>
+                    <Text style={[styles.metaVal, { color: colors.text }]}>{patientName}</Text>
                     {selectedPrescription.doctorMatricule ? (
                       <>
-                        <Text style={[styles.metaLabel, { marginTop: 6 }]}>Matricule prescripteur :</Text>
-                        <Text style={styles.metaVal}>{selectedPrescription.doctorMatricule}</Text>
+                        <Text style={[styles.metaLabel, { color: colors.textSecondary, marginTop: 6 }]}>Matricule prescripteur :</Text>
+                        <Text style={[styles.metaVal, { color: colors.text }]}>{selectedPrescription.doctorMatricule}</Text>
                       </>
                     ) : null}
                   </View>
 
-                  <Text style={styles.linesSectionTitle}>Médicaments et Posologie</Text>
+                  <Text style={[styles.linesSectionTitle, { color: colors.text }]}>Médicaments et Posologie</Text>
                   {selectedPrescription.lines && selectedPrescription.lines.length > 0 ? (
                     selectedPrescription.lines.map((l, i) => (
-                      <View key={i} style={styles.lineItemCard}>
-                        <Text style={styles.lineMedName}>{l.medication}</Text>
-                        <Text style={styles.linePosology}>{l.posologie}</Text>
+                      <View key={i} style={[styles.lineItemCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                        <Text style={[styles.lineMedName, { color: colors.text }]}>{l.medication}</Text>
+                        <Text style={[styles.linePosology, { color: colors.textSecondary }]}>{l.posologie}</Text>
                       </View>
                     ))
                   ) : (
-                    <Text style={styles.noLinesText}>Aucun médicament répertorié.</Text>
+                    <Text style={[styles.noLinesText, { color: colors.textSecondary }]}>Aucun médicament répertorié.</Text>
                   )}
 
                   {selectedPrescription.notes ? (
-                    <View style={styles.notesBox}>
-                      <Text style={styles.notesTitle}>Instructions du médecin :</Text>
-                      <Text style={styles.notesContent}>{selectedPrescription.notes}</Text>
+                    <View style={[styles.notesBox, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                      <Text style={[styles.notesTitle, { color: colors.textSecondary }]}>Instructions du médecin :</Text>
+                      <Text style={[styles.notesContent, { color: colors.text }]}>{selectedPrescription.notes}</Text>
                     </View>
                   ) : null}
 
@@ -351,23 +353,23 @@ export default function PatientPrescriptions() {
                   <View style={styles.sharesSection}>
                     <View style={styles.sharesHeader}>
                       <Share2 size={15} color="#00A651" style={{ marginRight: 6 }} />
-                      <Text style={styles.sharesTitle}>Historique des partages & transmissions</Text>
+                      <Text style={[styles.sharesTitle, { color: colors.text }]}>Historique des partages & transmissions</Text>
                     </View>
 
                     {shareHistory.length === 0 ? (
-                      <View style={styles.emptySharesBox}>
-                        <Text style={styles.emptySharesText}>
+                      <View style={[styles.emptySharesBox, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                        <Text style={[styles.emptySharesText, { color: colors.textSecondary }]}>
                           Cette ordonnance n'a pas encore été transmise à un praticien ou un établissement.
                         </Text>
                       </View>
                     ) : (
                       <View style={styles.sharesList}>
                         {shareHistory.map((sh) => (
-                          <View key={sh.id} style={styles.shareHistoryItem}>
+                          <View key={sh.id} style={[styles.shareHistoryItem, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
                             <CheckCircle2 size={14} color="#00A651" style={{ marginRight: 8, marginTop: 2 }} />
                             <View style={{ flex: 1 }}>
-                              <Text style={styles.shareRecipientName}>{sh.recipientName}</Text>
-                              <Text style={styles.shareDateText}>Transmise le {sh.sharedAt}</Text>
+                              <Text style={[styles.shareRecipientName, { color: colors.text }]}>{sh.recipientName}</Text>
+                              <Text style={[styles.shareDateText, { color: colors.textSecondary }]}>Transmise le {sh.sharedAt}</Text>
                             </View>
                           </View>
                         ))}
@@ -410,49 +412,61 @@ export default function PatientPrescriptions() {
       {/* Modal Sélecteur de Partage avec Praticien ou Centre */}
       <Modal visible={shareModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.shareModalContainer}>
-            <View style={styles.modalHeader}>
+          <SafeAreaView style={[styles.shareModalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View>
-                <Text style={styles.modalTitle}>Transmettre l'ordonnance</Text>
-                <Text style={styles.modalSubtitle}>Sélectionnez le praticien ou la structure</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Transmettre l'ordonnance</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Sélectionnez le praticien ou la structure</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setShareModalVisible(false)}
-                style={styles.closeBtn}
+                style={[styles.closeBtn, { backgroundColor: colors.cardSecondary }]}
                 activeOpacity={0.7}
               >
-                <X size={18} color="#0f172a" />
+                <X size={18} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             {/* Onglets Destinataires */}
-            <View style={styles.shareTabsRow}>
+            <View style={[styles.shareTabsRow, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
-                style={[styles.shareTabBtn, shareTab === 'practitioner' && styles.shareTabBtnActive]}
+                style={[
+                  styles.shareTabBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                  shareTab === 'practitioner' && styles.shareTabBtnActive,
+                ]}
                 onPress={() => setShareTab('practitioner')}
               >
-                <Stethoscope size={13} color={shareTab === 'practitioner' ? '#00A651' : '#64748b'} style={{ marginRight: 4 }} />
-                <Text style={[styles.shareTabText, shareTab === 'practitioner' && styles.shareTabTextActive]}>
+                <Stethoscope size={13} color={shareTab === 'practitioner' ? '#00A651' : colors.textSecondary} style={{ marginRight: 4 }} />
+                <Text style={[styles.shareTabText, { color: colors.textSecondary }, shareTab === 'practitioner' && styles.shareTabTextActive]}>
                   Praticiens
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.shareTabBtn, shareTab === 'center' && styles.shareTabBtnActive]}
+                style={[
+                  styles.shareTabBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                  shareTab === 'center' && styles.shareTabBtnActive,
+                ]}
                 onPress={() => setShareTab('center')}
               >
-                <Building2 size={13} color={shareTab === 'center' ? '#00A651' : '#64748b'} style={{ marginRight: 4 }} />
-                <Text style={[styles.shareTabText, shareTab === 'center' && styles.shareTabTextActive]}>
+                <Building2 size={13} color={shareTab === 'center' ? '#00A651' : colors.textSecondary} style={{ marginRight: 4 }} />
+                <Text style={[styles.shareTabText, { color: colors.textSecondary }, shareTab === 'center' && styles.shareTabTextActive]}>
                   Établissements
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.shareTabBtn, shareTab === 'external' && styles.shareTabBtnActive]}
+                style={[
+                  styles.shareTabBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                  shareTab === 'external' && styles.shareTabBtnActive,
+                ]}
                 onPress={() => setShareTab('external')}
               >
-                <Send size={13} color={shareTab === 'external' ? '#00A651' : '#64748b'} style={{ marginRight: 4 }} />
-                <Text style={[styles.shareTabText, shareTab === 'external' && styles.shareTabTextActive]}>
+                <Send size={13} color={shareTab === 'external' ? '#00A651' : colors.textSecondary} style={{ marginRight: 4 }} />
+                <Text style={[styles.shareTabText, { color: colors.textSecondary }, shareTab === 'external' && styles.shareTabTextActive]}>
                   Externe
                 </Text>
               </TouchableOpacity>
@@ -461,20 +475,20 @@ export default function PatientPrescriptions() {
             <ScrollView contentContainerStyle={styles.shareDestList} showsVerticalScrollIndicator={false}>
               {shareTab === 'practitioner' && (
                 <>
-                  <Text style={styles.shareListHint}>Sélectionnez un spécialiste du réseau TILA :</Text>
+                  <Text style={[styles.shareListHint, { color: colors.textSecondary }]}>Sélectionnez un spécialiste du réseau TILA :</Text>
                   {RECIPIENT_PRACTITIONERS.map((prat) => (
                     <TouchableOpacity
                       key={prat.id}
-                      style={styles.destCard}
+                      style={[styles.destCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}
                       onPress={() => handleConfirmShare(prat.name, 'praticien')}
                       activeOpacity={0.8}
                     >
-                      <View style={styles.destAvatar}>
+                      <View style={[styles.destAvatar, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
                         <Stethoscope size={16} color="#00A651" />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.destName}>{prat.name}</Text>
-                        <Text style={styles.destSub}>{prat.specialty}</Text>
+                        <Text style={[styles.destName, { color: colors.text }]}>{prat.name}</Text>
+                        <Text style={[styles.destSub, { color: colors.textSecondary }]}>{prat.specialty}</Text>
                       </View>
                       <Send size={14} color="#00A651" />
                     </TouchableOpacity>
@@ -484,20 +498,20 @@ export default function PatientPrescriptions() {
 
               {shareTab === 'center' && (
                 <>
-                  <Text style={styles.shareListHint}>Sélectionnez une structure hospitalière ou un centre partenaire :</Text>
+                  <Text style={[styles.shareListHint, { color: colors.textSecondary }]}>Sélectionnez une structure hospitalière ou un centre partenaire :</Text>
                   {RECIPIENT_CENTRES.map((centre) => (
                     <TouchableOpacity
                       key={centre.id}
-                      style={styles.destCard}
+                      style={[styles.destCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}
                       onPress={() => handleConfirmShare(centre.name, 'centre')}
                       activeOpacity={0.8}
                     >
-                      <View style={[styles.destAvatar, { backgroundColor: '#eff6ff' }]}>
+                      <View style={[styles.destAvatar, { backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : '#eff6ff' }]}>
                         <Building2 size={16} color="#2563eb" />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.destName}>{centre.name}</Text>
-                        <Text style={styles.destSub}>{centre.city} • Réseau National TILA</Text>
+                        <Text style={[styles.destName, { color: colors.text }]}>{centre.name}</Text>
+                        <Text style={[styles.destSub, { color: colors.textSecondary }]}>{centre.city} • Réseau National TILA</Text>
                       </View>
                       <Send size={14} color="#2563eb" />
                     </TouchableOpacity>
@@ -507,7 +521,7 @@ export default function PatientPrescriptions() {
 
               {shareTab === 'external' && (
                 <View style={{ paddingVertical: 10 }}>
-                  <Text style={styles.shareListHint}>
+                  <Text style={[styles.shareListHint, { color: colors.textSecondary }]}>
                     Partager le document PDF via vos applications installées (WhatsApp, Messagerie, Impression, etc.) :
                   </Text>
                   <TouchableOpacity
@@ -516,7 +530,7 @@ export default function PatientPrescriptions() {
                     activeOpacity={0.85}
                   >
                     <Share2 size={16} color="#ffffff" style={{ marginRight: 8 }} />
-                    <Text style={styles.externalShareBtnText}>Ouvrir le menu de partage système</Text>
+                    <Text style={styles.externalShareBtnText}>Ouvrir les applications de partage</Text>
                   </TouchableOpacity>
                 </View>
               )}

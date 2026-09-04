@@ -8,8 +8,10 @@ import { agentService, AgentReceivedPatientItem } from '../../../services/agent'
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function ReceivedPatientsScreen() {
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading, isRefetching, refetch, error } = useQuery({
@@ -54,31 +56,31 @@ export default function ReceivedPatientsScreen() {
   };
 
   const renderItem = ({ item }: { item: AgentReceivedPatientItem }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
-        <View style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
           <UserCheck size={22} color="#00A651" />
         </View>
         <View style={styles.headerInfo}>
-          <Text style={styles.patientName}>{item.firstName} {item.lastName}</Text>
+          <Text style={[styles.patientName, { color: colors.text }]}>{item.firstName} {item.lastName}</Text>
           <View style={styles.dateRow}>
-            <Calendar size={12} color="#94a3b8" style={{ marginRight: 4 }} />
-            <Text style={styles.dateText}>Reçu le {formatDate(item.receivedAt)}</Text>
+            <Calendar size={12} color={colors.textMuted} style={{ marginRight: 4 }} />
+            <Text style={[styles.dateText, { color: colors.textSecondary }]}>Reçu le {formatDate(item.receivedAt)}</Text>
           </View>
         </View>
       </View>
 
       {item.referral && (
-        <View style={styles.referralBox}>
+        <View style={[styles.referralBox, { backgroundColor: colors.cardSecondary }]}>
           <View style={styles.referralHeader}>
             <AlertCircle size={14} color="#f59e0b" style={{ marginRight: 4 }} />
-            <Text style={styles.referralTitle}>Orientation : {item.referral.type === 'centre' ? 'Centre de santé' : 'Spécialiste'}</Text>
+            <Text style={[styles.referralTitle, { color: colors.text }]}>Orientation : {item.referral.type === 'centre' ? 'Centre de santé' : 'Spécialiste'}</Text>
           </View>
           {!!item.referral.motif && (
-            <Text style={styles.referralMotif}>Motif: {item.referral.motif}</Text>
+            <Text style={[styles.referralMotif, { color: colors.textSecondary }]}>Motif: {item.referral.motif}</Text>
           )}
           {!!item.referral.referredToName && (
-            <Text style={styles.referralTarget}>Vers: {item.referral.referredToName}</Text>
+            <Text style={[styles.referralTarget, { color: colors.textSecondary }]}>Vers: {item.referral.referredToName}</Text>
           )}
         </View>
       )}
@@ -88,7 +90,7 @@ export default function ReceivedPatientsScreen() {
   const renderSkeleton = () => (
     <View style={styles.listContent}>
       {[1, 2, 3, 4].map((i) => (
-        <View key={i} style={[styles.card, { padding: 16 }]}>
+        <View key={i} style={[styles.card, { padding: 16, backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <Skeleton height={44} width={44} borderRadius={22} style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
@@ -103,40 +105,40 @@ export default function ReceivedPatientsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Patients Reçus</Text>
-        <Text style={styles.subtitle}>Liste des patients pris en charge sur le terrain</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Patients Reçus</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Liste des patients pris en charge sur le terrain</Text>
       </View>
 
       {isForbidden ? (
         <View style={styles.forbiddenContainer}>
-          <View style={styles.forbiddenIconContainer}>
+          <View style={[styles.forbiddenIconContainer, { backgroundColor: isDark ? '#451a03' : '#fef3c7' }]}>
             <ShieldAlert size={48} color="#f59e0b" />
           </View>
-          <Text style={styles.forbiddenTitle}>Accès Restreint</Text>
+          <Text style={[styles.forbiddenTitle, { color: colors.text }]}>Accès Restreint</Text>
           <Text style={styles.forbiddenText}>
             Vous n'avez pas l'autorisation d'accéder à cette section.
           </Text>
-          <Text style={styles.forbiddenSubtext}>
+          <Text style={[styles.forbiddenSubtext, { color: colors.textSecondary }]}>
             Cette fonctionnalité est réservée aux professionnels de santé habilités et n'est pas accessible aux acteurs communautaires.
           </Text>
         </View>
       ) : (
         <>
           {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+          <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Rechercher par nom, motif..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={colors.textMuted}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearIcon}>
-                <X size={18} color="#94a3b8" />
+                <X size={18} color={colors.textMuted} />
               </TouchableOpacity>
             )}
           </View>
@@ -159,11 +161,11 @@ export default function ReceivedPatientsScreen() {
               }
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Inbox size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-                  <Text style={styles.emptyTitle}>
+                  <Inbox size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>
                     {searchQuery ? "Aucun résultat" : "Aucun patient reçu"}
                   </Text>
-                  <Text style={styles.emptyText}>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                     {searchQuery 
                       ? `Aucun patient ne correspond à "${searchQuery}".`
                       : "Vous n'avez pas encore de patients enregistrés comme reçus."}

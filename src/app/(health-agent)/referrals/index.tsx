@@ -8,8 +8,10 @@ import { agentService, AgentReferralItem } from '../../../services/agent';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function ReferralsScreen() {
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
@@ -56,15 +58,15 @@ export default function ReferralsScreen() {
     const priorityStyle = getPriorityBadgeStyle(item.niveauPriorite);
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.cardHeader}>
-          <View style={styles.badge}>
+          <View style={[styles.badge, { backgroundColor: isDark ? '#431407' : '#fff7ed' }]}>
             <ArrowRightLeft size={14} color="#F58220" style={{ marginRight: 4 }} />
             <Text style={styles.badgeText}>Orientation</Text>
           </View>
 
           {!!item.niveauPriorite && (
-            <View style={[styles.priorityBadge, { backgroundColor: priorityStyle.bg }]}>
+            <View style={[styles.priorityBadge, { backgroundColor: isDark ? '#451a1a' : priorityStyle.bg }]}>
               <Text style={[styles.priorityText, { color: priorityStyle.text }]}>
                 {item.niveauPriorite}
               </Text>
@@ -74,26 +76,26 @@ export default function ReferralsScreen() {
 
         <View style={styles.cardBody}>
           <View style={styles.infoRow}>
-            <User size={16} color="#64748b" style={styles.rowIcon} />
-            <Text style={styles.patientName}>{item.patientName || 'Patient non renseigné'}</Text>
+            <User size={16} color={colors.textSecondary} style={styles.rowIcon} />
+            <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || 'Patient non renseigné'}</Text>
           </View>
 
           {!!item.motif && (
-            <Text style={styles.motifText}>Motif: {item.motif}</Text>
+            <Text style={[styles.motifText, { color: colors.textSecondary }]}>Motif: {item.motif}</Text>
           )}
 
           {!!(item.specialiste || item.referredToCentreName) && (
             <View style={styles.infoRow}>
-              <Building size={16} color="#94a3b8" style={styles.rowIcon} />
-              <Text style={styles.destText}>
+              <Building size={16} color={colors.textMuted} style={styles.rowIcon} />
+              <Text style={[styles.destText, { color: colors.textSecondary }]}>
                 Orienté vers : {item.specialiste || item.referredToCentreName}
               </Text>
             </View>
           )}
 
           <View style={styles.infoRow}>
-            <Calendar size={16} color="#94a3b8" style={styles.rowIcon} />
-            <Text style={styles.dateText}>Date : {formatDate(item.dateReference || item.dateDepistage)}</Text>
+            <Calendar size={16} color={colors.textMuted} style={styles.rowIcon} />
+            <Text style={[styles.dateText, { color: colors.textSecondary }]}>Date : {formatDate(item.dateReference || item.dateDepistage)}</Text>
           </View>
         </View>
       </View>
@@ -103,7 +105,7 @@ export default function ReferralsScreen() {
   const renderSkeleton = () => (
     <View style={styles.listContent}>
       {[1, 2, 3, 4].map((i) => (
-        <View key={i} style={[styles.card, { padding: 16 }]}>
+        <View key={i} style={[styles.card, { padding: 16, backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
             <Skeleton height={22} width={100} borderRadius={6} />
             <Skeleton height={22} width={70} borderRadius={6} />
@@ -117,25 +119,25 @@ export default function ReferralsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mes Orientations</Text>
-        <Text style={styles.subtitle}>Suivi des cas orientés vers des centres ou spécialistes</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Mes Orientations</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Suivi des cas orientés vers des centres ou spécialistes</Text>
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Rechercher par patient, motif, destinataire..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textMuted}
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearIcon}>
-            <X size={18} color="#94a3b8" />
+            <X size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -158,11 +160,11 @@ export default function ReferralsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Inbox size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>
+              <Inbox size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {searchQuery ? "Aucun résultat" : "Aucune orientation"}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {searchQuery 
                   ? `Aucune orientation ne correspond à "${searchQuery}".`
                   : "Vous n'avez pas encore effectué d'orientation pour vos patients."}

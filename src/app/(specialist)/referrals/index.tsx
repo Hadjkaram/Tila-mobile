@@ -9,10 +9,12 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function ReferralsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'pending' | 'active'>('pending');
   
   // Modal state
@@ -111,11 +113,11 @@ export default function ReferralsScreen() {
 
   // Renderers
   const renderPendingItem = ({ item }: { item: any }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
       <View style={styles.cardHeader}>
         <View style={styles.patientInfo}>
-          <Text style={styles.patientName}>{item.patientName || item.internalPatientCode || 'Patient Inconnu'}</Text>
-          <Text style={styles.dateText}>
+          <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || item.internalPatientCode || 'Patient Inconnu'}</Text>
+          <Text style={[styles.dateText, { color: colors.textSecondary }]}>
             Référé le : {item.createdAt ? format(parseISO(item.createdAt), 'dd MMM yyyy', { locale: fr }) : 'N/A'}
           </Text>
         </View>
@@ -127,9 +129,9 @@ export default function ReferralsScreen() {
         )}
       </View>
       
-      <View style={styles.motifContainer}>
-        <UserCheck size={16} color="#64748b" style={{ marginRight: 8 }} />
-        <Text style={styles.motifText} numberOfLines={2}>
+      <View style={[styles.motifContainer, { backgroundColor: colors.inputBg }]}>
+        <UserCheck size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
+        <Text style={[styles.motifText, { color: colors.textSecondary }]} numberOfLines={2}>
           {item.motif || item.reason || 'Aucun motif renseigné'}
         </Text>
       </View>
@@ -147,11 +149,11 @@ export default function ReferralsScreen() {
   );
 
   const renderActiveItem = ({ item }: { item: any }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
       <View style={styles.cardHeader}>
         <View style={styles.patientInfo}>
-          <Text style={styles.patientName}>{item.patientName || item.patient?.name || 'Patient Inconnu'}</Text>
-          <Text style={styles.dateText}>
+          <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || item.patient?.name || 'Patient Inconnu'}</Text>
+          <Text style={[styles.dateText, { color: colors.textSecondary }]}>
             Suivi depuis : {item.startDate ? format(parseISO(item.startDate), 'dd MMM yyyy', { locale: fr }) : 'N/A'}
           </Text>
         </View>
@@ -180,7 +182,7 @@ export default function ReferralsScreen() {
   const renderSkeleton = () => (
     <View style={{ padding: 24 }}>
       {[1, 2, 3].map(i => (
-        <View key={i} style={[styles.card, { padding: 0 }]}>
+        <View key={i} style={[styles.card, { padding: 0, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
           <Skeleton height={140} borderRadius={16} />
         </View>
       ))}
@@ -193,17 +195,17 @@ export default function ReferralsScreen() {
   const isRefetching = activeTab === 'pending' ? isRefetchingPending : isRefetchingActive;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Cas Référés</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.headerText }]}>Cas Référés</Text>
         
         {/* Segmented Control */}
-        <View style={styles.segmentContainer}>
+        <View style={[styles.segmentContainer, { backgroundColor: colors.inputBg }]}>
           <TouchableOpacity 
-            style={[styles.segmentButton, activeTab === 'pending' && styles.segmentActive]}
+            style={[styles.segmentButton, activeTab === 'pending' && [styles.segmentActive, { backgroundColor: colors.card }]]}
             onPress={() => setActiveTab('pending')}
           >
-            <Text style={[styles.segmentText, activeTab === 'pending' && styles.segmentTextActive]}>En attente</Text>
+            <Text style={[styles.segmentText, { color: colors.textSecondary }, activeTab === 'pending' && [styles.segmentTextActive, { color: colors.text }]]}>En attente</Text>
             {activeTab === 'pending' && pendingList.length > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{pendingList.length}</Text>
@@ -211,10 +213,10 @@ export default function ReferralsScreen() {
             )}
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.segmentButton, activeTab === 'active' && styles.segmentActive]}
+            style={[styles.segmentButton, activeTab === 'active' && [styles.segmentActive, { backgroundColor: colors.card }]]}
             onPress={() => setActiveTab('active')}
           >
-            <Text style={[styles.segmentText, activeTab === 'active' && styles.segmentTextActive]}>Suivis en cours</Text>
+            <Text style={[styles.segmentText, { color: colors.textSecondary }, activeTab === 'active' && [styles.segmentTextActive, { color: colors.text }]]}>Suivis en cours</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -229,11 +231,11 @@ export default function ReferralsScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} colors={['#00A651']} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Inbox size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>
+              <Inbox size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {activeTab === 'pending' ? "Aucun cas en attente" : "Aucun suivi actif"}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {activeTab === 'pending' 
                   ? "Vous n'avez actuellement aucun patient orienté vers vous en attente de prise en charge."
                   : "Vous n'avez pas de dossiers patients actifs en ce moment."}
@@ -251,23 +253,24 @@ export default function ReferralsScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Contre-référer le patient</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Contre-référer le patient</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X color="#94a3b8" size={24} />
+                <X color={colors.textSecondary} size={24} />
               </TouchableOpacity>
             </View>
             
-            <Text style={styles.modalDesc}>
+            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
               Veuillez indiquer le motif ou les observations justifiant cette contre-référence.
             </Text>
             
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
               multiline
               numberOfLines={4}
               placeholder="Ex: Fin de traitement, besoin d'un autre spécialiste..."
+              placeholderTextColor={colors.textMuted}
               value={motif}
               onChangeText={setMotif}
               textAlignVertical="top"

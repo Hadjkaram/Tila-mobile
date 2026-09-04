@@ -29,10 +29,12 @@ import { apiClient, tokenService } from '../../services/apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { preloadService } from '../../services/preloadService';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function RegisterPatientScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors, isDark } = useTheme();
   const params = useLocalSearchParams<{ evaluationToken?: string }>();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -146,17 +148,17 @@ export default function RegisterPatientScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Barre supérieure */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.cardSecondary }]}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color="#0f172a" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Espace Bénéficiaire</Text>
+        <Text style={[styles.topBarTitle, { color: colors.text }]}>Espace Bénéficiaire</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -171,24 +173,24 @@ export default function RegisterPatientScreen() {
         {/* Titre & Accroche */}
         <View style={styles.header}>
           <View style={styles.badgeRow}>
-            <View style={styles.roleBadge}>
+            <View style={[styles.roleBadge, isDark && { backgroundColor: 'rgba(0,166,81,0.15)', borderColor: '#00A651' }]}>
               <Heart size={14} color="#00A651" style={{ marginRight: 5 }} />
               <Text style={styles.roleBadgeText}>Accompagnement Patient</Text>
             </View>
           </View>
-          <Text style={styles.title}>Créer mon compte</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Créer mon compte</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Rejoignez TILA pour suivre votre santé mentale en toute confidentialité.
           </Text>
         </View>
 
         {/* Bannière de liaison de l'auto-évaluation */}
         {evaluationToken ? (
-          <View style={styles.attachedEvaluationBanner}>
+          <View style={[styles.attachedEvaluationBanner, isDark && { backgroundColor: 'rgba(0,166,81,0.15)', borderColor: '#00A651' }]}>
             <ShieldCheck size={20} color="#00A651" style={{ marginTop: 2 }} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.attachedTitle}>Auto-évaluation rattachée !</Text>
-              <Text style={styles.attachedDesc}>
+              <Text style={[styles.attachedTitle, isDark && { color: '#4ade80' }]}>Auto-évaluation rattachée !</Text>
+              <Text style={[styles.attachedDesc, isDark && { color: '#86efac' }]}>
                 Vos résultats d'évaluation récents seront automatiquement conservés dans votre nouvel espace personnel.
               </Text>
             </View>
@@ -196,17 +198,17 @@ export default function RegisterPatientScreen() {
         ) : null}
 
         {/* Formulaire complet */}
-        <View style={styles.formCard}>
+        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {/* Prénom & Nom */}
           <View style={styles.nameRow}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Prénom *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color="#94a3b8" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.text }]}>Prénom *</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <User size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   placeholder="Ex: Sarah"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={firstName}
                   onChangeText={setFirstName}
                 />
@@ -214,13 +216,13 @@ export default function RegisterPatientScreen() {
             </View>
 
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Nom *</Text>
-              <View style={styles.inputWrapper}>
-                <User size={18} color="#94a3b8" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.text }]}>Nom *</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <User size={18} color={colors.textMuted} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   placeholder="Ex: Kouamé"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={lastName}
                   onChangeText={setLastName}
                 />
@@ -230,15 +232,15 @@ export default function RegisterPatientScreen() {
 
           {/* Email */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Adresse Email *</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Adresse Email *</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Mail size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="votre.email@exemple.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
               />
@@ -247,14 +249,14 @@ export default function RegisterPatientScreen() {
 
           {/* Téléphone (Format Côte d'Ivoire) */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Numéro de Téléphone (Optionnel)</Text>
-            <View style={styles.inputWrapper}>
-              <Phone size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Numéro de Téléphone (Optionnel)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Phone size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Ex: +225 07 00 00 00 00"
                 keyboardType="phone-pad"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
               />
@@ -263,13 +265,13 @@ export default function RegisterPatientScreen() {
 
           {/* Date de naissance */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date de Naissance (AAAA-MM-JJ)</Text>
-            <View style={styles.inputWrapper}>
-              <Calendar size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Date de Naissance (AAAA-MM-JJ)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Calendar size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Ex: 1995-06-15"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={birthdate}
                 onChangeText={setBirthdate}
               />
@@ -278,14 +280,14 @@ export default function RegisterPatientScreen() {
 
           {/* Mot de passe */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mot de Passe * (min. 6 caractères)</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={18} color="#94a3b8" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.text }]}>Mot de Passe * (min. 6 caractères)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={[styles.input, { paddingRight: 44 }]}
+                style={[styles.input, { color: colors.text, paddingRight: 44 }]}
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
               />
@@ -295,9 +297,9 @@ export default function RegisterPatientScreen() {
                 activeOpacity={0.7}
               >
                 {showPassword ? (
-                  <EyeOff size={18} color="#64748b" />
+                  <EyeOff size={18} color={colors.textSecondary} />
                 ) : (
-                  <Eye size={18} color="#64748b" />
+                  <Eye size={18} color={colors.textSecondary} />
                 )}
               </TouchableOpacity>
             </View>
@@ -305,7 +307,7 @@ export default function RegisterPatientScreen() {
 
           {/* Message d'erreur */}
           {errorMessage ? (
-            <View style={styles.errorBox}>
+            <View style={[styles.errorBox, isDark && { backgroundColor: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }]}>
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
@@ -334,7 +336,7 @@ export default function RegisterPatientScreen() {
           onPress={() => router.push('/(auth)/login')}
           activeOpacity={0.7}
         >
-          <Text style={styles.loginLinkText}>
+          <Text style={[styles.loginLinkText, { color: colors.textSecondary }]}>
             Vous avez déjà un compte ?{' '}
             <Text style={styles.loginLinkHighlight}>Se connecter</Text>
           </Text>

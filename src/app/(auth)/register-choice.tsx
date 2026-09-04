@@ -18,24 +18,26 @@ import {
   ArrowRight,
   LogIn,
 } from 'lucide-react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function RegisterChoiceScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const { colors, isDark } = useTheme();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Header avec retour */}
       <View style={styles.topBar}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color="#0f172a" />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Inscription</Text>
+        <Text style={[styles.topBarTitle, { color: colors.text }]}>Inscription</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -68,31 +70,31 @@ export default function RegisterChoiceScreen() {
 
         {/* Titre & Sous-titre officiels */}
         <View style={styles.header}>
-          <Text style={styles.title}>Créer un compte</Text>
-          <Text style={styles.subtitle}>Comment souhaitez-vous vous inscrire ?</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Créer un compte</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Comment souhaitez-vous vous inscrire ?</Text>
         </View>
 
         {/* Les 3 Cartes de Choix UX/UI Pro */}
         <View style={styles.cardsContainer}>
           {/* Carte 1 : Professionnel de santé */}
           <TouchableOpacity
-            style={styles.choiceCard}
+            style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/(auth)/register-pro')}
             activeOpacity={0.7}
           >
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconCircle, { backgroundColor: '#ecfdf5' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? colors.cardSecondary : '#ecfdf5' }]}>
                 <Stethoscope size={26} color="#00A651" />
               </View>
-              <View style={styles.badgeRole}>
+              <View style={[styles.badgeRole, isDark && { backgroundColor: colors.cardSecondary }]}>
                 <Text style={[styles.badgeRoleText, { color: '#00A651' }]}>
                   Professionnels
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.cardTitle}>Je suis un professionnel de santé</Text>
-            <Text style={styles.cardDescription}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Je suis un professionnel de santé</Text>
+            <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
               Psychologues, psychiatres, travailleurs sociaux… Inscrivez-vous à l’annuaire pour être visible et recevoir des demandes de téléconsultation.
             </Text>
 
@@ -106,23 +108,23 @@ export default function RegisterChoiceScreen() {
 
           {/* Carte 2 : Bénéficiaire / Patient (Je souhaite être accompagné) */}
           <TouchableOpacity
-            style={[styles.choiceCard, styles.choiceCardPatient]}
+            style={[styles.choiceCard, styles.choiceCardPatient, isDark && { backgroundColor: colors.card, borderColor: '#00A651' }]}
             onPress={() => router.push('/(auth)/register-patient')}
             activeOpacity={0.7}
           >
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconCircle, { backgroundColor: '#f0fdf4' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? colors.cardSecondary : '#f0fdf4' }]}>
                 <Heart size={26} color="#00A651" />
               </View>
-              <View style={[styles.badgeRole, { backgroundColor: '#dcfce7' }]}>
+              <View style={[styles.badgeRole, isDark ? { backgroundColor: colors.cardSecondary } : { backgroundColor: '#dcfce7' }]}>
                 <Text style={[styles.badgeRoleText, { color: '#15803d' }]}>
                   Bénéficiaires & Patients
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.cardTitle}>Je souhaite être accompagné(e)</Text>
-            <Text style={styles.cardDescription}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Je souhaite être accompagné(e)</Text>
+            <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
               Créez un compte pour accéder aux évaluations, prendre rendez-vous avec un praticien et suivre votre parcours de santé mentale.
             </Text>
 
@@ -136,23 +138,23 @@ export default function RegisterChoiceScreen() {
 
           {/* Carte 3 : Agent Sensibilisateur */}
           <TouchableOpacity
-            style={styles.choiceCard}
+            style={[styles.choiceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/(auth)/register-agent')}
             activeOpacity={0.7}
           >
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.iconCircle, { backgroundColor: '#f0f9ff' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? colors.cardSecondary : '#f0f9ff' }]}>
                 <Users size={26} color="#0284c7" />
               </View>
-              <View style={[styles.badgeRole, { backgroundColor: '#e0f2fe' }]}>
+              <View style={[styles.badgeRole, isDark ? { backgroundColor: colors.cardSecondary } : { backgroundColor: '#e0f2fe' }]}>
                 <Text style={[styles.badgeRoleText, { color: '#0369a1' }]}>
                   Sensibilisateurs
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.cardTitle}>Je suis un agent sensibilisateur</Text>
-            <Text style={styles.cardDescription}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Je suis un agent sensibilisateur</Text>
+            <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
               Agents rattachés à une ONG partenaire. Compte soumis à validation administrative pour le suivi de cohortes et dépistages terrain.
             </Text>
 
@@ -168,12 +170,12 @@ export default function RegisterChoiceScreen() {
         {/* Pied de page : Déjà un compte ? Se connecter */}
         <View style={styles.footer}>
           <TouchableOpacity
-            style={styles.loginLink}
+            style={[styles.loginLink, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/(auth)/login')}
             activeOpacity={0.7}
           >
             <LogIn size={16} color="#00A651" style={{ marginRight: 6 }} />
-            <Text style={styles.loginLinkText}>
+            <Text style={[styles.loginLinkText, { color: colors.textSecondary }]}>
               Déjà un compte ?{' '}
               <Text style={styles.loginLinkHighlight}>Se connecter</Text>
             </Text>

@@ -30,6 +30,7 @@ import { useQuery } from '@tanstack/react-query';
 import { superviseurService, SuperviseurScreeningItem } from '../../../services/superviseur';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 const TOOL_FILTERS = [
   { key: 'tous', label: 'Tous' },
@@ -40,6 +41,7 @@ const TOOL_FILTERS = [
 ];
 
 export default function SupervisorScreeningsScreen() {
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTool, setSelectedTool] = useState('tous');
   const [selectedScreening, setSelectedScreening] = useState<SuperviseurScreeningItem | null>(null);
@@ -88,24 +90,39 @@ export default function SupervisorScreeningsScreen() {
   const getSeverityStyle = (sev: string) => {
     switch (sev) {
       case 'severe':
-        return { bg: '#fee2e2', text: '#dc2626', border: '#fca5a5', label: 'Sévère' };
+        return {
+          bg: isDark ? 'rgba(220, 38, 38, 0.15)' : '#fee2e2',
+          text: isDark ? '#f87171' : '#dc2626',
+          border: isDark ? '#7f1d1d' : '#fca5a5',
+          label: 'Sévère',
+        };
       case 'modere':
-        return { bg: '#fef3c7', text: '#d97706', border: '#fcd34d', label: 'Modéré' };
+        return {
+          bg: isDark ? 'rgba(217, 119, 6, 0.15)' : '#fef3c7',
+          text: isDark ? '#fbbf24' : '#d97706',
+          border: isDark ? '#92400e' : '#fcd34d',
+          label: 'Modéré',
+        };
       default:
-        return { bg: '#ecfdf5', text: '#00A651', border: '#a7f3d0', label: 'Faible' };
+        return {
+          bg: isDark ? 'rgba(0, 166, 81, 0.15)' : '#ecfdf5',
+          text: '#00A651',
+          border: isDark ? '#065f46' : '#a7f3d0',
+          label: 'Faible',
+        };
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {/* 1. Barre de Recherche */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrap}>
-          <Search size={18} color="#64748b" style={{ marginRight: 8 }} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchInputWrap, { backgroundColor: colors.cardSecondary }]}>
+          <Search size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Rechercher patient, code, centre, agent..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
             clearButtonMode="while-editing"
@@ -114,18 +131,28 @@ export default function SupervisorScreeningsScreen() {
       </View>
 
       {/* 2. Filtres rapides par questionnaire */}
-      <View style={styles.filterSection}>
+      <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolsScroll}>
           {TOOL_FILTERS.map((tool) => {
             const isSelected = selectedTool === tool.key;
             return (
               <TouchableOpacity
                 key={tool.key}
-                style={[styles.toolPill, isSelected && styles.toolPillSelected]}
+                style={[
+                  styles.toolPill,
+                  { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                  isSelected && styles.toolPillSelected,
+                ]}
                 onPress={() => setSelectedTool(tool.key)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.toolPillText, isSelected && styles.toolPillTextSelected]}>
+                <Text
+                  style={[
+                    styles.toolPillText,
+                    { color: colors.textSecondary },
+                    isSelected && styles.toolPillTextSelected,
+                  ]}
+                >
                   {tool.label}
                 </Text>
               </TouchableOpacity>
@@ -136,7 +163,7 @@ export default function SupervisorScreeningsScreen() {
 
       {/* Compteur de résultats */}
       <View style={styles.countRow}>
-        <Text style={styles.countText}>
+        <Text style={[styles.countText, { color: colors.textSecondary }]}>
           {filteredItems.length} dépistage(s) supervisé(s)
         </Text>
       </View>
@@ -145,7 +172,7 @@ export default function SupervisorScreeningsScreen() {
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#00A651" />
-          <Text style={styles.loadingText}>Chargement des dépistages terrain...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des dépistages terrain...</Text>
         </View>
       ) : (
         <ScrollView
@@ -157,9 +184,9 @@ export default function SupervisorScreeningsScreen() {
         >
           {filteredItems.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <FileSearch size={40} color="#cbd5e1" style={{ marginBottom: 12 }} />
-              <Text style={styles.emptyTitle}>Aucun dépistage trouvé</Text>
-              <Text style={styles.emptySubtitle}>
+              <FileSearch size={40} color={colors.textMuted} style={{ marginBottom: 12 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun dépistage trouvé</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                 Modifiez vos critères de recherche ou sélectionnez un autre outil.
               </Text>
             </View>
@@ -176,23 +203,35 @@ export default function SupervisorScreeningsScreen() {
               return (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.card}
+                  style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => handleOpenDetail(item)}
                   activeOpacity={0.8}
                 >
                   {/* Carte Top : Patient + Code + Statut Revue */}
                   <View style={styles.cardHeader}>
                     <View style={styles.patientInfoCol}>
-                      <Text style={styles.patientName}>{item.patientName}</Text>
-                      <Text style={styles.patientCode}>{item.patientCode}</Text>
+                      <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName}</Text>
+                      <Text style={[styles.patientCode, { color: colors.textSecondary }]}>{item.patientCode}</Text>
                     </View>
-                    <View style={[styles.reviewBadge, isReviewed ? styles.reviewBadgeDone : styles.reviewBadgePending]}>
+                    <View
+                      style={[
+                        styles.reviewBadge,
+                        isReviewed
+                          ? (isDark ? styles.reviewBadgeDoneDark : styles.reviewBadgeDone)
+                          : (isDark ? styles.reviewBadgePendingDark : styles.reviewBadgePending),
+                      ]}
+                    >
                       {isReviewed ? (
                         <CheckCircle size={12} color="#00A651" style={{ marginRight: 4 }} />
                       ) : (
-                        <Clock size={12} color="#d97706" style={{ marginRight: 4 }} />
+                        <Clock size={12} color={isDark ? '#fbbf24' : '#d97706'} style={{ marginRight: 4 }} />
                       )}
-                      <Text style={[styles.reviewBadgeText, isReviewed ? styles.textSuccess : styles.textWarning]}>
+                      <Text
+                        style={[
+                          styles.reviewBadgeText,
+                          isReviewed ? styles.textSuccess : (isDark ? styles.textWarningDark : styles.textWarning),
+                        ]}
+                      >
                         {isReviewed ? 'Revu & Validé' : 'À examiner'}
                       </Text>
                     </View>
@@ -207,23 +246,23 @@ export default function SupervisorScreeningsScreen() {
                   {/* Métadonnées : Centre + Agent */}
                   <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
-                      <Building2 size={12} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.metaItemText}>{item.siteName}</Text>
+                      <Building2 size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.metaItemText, { color: colors.textSecondary }]}>{item.siteName}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <User size={12} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.metaItemText}>Agent : {item.evaluatorName}</Text>
+                      <User size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.metaItemText, { color: colors.textSecondary }]}>Agent : {item.evaluatorName}</Text>
                     </View>
                   </View>
 
                   {/* Score & Sévérité */}
-                  <View style={styles.cardFooter}>
+                  <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
                     <View style={[styles.severityBadge, { backgroundColor: sev.bg, borderColor: sev.border }]}>
                       <Text style={[styles.severityBadgeText, { color: sev.text }]}>
                         Score {item.score} • {sev.label}
                       </Text>
                     </View>
-                    <Text style={styles.dateText}>{formattedDate}</Text>
+                    <Text style={[styles.dateText, { color: colors.textMuted }]}>{formattedDate}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -235,18 +274,18 @@ export default function SupervisorScreeningsScreen() {
       {/* 4. Modal Détail de la Revue Clinique */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
+          <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View>
-                <Text style={styles.modalTitle}>Revue du Dépistage</Text>
-                <Text style={styles.modalSubtitle}>Détails cliniques pour supervision</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Revue du Dépistage</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Détails cliniques pour supervision</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
-                style={styles.closeBtn}
+                style={[styles.closeBtn, { backgroundColor: colors.cardSecondary }]}
                 activeOpacity={0.7}
               >
-                <X size={20} color="#0f172a" />
+                <X size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -254,54 +293,54 @@ export default function SupervisorScreeningsScreen() {
               <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                 {/* Bloc Patient */}
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Patient & Identité</Text>
-                  <View style={styles.detailCard}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.text }]}>Patient & Identité</Text>
+                  <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Nom & Prénom</Text>
-                      <Text style={styles.detailValue}>{selectedScreening.patientName}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Nom & Prénom</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{selectedScreening.patientName}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Code interne</Text>
-                      <Text style={styles.detailValue}>{selectedScreening.patientCode}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Code interne</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{selectedScreening.patientCode}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Site de dépistage</Text>
-                      <Text style={styles.detailValue}>{selectedScreening.siteName}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Site de dépistage</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{selectedScreening.siteName}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Agent examinateur</Text>
-                      <Text style={styles.detailValue}>{selectedScreening.evaluatorName}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Agent examinateur</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{selectedScreening.evaluatorName}</Text>
                     </View>
                   </View>
                 </View>
 
                 {/* Bloc Score Clinique */}
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Évaluation & Scores</Text>
-                  <View style={styles.detailCard}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.text }]}>Évaluation & Scores</Text>
+                  <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Questionnaire</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Questionnaire</Text>
                       <Text style={[styles.detailValue, { color: '#00A651', fontWeight: '700' }]}>
                         {selectedScreening.templateTitle}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Score total</Text>
-                      <Text style={[styles.detailValue, { fontSize: 16, fontWeight: '700' }]}>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Score total</Text>
+                      <Text style={[styles.detailValue, { color: colors.text, fontSize: 16, fontWeight: '700' }]}>
                         {selectedScreening.score} pts
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Niveau de sévérité</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Niveau de sévérité</Text>
                       <Text
                         style={[
                           styles.detailValue,
                           {
                             color:
                               selectedScreening.severity === 'severe'
-                                ? '#dc2626'
+                                ? (isDark ? '#f87171' : '#dc2626')
                                 : selectedScreening.severity === 'modere'
-                                ? '#d97706'
+                                ? (isDark ? '#fbbf24' : '#d97706')
                                 : '#00A651',
                             fontWeight: '700',
                           },
@@ -315,23 +354,23 @@ export default function SupervisorScreeningsScreen() {
 
                 {/* Bloc Alertes Cliniques */}
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Alertes Détectées</Text>
-                  <View style={styles.detailCard}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.text }]}>Alertes Détectées</Text>
+                  <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
                     <View style={styles.alertCheckRow}>
-                      <Text style={styles.alertCheckLabel}>Idéation suicidaire</Text>
+                      <Text style={[styles.alertCheckLabel, { color: colors.text }]}>Idéation suicidaire</Text>
                       <Text style={selectedScreening.alerts.suicide ? styles.textDanger : styles.textSuccess}>
                         {selectedScreening.alerts.suicide ? '⚠️ OUI (Prioritaire)' : 'Non détectée'}
                       </Text>
                     </View>
                     <View style={styles.alertCheckRow}>
-                      <Text style={styles.alertCheckLabel}>Risque TSPT aigu</Text>
-                      <Text style={selectedScreening.alerts.tspt ? styles.textWarning : styles.textSuccess}>
+                      <Text style={[styles.alertCheckLabel, { color: colors.text }]}>Risque TSPT aigu</Text>
+                      <Text style={selectedScreening.alerts.tspt ? (isDark ? styles.textWarningDark : styles.textWarning) : styles.textSuccess}>
                         {selectedScreening.alerts.tspt ? '⚠️ Positif (Score ≥ 32)' : 'Négatif'}
                       </Text>
                     </View>
                     <View style={styles.alertCheckRow}>
-                      <Text style={styles.alertCheckLabel}>Symptômes psychotiques</Text>
-                      <Text style={selectedScreening.alerts.psychose ? styles.textWarning : styles.textSuccess}>
+                      <Text style={[styles.alertCheckLabel, { color: colors.text }]}>Symptômes psychotiques</Text>
+                      <Text style={selectedScreening.alerts.psychose ? (isDark ? styles.textWarningDark : styles.textWarning) : styles.textSuccess}>
                         {selectedScreening.alerts.psychose ? '⚠️ Présents' : 'Absents'}
                       </Text>
                     </View>
@@ -467,8 +506,14 @@ const styles = StyleSheet.create({
   reviewBadgeDone: {
     backgroundColor: '#ecfdf5',
   },
+  reviewBadgeDoneDark: {
+    backgroundColor: 'rgba(0, 166, 81, 0.15)',
+  },
   reviewBadgePending: {
     backgroundColor: '#fef3c7',
+  },
+  reviewBadgePendingDark: {
+    backgroundColor: 'rgba(217, 119, 6, 0.15)',
   },
   reviewBadgeText: {
     fontSize: 11,
@@ -560,6 +605,9 @@ const styles = StyleSheet.create({
   },
   textWarning: {
     color: '#d97706',
+  },
+  textWarningDark: {
+    color: '#fbbf24',
   },
   textDanger: {
     color: '#dc2626',

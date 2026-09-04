@@ -31,9 +31,11 @@ import { agentService, AgentPatient, AgentQuestionnaireItem, AgentCentre } from 
 import { syncService } from '../../../services/syncService';
 import { referentialCache } from '../../../services/referentialCache';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function NewAssessmentScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   // State
   const [selectedQuestionnaireKey, setSelectedQuestionnaireKey] = useState<string>('');
@@ -249,13 +251,13 @@ export default function NewAssessmentScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouveau Dépistage</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Nouveau Dépistage</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -265,7 +267,7 @@ export default function NewAssessmentScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionNumber}>1</Text>
-            <Text style={styles.sectionTitle}>Choisir le Questionnaire</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Choisir le Questionnaire</Text>
           </View>
 
           {isLoadingQ ? (
@@ -284,37 +286,38 @@ export default function NewAssessmentScreen() {
                     key={q.key}
                     style={[
                       styles.qCard,
-                      isSelected && styles.qCardSelected,
-                      isOds && styles.qCardOdsHighlight
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                      isSelected && [styles.qCardSelected, { backgroundColor: isDark ? '#064e3b22' : '#f0fdf4', borderColor: '#00A651' }],
+                      isOds && !isSelected && { borderColor: isDark ? '#059669' : '#86efac' }
                     ]}
                     onPress={() => setSelectedQuestionnaireKey(q.key)}
                     activeOpacity={0.8}
                   >
                     <View style={styles.qCardLeft}>
-                      <View style={[styles.qIconContainer, isSelected && styles.qIconContainerSelected]}>
+                      <View style={[styles.qIconContainer, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }, isSelected && styles.qIconContainerSelected]}>
                         <ClipboardList size={20} color={isSelected ? '#ffffff' : '#00A651'} />
                       </View>
                       <View style={styles.qTextContainer}>
                         <View style={styles.qTitleRow}>
-                          <Text style={[styles.qTitle, isSelected && styles.qTitleSelected]}>
+                          <Text style={[styles.qTitle, { color: isSelected ? '#00A651' : colors.text }]}>
                             {q.name || q.title || q.key}
                           </Text>
                           {isOds && (
-                            <View style={styles.odsBadge}>
+                            <View style={[styles.odsBadge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
                               <Sparkles size={10} color="#00A651" style={{ marginRight: 3 }} />
                               <Text style={styles.odsBadgeText}>ODS Recommandé</Text>
                             </View>
                           )}
                         </View>
                         {!!q.description && (
-                          <Text style={styles.qDescription} numberOfLines={2}>
+                          <Text style={[styles.qDescription, { color: colors.textSecondary }]} numberOfLines={2}>
                             {q.description}
                           </Text>
                         )}
                       </View>
                     </View>
 
-                    <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                    <View style={[styles.radioCircle, { borderColor: colors.border }, isSelected && styles.radioCircleSelected]}>
                       {isSelected && <Check size={14} color="#ffffff" />}
                     </View>
                   </TouchableOpacity>
@@ -328,46 +331,46 @@ export default function NewAssessmentScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionNumber}>2</Text>
-            <Text style={styles.sectionTitle}>Sélectionner le Patient</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Sélectionner le Patient</Text>
           </View>
 
           {selectedPatient ? (
-            <View style={styles.selectedPatientCard}>
+            <View style={[styles.selectedPatientCard, { backgroundColor: colors.card, borderColor: '#00A651' }]}>
               <View style={styles.selectedPatientLeft}>
-                <View style={styles.patientAvatar}>
+                <View style={[styles.patientAvatar, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
                   <User size={22} color="#00A651" />
                 </View>
                 <View>
-                  <Text style={styles.selectedPatientName}>
+                  <Text style={[styles.selectedPatientName, { color: colors.text }]}>
                     {selectedPatient.firstName} {selectedPatient.lastName}
                   </Text>
                   {!!selectedPatient.phoneNumber && (
-                    <Text style={styles.selectedPatientSub}>{selectedPatient.phoneNumber}</Text>
+                    <Text style={[styles.selectedPatientSub, { color: colors.textSecondary }]}>{selectedPatient.phoneNumber}</Text>
                   )}
                   {!!selectedPatient.internalPatientCode && (
-                    <Text style={styles.selectedPatientCode}>Code: {selectedPatient.internalPatientCode}</Text>
+                    <Text style={[styles.selectedPatientCode, { color: colors.textMuted }]}>Code: {selectedPatient.internalPatientCode}</Text>
                   )}
                 </View>
               </View>
               <TouchableOpacity onPress={() => setSelectedPatient(null)} style={styles.removePatientButton}>
-                <X size={18} color="#94a3b8" />
+                <X size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           ) : (
             <View>
               {/* Search Bar */}
-              <View style={styles.searchBar}>
-                <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+              <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={[styles.searchInput, { color: colors.text }]}
                   placeholder="Rechercher par nom ou prénom..."
                   value={patientSearch}
                   onChangeText={setPatientSearch}
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                 />
                 {patientSearch.length > 0 && (
                   <TouchableOpacity onPress={() => setPatientSearch('')}>
-                    <X size={16} color="#94a3b8" />
+                    <X size={16} color={colors.textMuted} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -376,39 +379,39 @@ export default function NewAssessmentScreen() {
               {isSearchingPatients && (
                 <View style={styles.loadingSearch}>
                   <ActivityIndicator size="small" color="#00A651" />
-                  <Text style={styles.loadingSearchText}>Recherche en cours...</Text>
+                  <Text style={[styles.loadingSearchText, { color: colors.textSecondary }]}>Recherche en cours...</Text>
                 </View>
               )}
 
               {debouncedPatientSearch.trim().length > 1 && !isSearchingPatients && (
-                <View style={styles.searchResultsContainer}>
+                <View style={[styles.searchResultsContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   {hybridPatients.map((p) => (
                     <TouchableOpacity
                       key={p.id}
-                      style={styles.searchResultItem}
+                      style={[styles.searchResultItem, { borderBottomColor: colors.border }]}
                       onPress={() => {
                         setSelectedPatient(p);
                         setPatientSearch('');
                       }}
                     >
-                      <User size={18} color="#64748b" style={{ marginRight: 10 }} />
+                      <User size={18} color={colors.textSecondary} style={{ marginRight: 10 }} />
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.resultItemName}>{p.firstName} {p.lastName}</Text>
-                        {!!p.phoneNumber && <Text style={styles.resultItemSub}>{p.phoneNumber}</Text>}
+                        <Text style={[styles.resultItemName, { color: colors.text }]}>{p.firstName} {p.lastName}</Text>
+                        {!!p.phoneNumber && <Text style={[styles.resultItemSub, { color: colors.textSecondary }]}>{p.phoneNumber}</Text>}
                       </View>
-                      <ChevronRight size={16} color="#cbd5e1" />
+                      <ChevronRight size={16} color={colors.textMuted} />
                     </TouchableOpacity>
                   ))}
 
                   {hybridPatients.length === 0 && (
-                    <Text style={styles.noResultsText}>Aucun patient trouvé pour "{debouncedPatientSearch}".</Text>
+                    <Text style={[styles.noResultsText, { color: colors.textMuted }]}>Aucun patient trouvé pour "{debouncedPatientSearch}".</Text>
                   )}
                 </View>
               )}
 
               {/* Quick Create Patient Button */}
               <TouchableOpacity
-                style={styles.newPatientButton}
+                style={[styles.newPatientButton, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5', borderColor: isDark ? '#059669' : '#bbf7d0' }]}
                 onPress={() => setIsModalOpen(true)}
                 activeOpacity={0.8}
               >
@@ -424,7 +427,7 @@ export default function NewAssessmentScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionNumber}>3</Text>
-              <Text style={styles.sectionTitle}>Centre de Rattachement</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Centre de Rattachement</Text>
             </View>
             <View style={styles.centresRow}>
               {centres.slice(0, 3).map((c) => {
@@ -432,11 +435,15 @@ export default function NewAssessmentScreen() {
                 return (
                   <TouchableOpacity
                     key={c.id}
-                    style={[styles.centreChip, isSelected && styles.centreChipSelected]}
+                    style={[
+                      styles.centreChip, 
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                      isSelected && [styles.centreChipSelected, { backgroundColor: isDark ? '#064e3b22' : '#f0fdf4', borderColor: '#00A651' }]
+                    ]}
                     onPress={() => setSelectedCentre(c.name)}
                   >
-                    <Building size={14} color={isSelected ? '#00A651' : '#64748b'} style={{ marginRight: 6 }} />
-                    <Text style={[styles.centreChipText, isSelected && styles.centreChipTextSelected]}>
+                    <Building size={14} color={isSelected ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.centreChipText, { color: isSelected ? '#00A651' : colors.textSecondary }, isSelected && styles.centreChipTextSelected]}>
                       {c.name}
                     </Text>
                   </TouchableOpacity>
@@ -465,44 +472,48 @@ export default function NewAssessmentScreen() {
       {/* Modal Création Nouveau Patient Rapide */}
       <Modal visible={isModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nouveau Patient</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Nouveau Patient</Text>
               <TouchableOpacity onPress={() => setIsModalOpen(false)}>
-                <X size={22} color="#64748b" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.inputLabel}>Prénom *</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Prénom *</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: Jean"
+                placeholderTextColor={colors.textMuted}
                 value={newFirstName}
                 onChangeText={setNewFirstName}
               />
 
-              <Text style={styles.inputLabel}>Nom *</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Nom *</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: Kouassi"
+                placeholderTextColor={colors.textMuted}
                 value={newLastName}
                 onChangeText={setNewLastName}
               />
 
-              <Text style={styles.inputLabel}>Téléphone (optionnel)</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Téléphone (optionnel)</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: +225 0700000000"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
                 value={newPhone}
                 onChangeText={setNewPhone}
               />
 
-              <Text style={styles.inputLabel}>Date de naissance (optionnel - AAAA-MM-JJ)</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Date de naissance (optionnel - AAAA-MM-JJ)</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: 1995-05-12"
+                placeholderTextColor={colors.textMuted}
                 value={newBirthdate}
                 onChangeText={setNewBirthdate}
               />

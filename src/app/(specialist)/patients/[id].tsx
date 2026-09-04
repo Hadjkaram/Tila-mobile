@@ -36,11 +36,13 @@ import { professionalService, PatientTimelineEvent } from '../../../services/pro
 import { format, differenceInYears, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { useTheme } from '../../../context/ThemeContext';
 
 type TabType = 'general' | 'appointments' | 'parcours';
 
 export default function PatientDetailScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { id } = useLocalSearchParams();
   const patientId = Array.isArray(id) ? id[0] : id;
 
@@ -146,12 +148,12 @@ export default function PatientDetailScreen() {
 
   if (isLoadingPatient && !patient) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#0f172a" />
+            <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chargement...</Text>
+          <Text style={[styles.headerTitle, { color: colors.headerText }]}>Chargement...</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={{ padding: 24 }}>
@@ -165,18 +167,18 @@ export default function PatientDetailScreen() {
 
   if (!patient) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#0f172a" />
+            <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Fiche Patient</Text>
+          <Text style={[styles.headerTitle, { color: colors.headerText }]}>Fiche Patient</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.emptyStateContainer}>
-          <Inbox size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-          <Text style={styles.emptyTitle}>Patient introuvable</Text>
-          <Text style={styles.emptySubtitle}>Le dossier de ce patient n'a pas pu être chargé.</Text>
+          <Inbox size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 16 }} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>Patient introuvable</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Le dossier de ce patient n'a pas pu être chargé.</Text>
         </View>
       </SafeAreaView>
     );
@@ -186,13 +188,13 @@ export default function PatientDetailScreen() {
   const calculatedAge = getAge(patient.birthdate);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       {/* Top Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
+        <Text style={[styles.headerTitle, { color: colors.headerText }]} numberOfLines={1}>
           {patient.name || `${patient.firstName} ${patient.lastName}`}
         </Text>
         <View style={{ width: 40 }} />
@@ -210,14 +212,14 @@ export default function PatientDetailScreen() {
         }
       >
         {/* Profile Card Header */}
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.profileTopRow}>
-            <View style={styles.avatarLarge}>
+            <View style={[styles.avatarLarge, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
               <User size={38} color="#00A651" />
             </View>
             <View style={styles.profileHeaderInfo}>
-              <Text style={styles.patientName}>{patient.name || `${patient.firstName} ${patient.lastName}`}</Text>
-              <Text style={styles.patientSub}>
+              <Text style={[styles.patientName, { color: colors.text }]}>{patient.name || `${patient.firstName} ${patient.lastName}`}</Text>
+              <Text style={[styles.patientSub, { color: colors.textSecondary }]}>
                 {patient.profession?.name || 'Patient'} 
                 {patient.organisation?.name ? ` • ${patient.organisation.name}` : ''}
               </Text>
@@ -225,7 +227,7 @@ export default function PatientDetailScreen() {
               <View style={styles.badgeRow}>
                 <View style={[
                   styles.statusBadge, 
-                  patient.status === 'active' ? styles.statusActive : styles.statusInactive
+                  patient.status === 'active' ? (isDark ? { backgroundColor: 'rgba(0,166,81,0.15)' } : styles.statusActive) : (isDark ? { backgroundColor: '#334155' } : styles.statusInactive)
                 ]}>
                   <Text style={[
                     styles.statusBadgeText, 
@@ -236,7 +238,7 @@ export default function PatientDetailScreen() {
                 </View>
 
                 {stressBadge && (
-                  <View style={[styles.stressBadge, { backgroundColor: stressBadge.bg }]}>
+                  <View style={[styles.stressBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : stressBadge.bg }]}>
                     <Activity size={12} color={stressBadge.text} style={{ marginRight: 4 }} />
                     <Text style={[styles.stressBadgeText, { color: stressBadge.text }]}>
                       {stressBadge.label}
@@ -248,7 +250,7 @@ export default function PatientDetailScreen() {
           </View>
 
           {/* Quick Actions (Call, SMS, Mail) */}
-          <View style={styles.quickActions}>
+          <View style={[styles.quickActions, { borderTopColor: colors.border }]}>
             {patient.phoneNumber ? (
               <>
                 <TouchableOpacity 
@@ -256,7 +258,7 @@ export default function PatientDetailScreen() {
                   onPress={() => openDialer(patient.phoneNumber as string)}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.actionIconContainer}>
+                  <View style={[styles.actionIconContainer, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
                     <Phone size={18} color="#00A651" />
                   </View>
                   <Text style={styles.actionText}>Appeler</Text>
@@ -267,7 +269,7 @@ export default function PatientDetailScreen() {
                   onPress={() => openSMS(patient.phoneNumber as string)}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.actionIconContainer}>
+                  <View style={[styles.actionIconContainer, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
                     <MessageSquare size={18} color="#00A651" />
                   </View>
                   <Text style={styles.actionText}>Message</Text>
@@ -281,7 +283,7 @@ export default function PatientDetailScreen() {
                 onPress={() => openMail(patient.email as string)}
                 activeOpacity={0.7}
               >
-                <View style={styles.actionIconContainer}>
+                <View style={[styles.actionIconContainer, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
                   <Mail size={18} color="#00A651" />
                 </View>
                 <Text style={styles.actionText}>Email</Text>
@@ -291,30 +293,30 @@ export default function PatientDetailScreen() {
         </View>
 
         {/* 3 Tabs Bar */}
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity 
-            style={[styles.tabButton, activeTab === 'general' && styles.tabButtonActive]}
+            style={[styles.tabButton, activeTab === 'general' && [styles.tabButtonActive, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]]}
             onPress={() => setActiveTab('general')}
             activeOpacity={0.7}
           >
-            <User size={16} color={activeTab === 'general' ? '#00A651' : '#64748b'} style={{ marginRight: 6 }} />
-            <Text style={[styles.tabButtonText, activeTab === 'general' && styles.tabButtonTextActive]}>
+            <User size={16} color={activeTab === 'general' ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
+            <Text style={[styles.tabButtonText, { color: colors.textSecondary }, activeTab === 'general' && styles.tabButtonTextActive]}>
               Général
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.tabButton, activeTab === 'appointments' && styles.tabButtonActive]}
+            style={[styles.tabButton, activeTab === 'appointments' && [styles.tabButtonActive, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]]}
             onPress={() => setActiveTab('appointments')}
             activeOpacity={0.7}
           >
-            <Calendar size={16} color={activeTab === 'appointments' ? '#00A651' : '#64748b'} style={{ marginRight: 6 }} />
-            <Text style={[styles.tabButtonText, activeTab === 'appointments' && styles.tabButtonTextActive]}>
+            <Calendar size={16} color={activeTab === 'appointments' ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
+            <Text style={[styles.tabButtonText, { color: colors.textSecondary }, activeTab === 'appointments' && styles.tabButtonTextActive]}>
               Rendez-vous
             </Text>
             {appointments.length > 0 && (
-              <View style={[styles.tabBadge, activeTab === 'appointments' && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, activeTab === 'appointments' && styles.tabBadgeTextActive]}>
+              <View style={[styles.tabBadge, { backgroundColor: colors.cardSecondary }, activeTab === 'appointments' && styles.tabBadgeActive]}>
+                <Text style={[styles.tabBadgeText, { color: colors.textSecondary }, activeTab === 'appointments' && styles.tabBadgeTextActive]}>
                   {appointments.length}
                 </Text>
               </View>
@@ -322,17 +324,17 @@ export default function PatientDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.tabButton, activeTab === 'parcours' && styles.tabButtonActive]}
+            style={[styles.tabButton, activeTab === 'parcours' && [styles.tabButtonActive, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]]}
             onPress={() => setActiveTab('parcours')}
             activeOpacity={0.7}
           >
-            <Clock size={16} color={activeTab === 'parcours' ? '#00A651' : '#64748b'} style={{ marginRight: 6 }} />
-            <Text style={[styles.tabButtonText, activeTab === 'parcours' && styles.tabButtonTextActive]}>
+            <Clock size={16} color={activeTab === 'parcours' ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
+            <Text style={[styles.tabButtonText, { color: colors.textSecondary }, activeTab === 'parcours' && styles.tabButtonTextActive]}>
               Parcours
             </Text>
             {timelineEvents.length > 0 && (
-              <View style={[styles.tabBadge, activeTab === 'parcours' && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, activeTab === 'parcours' && styles.tabBadgeTextActive]}>
+              <View style={[styles.tabBadge, { backgroundColor: colors.cardSecondary }, activeTab === 'parcours' && styles.tabBadgeActive]}>
+                <Text style={[styles.tabBadgeText, { color: colors.textSecondary }, activeTab === 'parcours' && styles.tabBadgeTextActive]}>
                   {timelineEvents.length}
                 </Text>
               </View>
@@ -344,29 +346,29 @@ export default function PatientDetailScreen() {
         {activeTab === 'general' && (
           <View style={styles.tabContent}>
             {/* Identity & Codes */}
-            <View style={styles.infoCard}>
-              <Text style={styles.cardHeaderTitle}>Identifiants & Contact</Text>
+            <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.cardHeaderTitle, { color: colors.text }]}>Identifiants & Contact</Text>
               
               <View style={styles.infoRow}>
-                <View style={styles.infoIconBox}>
+                <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
                   <Hash size={18} color="#00A651" />
                 </View>
                 <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>Code Patient Interne</Text>
-                  <Text style={styles.infoValue}>{patient.internalPatientCode || 'N/A'}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Code Patient Interne</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{patient.internalPatientCode || 'N/A'}</Text>
                 </View>
               </View>
 
               {!!patient.externalPatientCode && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <View style={styles.infoRow}>
-                    <View style={styles.infoIconBox}>
-                      <Hash size={18} color="#64748b" />
+                    <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
+                      <Hash size={18} color={colors.textSecondary} />
                     </View>
                     <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Code Externe</Text>
-                      <Text style={styles.infoValue}>{patient.externalPatientCode}</Text>
+                      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Code Externe</Text>
+                      <Text style={[styles.infoValue, { color: colors.text }]}>{patient.externalPatientCode}</Text>
                     </View>
                   </View>
                 </>
@@ -374,14 +376,14 @@ export default function PatientDetailScreen() {
 
               {!!patient.phoneNumber && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <View style={styles.infoRow}>
-                    <View style={styles.infoIconBox}>
+                    <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
                       <Phone size={18} color="#00A651" />
                     </View>
                     <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Téléphone</Text>
-                      <Text style={styles.infoValue}>{patient.phoneNumber}</Text>
+                      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Téléphone</Text>
+                      <Text style={[styles.infoValue, { color: colors.text }]}>{patient.phoneNumber}</Text>
                     </View>
                   </View>
                 </>
@@ -389,14 +391,14 @@ export default function PatientDetailScreen() {
 
               {!!patient.email && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <View style={styles.infoRow}>
-                    <View style={styles.infoIconBox}>
+                    <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
                       <Mail size={18} color="#00A651" />
                     </View>
                     <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Adresse Email</Text>
-                      <Text style={styles.infoValue}>{patient.email}</Text>
+                      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Adresse Email</Text>
+                      <Text style={[styles.infoValue, { color: colors.text }]}>{patient.email}</Text>
                     </View>
                   </View>
                 </>
@@ -404,16 +406,16 @@ export default function PatientDetailScreen() {
             </View>
 
             {/* Demographics & Profession */}
-            <View style={styles.infoCard}>
-              <Text style={styles.cardHeaderTitle}>Démographie & Emploi</Text>
+            <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.cardHeaderTitle, { color: colors.text }]}>Démographie & Emploi</Text>
 
               <View style={styles.infoRow}>
-                <View style={styles.infoIconBox}>
-                  <Calendar size={18} color="#64748b" />
+                <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
+                  <Calendar size={18} color={colors.textSecondary} />
                 </View>
                 <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>Date de naissance & Âge</Text>
-                  <Text style={styles.infoValue}>
+                  <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Date de naissance & Âge</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>
                     {formatDate(patient.birthdate)}
                     {calculatedAge ? ` (${calculatedAge})` : ''}
                   </Text>
@@ -422,14 +424,14 @@ export default function PatientDetailScreen() {
 
               {!!patient.organisation?.name && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <View style={styles.infoRow}>
-                    <View style={styles.infoIconBox}>
-                      <Building size={18} color="#64748b" />
+                    <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
+                      <Building size={18} color={colors.textSecondary} />
                     </View>
                     <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Organisation / Entreprise</Text>
-                      <Text style={styles.infoValue}>{patient.organisation.name}</Text>
+                      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Organisation / Entreprise</Text>
+                      <Text style={[styles.infoValue, { color: colors.text }]}>{patient.organisation.name}</Text>
                     </View>
                   </View>
                 </>
@@ -437,14 +439,14 @@ export default function PatientDetailScreen() {
 
               {!!patient.profession?.name && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <View style={styles.infoRow}>
-                    <View style={styles.infoIconBox}>
-                      <Briefcase size={18} color="#64748b" />
+                    <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
+                      <Briefcase size={18} color={colors.textSecondary} />
                     </View>
                     <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Profession</Text>
-                      <Text style={styles.infoValue}>{patient.profession.name}</Text>
+                      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Profession</Text>
+                      <Text style={[styles.infoValue, { color: colors.text }]}>{patient.profession.name}</Text>
                     </View>
                   </View>
                 </>
@@ -452,14 +454,14 @@ export default function PatientDetailScreen() {
 
               {!!patient.residenceLocation?.name && (
                 <>
-                  <View style={styles.divider} />
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
                   <View style={styles.infoRow}>
-                    <View style={styles.infoIconBox}>
-                      <MapPin size={18} color="#64748b" />
+                    <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
+                      <MapPin size={18} color={colors.textSecondary} />
                     </View>
                     <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Localisation / Résidence</Text>
-                      <Text style={styles.infoValue}>{patient.residenceLocation.name}</Text>
+                      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Localisation / Résidence</Text>
+                      <Text style={[styles.infoValue, { color: colors.text }]}>{patient.residenceLocation.name}</Text>
                     </View>
                   </View>
                 </>
@@ -467,28 +469,28 @@ export default function PatientDetailScreen() {
             </View>
 
             {/* Visits & Follow-up */}
-            <View style={styles.infoCard}>
-              <Text style={styles.cardHeaderTitle}>Suivi Clinique</Text>
+            <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.cardHeaderTitle, { color: colors.text }]}>Suivi Clinique</Text>
 
               <View style={styles.infoRow}>
-                <View style={styles.infoIconBox}>
+                <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
                   <CalendarCheck size={18} color="#00A651" />
                 </View>
                 <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>Dernière consultation</Text>
-                  <Text style={styles.infoValue}>{formatDate(patient.lastVisit)}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Dernière consultation</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{formatDate(patient.lastVisit)}</Text>
                 </View>
               </View>
 
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
               <View style={styles.infoRow}>
-                <View style={styles.infoIconBox}>
+                <View style={[styles.infoIconBox, { backgroundColor: colors.inputBg }]}>
                   <Clock size={18} color="#3b82f6" />
                 </View>
                 <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>Prochain Rendez-vous</Text>
-                  <Text style={styles.infoValue}>{formatDate(patient.nextVisit)}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Prochain Rendez-vous</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{formatDate(patient.nextVisit)}</Text>
                 </View>
               </View>
             </View>
@@ -504,10 +506,10 @@ export default function PatientDetailScreen() {
                 <Skeleton height={90} borderRadius={16} style={{ marginBottom: 12 }} />
               </View>
             ) : appointments.length === 0 ? (
-              <View style={styles.tabEmptyState}>
-                <CalendarCheck size={48} color="#cbd5e1" style={{ marginBottom: 12 }} />
-                <Text style={styles.emptyTitle}>Aucun rendez-vous</Text>
-                <Text style={styles.emptySubtitle}>Ce patient n'a pas encore de rendez-vous programmé.</Text>
+              <View style={[styles.tabEmptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <CalendarCheck size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 12 }} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun rendez-vous</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Ce patient n'a pas encore de rendez-vous programmé.</Text>
               </View>
             ) : (
               appointments.map((apt: any, idx: number) => {
@@ -516,18 +518,18 @@ export default function PatientDetailScreen() {
                 const isPending = apt.status === 'en attente' || apt.status === 'pending';
 
                 return (
-                  <View key={apt.id || idx} style={styles.appointmentCard}>
+                  <View key={apt.id || idx} style={[styles.appointmentCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={styles.aptTopRow}>
                       <View style={styles.aptDateTime}>
                         <Clock size={16} color="#00A651" style={{ marginRight: 6 }} />
-                        <Text style={styles.aptDateText}>
+                        <Text style={[styles.aptDateText, { color: colors.text }]}>
                           {formatDate(apt.start || apt.date, "dd MMMM yyyy à HH:mm")}
                         </Text>
                       </View>
 
                       <View style={[
                         styles.aptStatusBadge,
-                        isConfirmed ? styles.aptConfirmed : isPending ? styles.aptPending : styles.aptCancelled
+                        isConfirmed ? (isDark ? { backgroundColor: 'rgba(0,166,81,0.15)' } : styles.aptConfirmed) : isPending ? (isDark ? { backgroundColor: 'rgba(245,130,32,0.15)' } : styles.aptPending) : (isDark ? { backgroundColor: '#334155' } : styles.aptCancelled)
                       ]}>
                         <Text style={[
                           styles.aptStatusBadgeText,
@@ -543,12 +545,12 @@ export default function PatientDetailScreen() {
                         {isVideo ? (
                           <>
                             <Video size={14} color="#0284c7" style={{ marginRight: 4 }} />
-                            <Text style={styles.aptTypeText}>Téléconsultation</Text>
+                            <Text style={[styles.aptTypeText, { color: colors.textSecondary }]}>Téléconsultation</Text>
                           </>
                         ) : (
                           <>
-                            <Building size={14} color="#64748b" style={{ marginRight: 4 }} />
-                            <Text style={styles.aptTypeText}>Au cabinet</Text>
+                            <Building size={14} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                            <Text style={[styles.aptTypeText, { color: colors.textSecondary }]}>Au cabinet</Text>
                           </>
                         )}
                       </View>
@@ -580,10 +582,10 @@ export default function PatientDetailScreen() {
                 <Skeleton height={110} borderRadius={16} style={{ marginBottom: 12 }} />
               </View>
             ) : timelineEvents.length === 0 ? (
-              <View style={styles.tabEmptyState}>
-                <FolderOpen size={48} color="#cbd5e1" style={{ marginBottom: 12 }} />
-                <Text style={styles.emptyTitle}>Parcours vierge</Text>
-                <Text style={styles.emptySubtitle}>Aucun événement clinique (dépistage, consultation ou orientation) n'a encore été consigné.</Text>
+              <View style={[styles.tabEmptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <FolderOpen size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 12 }} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>Parcours vierge</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Aucun événement clinique (dépistage, consultation ou orientation) n'a encore été consigné.</Text>
               </View>
             ) : (
               <View style={styles.timelineContainer}>
@@ -608,14 +610,14 @@ export default function PatientDetailScreen() {
                             <CheckCircle2 size={12} color="#ffffff" />
                           )}
                         </View>
-                        {idx < timelineEvents.length - 1 && <View style={styles.timelineVerticalLine} />}
+                        {idx < timelineEvents.length - 1 && <View style={[styles.timelineVerticalLine, { backgroundColor: colors.border }]} />}
                       </View>
 
                       {/* Timeline Card */}
-                      <View style={styles.timelineCard}>
+                      <View style={[styles.timelineCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <View style={styles.timelineCardHeader}>
-                          <Text style={styles.timelineAction}>{evt.action || 'Événement clinique'}</Text>
-                          <Text style={styles.timelineDate}>{formatDate(evt.date, 'dd MMM yyyy')}</Text>
+                          <Text style={[styles.timelineAction, { color: colors.text }]}>{evt.action || 'Événement clinique'}</Text>
+                          <Text style={[styles.timelineDate, { color: colors.textSecondary }]}>{formatDate(evt.date, 'dd MMM yyyy')}</Text>
                         </View>
 
                         {!!evt.acteur && (
@@ -623,12 +625,12 @@ export default function PatientDetailScreen() {
                         )}
 
                         {!!evt.details && (
-                          <Text style={styles.timelineDetails}>{evt.details}</Text>
+                          <Text style={[styles.timelineDetails, { color: colors.textSecondary }]}>{evt.details}</Text>
                         )}
 
                         {!!evt.status && (
-                          <View style={styles.timelineStatusBadge}>
-                            <Text style={styles.timelineStatusText}>{evt.status}</Text>
+                          <View style={[styles.timelineStatusBadge, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                            <Text style={[styles.timelineStatusText, { color: colors.textSecondary }]}>{evt.status}</Text>
                           </View>
                         )}
                       </View>

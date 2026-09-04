@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react-native';
 import { DashboardOption } from './login';
+import { useTheme } from '../../context/ThemeContext';
 
 const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
   {
@@ -119,6 +120,7 @@ export default function SpaceSelectionScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const { colors, isDark } = useTheme();
 
   const [dashboards, setDashboards] = useState<DashboardOption[]>([]);
   const [userName, setUserName] = useState('Utilisateur');
@@ -277,29 +279,29 @@ export default function SpaceSelectionScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: colors.bgSecondary }]}>
         <ActivityIndicator size="large" color="#00A651" />
-        <Text style={styles.loadingText}>Chargement de vos espaces de travail...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement de vos espaces de travail...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
       <View style={[styles.innerContent, isTablet && styles.innerContentTablet]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.badgeRow}>
-            <View style={styles.adminBadge}>
+            <View style={[styles.adminBadge, isDark && { backgroundColor: '#064e3b', borderColor: '#059669' }]}>
               <Sparkles size={13} color="#00A651" style={{ marginRight: 4 }} />
               <Text style={styles.adminBadgeText}>
                 {isAdmin ? 'Accès Administrateur Global' : 'Portail Multi-Profils'}
               </Text>
             </View>
           </View>
-          <Text style={styles.title}>Sélectionnez votre Dashboard</Text>
-          <Text style={styles.subtitle}>
-            Bonjour <Text style={{ fontWeight: '700', color: '#0f172a' }}>{userName}</Text>,
+          <Text style={[styles.title, { color: colors.text }]}>Sélectionnez votre Dashboard</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Bonjour <Text style={{ fontWeight: '700', color: colors.text }}>{userName}</Text>,
             choisissez le tableau de bord à ouvrir pour cette session :
           </Text>
         </View>
@@ -312,22 +314,36 @@ export default function SpaceSelectionScreen() {
             return (
               <TouchableOpacity
                 key={dash.id}
-                style={styles.dashCard}
+                style={[
+                  styles.dashCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}
                 onPress={() => handleSelectDashboard(dash)}
                 disabled={isRedirecting}
                 activeOpacity={0.8}
               >
-                <View style={[styles.dashIconBox, { backgroundColor: dash.bgLight }]}>
+                <View
+                  style={[
+                    styles.dashIconBox,
+                    { backgroundColor: isDark ? colors.cardSecondary : dash.bgLight },
+                  ]}
+                >
                   <IconComponent size={24} color={dash.color} />
                 </View>
 
                 <View style={styles.dashContent}>
                   <View style={styles.dashTitleRow}>
-                    <Text style={styles.dashTitle}>{dash.title}</Text>
+                    <Text style={[styles.dashTitle, { color: colors.text }]}>{dash.title}</Text>
                     <View
                       style={[
                         styles.dashBadge,
-                        { backgroundColor: dash.bgLight, borderColor: dash.color },
+                        {
+                          backgroundColor: isDark ? colors.cardSecondary : dash.bgLight,
+                          borderColor: dash.color,
+                        },
                       ]}
                     >
                       <Text style={[styles.dashBadgeText, { color: dash.color }]}>
@@ -335,12 +351,12 @@ export default function SpaceSelectionScreen() {
                       </Text>
                     </View>
                   </View>
-                  <Text style={styles.dashSubtitle} numberOfLines={2}>
+                  <Text style={[styles.dashSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
                     {dash.subtitle}
                   </Text>
                 </View>
 
-                <ChevronRight size={20} color="#94a3b8" />
+                <ChevronRight size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             );
           })}

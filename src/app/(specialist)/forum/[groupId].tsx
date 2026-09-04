@@ -8,9 +8,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { forumService, ForumDiscussion } from '../../../services/forum';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function ForumChatScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { groupId } = useLocalSearchParams();
   const queryClient = useQueryClient();
   const parsedGroupId = parseInt(groupId as string, 10);
@@ -64,14 +66,17 @@ export default function ForumChatScreen() {
     return (
       <View style={[styles.messageWrapper, isMe ? styles.messageWrapperRight : styles.messageWrapperLeft]}>
         {!isMe && (
-          <Text style={styles.authorName}>{item.isAnonymous ? 'Anonyme' : (item.author || 'Inconnu')}</Text>
+          <Text style={[styles.authorName, { color: colors.textSecondary }]}>{item.isAnonymous ? 'Anonyme' : (item.author || 'Inconnu')}</Text>
         )}
-        <View style={[styles.messageBubble, isMe ? styles.messageBubbleRight : styles.messageBubbleLeft]}>
-          <Text style={[styles.messageText, isMe ? styles.messageTextRight : styles.messageTextLeft]}>
+        <View style={[
+          styles.messageBubble, 
+          isMe ? styles.messageBubbleRight : [styles.messageBubbleLeft, { backgroundColor: colors.card, borderColor: colors.border }]
+        ]}>
+          <Text style={[styles.messageText, isMe ? styles.messageTextRight : [styles.messageTextLeft, { color: colors.text }]]}>
             {item.content}
           </Text>
         </View>
-        <Text style={[styles.timeText, isMe ? styles.timeTextRight : styles.timeTextLeft]}>
+        <Text style={[styles.timeText, { color: colors.textMuted }, isMe ? styles.timeTextRight : styles.timeTextLeft]}>
           {item.createdAt ? format(parseISO(item.createdAt), 'HH:mm', { locale: fr }) : ''}
         </Text>
       </View>
@@ -79,18 +84,18 @@ export default function ForumChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.headerText }]} numberOfLines={1}>
             {group?.name || 'Discussion'}
           </Text>
           {group?.membersCount && (
-            <Text style={styles.headerSubtitle}>{group.membersCount} membres</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{group.membersCount} membres</Text>
           )}
         </View>
       </View>
@@ -116,10 +121,11 @@ export default function ForumChatScreen() {
         )}
 
         {/* Input Area */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, { backgroundColor: colors.inputBg, borderColor: colors.border, borderWidth: 1, color: colors.text }]}
             placeholder="Écrivez un message..."
+            placeholderTextColor={colors.textMuted}
             value={message}
             onChangeText={setMessage}
             multiline

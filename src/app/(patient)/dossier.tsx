@@ -21,8 +21,10 @@ import {
   HeartPulse,
 } from 'lucide-react-native';
 import { patientService, PatientConsultationsView, PatientConsultationItem } from '../../services/patient';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PatientDossier() {
+  const { colors, isDark } = useTheme();
   const [dossierData, setDossierData] = useState<PatientConsultationsView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -52,11 +54,11 @@ export default function PatientDossier() {
   const followUps = dossierData?.activeFollowUps || [];
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#00A651" />
-          <Text style={styles.loadingText}>Chargement de votre dossier médical...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement de votre dossier médical...</Text>
         </View>
       ) : (
         <ScrollView
@@ -67,12 +69,12 @@ export default function PatientDossier() {
           }
         >
           {/* Header Info */}
-          <View style={styles.headerCard}>
-            <View style={styles.iconCircle}>
+          <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.iconCircle, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
               <HeartPulse size={26} color="#00A651" />
             </View>
-            <Text style={styles.headerTitle}>Dossier Médical & Suivi Clinique</Text>
-            <Text style={styles.headerSub}>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Dossier Médical & Suivi Clinique</Text>
+            <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
               Historique complet de vos consultations, avis médicaux et prises en charge spécialisées.
             </Text>
           </View>
@@ -80,14 +82,14 @@ export default function PatientDossier() {
           {/* Suivis en cours */}
           {followUps.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Suivis Actifs ({followUps.length})</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Suivis Actifs ({followUps.length})</Text>
               {followUps.map((fu, idx) => (
-                <View key={fu.id || idx} style={styles.followUpCard}>
+                <View key={fu.id || idx} style={[styles.followUpCard, isDark && { backgroundColor: 'rgba(37,99,235,0.15)', borderColor: '#2563eb' }]}>
                   <View style={styles.followUpHeader}>
-                    <Text style={styles.followUpStatus}>{fu.statusLabel || 'En cours'}</Text>
-                    <Text style={styles.followUpDate}>{fu.openedAt || ''}</Text>
+                    <Text style={[styles.followUpStatus, isDark && { color: '#60a5fa' }]}>{fu.statusLabel || 'En cours'}</Text>
+                    <Text style={[styles.followUpDate, { color: colors.textSecondary }]}>{fu.openedAt || ''}</Text>
                   </View>
-                  <Text style={styles.followUpMessage}>{fu.message}</Text>
+                  <Text style={[styles.followUpMessage, { color: isDark ? colors.text : '#1e293b' }]}>{fu.message}</Text>
                 </View>
               ))}
             </View>
@@ -95,41 +97,41 @@ export default function PatientDossier() {
 
           {/* Historique des Consultations */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Historique des Consultations ({consultations.length})</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Historique des Consultations ({consultations.length})</Text>
 
             {consultations.length === 0 ? (
-              <View style={styles.emptyCard}>
-                <FileText size={44} color="#cbd5e1" style={{ marginBottom: 10 }} />
-                <Text style={styles.emptyTitle}>Aucune consultation consignée</Text>
-                <Text style={styles.emptySub}>
+              <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <FileText size={44} color={colors.textMuted} style={{ marginBottom: 10 }} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune consultation consignée</Text>
+                <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                   Les comptes-rendus rédigés par vos médecins et psychologues apparaîtront dans cette rubrique.
                 </Text>
               </View>
             ) : (
               consultations.map((c, i) => (
-                <View key={c.id || i} style={styles.consultationCard}>
+                <View key={c.id || i} style={[styles.consultationCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.consultationHeader}>
-                    <View style={styles.doctorIcon}>
+                    <View style={[styles.doctorIcon, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
                       <Stethoscope size={16} color="#00A651" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.doctorName}>{c.professionalName || 'Praticien'}</Text>
-                      <Text style={styles.specialtyText}>{c.specialty || 'Consultation spécialisée'}</Text>
+                      <Text style={[styles.doctorName, { color: colors.text }]}>{c.professionalName || 'Praticien'}</Text>
+                      <Text style={[styles.specialtyText, { color: colors.textSecondary }]}>{c.specialty || 'Consultation spécialisée'}</Text>
                     </View>
-                    <Text style={styles.consultationDate}>{c.date || 'Récemment'}</Text>
+                    <Text style={[styles.consultationDate, { color: colors.textMuted }]}>{c.date || 'Récemment'}</Text>
                   </View>
 
                   {c.motif ? (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Motif :</Text>
-                      <Text style={styles.detailValue}>{c.motif}</Text>
+                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Motif :</Text>
+                      <Text style={[styles.detailValue, { color: colors.text }]}>{c.motif}</Text>
                     </View>
                   ) : null}
 
                   {c.summary ? (
-                    <View style={styles.summaryBox}>
-                      <Text style={styles.summaryLabel}>Synthèse médicale :</Text>
-                      <Text style={styles.summaryText}>{c.summary}</Text>
+                    <View style={[styles.summaryBox, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                      <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Synthèse médicale :</Text>
+                      <Text style={[styles.summaryText, { color: colors.text }]}>{c.summary}</Text>
                     </View>
                   ) : null}
                 </View>

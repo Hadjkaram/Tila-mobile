@@ -7,9 +7,11 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { forumService, ForumGroup } from '../../../services/forum';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function ForumGroupsScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   const { data: groups, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['forum_groups'],
@@ -18,37 +20,37 @@ export default function ForumGroupsScreen() {
 
   const renderGroup = ({ item }: { item: ForumGroup }) => (
     <TouchableOpacity 
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
       onPress={() => router.push(`/(specialist)/forum/${item.id}`)}
       activeOpacity={0.7}
     >
       <View style={styles.cardHeader}>
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]}>
           <Hash size={24} color="#00A651" />
         </View>
         <View style={styles.headerText}>
-          <Text style={styles.groupName}>{item.name}</Text>
+          <Text style={[styles.groupName, { color: colors.text }]}>{item.name}</Text>
           {item.isPrivate && (
-            <View style={styles.privateBadge}>
-              <Text style={styles.privateText}>Privé</Text>
+            <View style={[styles.privateBadge, { backgroundColor: colors.cardSecondary }]}>
+              <Text style={[styles.privateText, { color: colors.textSecondary }]}>Privé</Text>
             </View>
           )}
         </View>
       </View>
       
-      <Text style={styles.description} numberOfLines={2}>
+      <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
         {item.description}
       </Text>
       
-      <View style={styles.statsRow}>
+      <View style={[styles.statsRow, { backgroundColor: colors.inputBg }]}>
         <View style={styles.stat}>
-          <Users size={16} color="#64748b" />
-          <Text style={styles.statText}>{item.membersCount} membres</Text>
+          <Users size={16} color={colors.textSecondary} />
+          <Text style={[styles.statText, { color: colors.textSecondary }]}>{item.membersCount} membres</Text>
         </View>
-        <View style={styles.statDivider} />
+        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.stat}>
-          <MessageCircle size={16} color="#64748b" />
-          <Text style={styles.statText}>{item.postsCount} messages</Text>
+          <MessageCircle size={16} color={colors.textSecondary} />
+          <Text style={[styles.statText, { color: colors.textSecondary }]}>{item.postsCount} messages</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -57,7 +59,7 @@ export default function ForumGroupsScreen() {
   const renderSkeleton = () => (
     <View style={{ padding: 24 }}>
       {[1, 2, 3, 4].map(i => (
-        <View key={i} style={[styles.card, { padding: 0 }]}>
+        <View key={i} style={[styles.card, { padding: 0, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
           <Skeleton height={130} borderRadius={16} />
         </View>
       ))}
@@ -65,9 +67,9 @@ export default function ForumGroupsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Forum & Groupes</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.headerText }]}>Forum & Groupes</Text>
       </View>
 
       {isLoading ? renderSkeleton() : (
@@ -80,9 +82,9 @@ export default function ForumGroupsScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={['#00A651']} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <MessageCircle size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>Aucun groupe</Text>
-              <Text style={styles.emptyText}>
+              <MessageCircle size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun groupe</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Vous n'avez accès à aucun groupe de discussion pour le moment.
               </Text>
             </View>

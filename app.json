@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ci.tila.app",
-      "appleTeamId": "VOTRE_TEAM_ID"
+      "buildNumber": "2"
     },
     "android": {
       "package": "ci.tila.app",

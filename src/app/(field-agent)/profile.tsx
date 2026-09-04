@@ -34,9 +34,11 @@ import { tokenService } from '../../services/apiClient';
 import { syncService } from '../../services/syncService';
 import { referentialCache } from '../../services/referentialCache';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function FieldAgentProfileScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { data: contextData, isLoading } = useGetContext();
   const updateProfileMutation = useUpdateProfile();
 
@@ -182,15 +184,15 @@ export default function FieldAgentProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
-        <View style={styles.avatarCard}>
-          <View style={styles.avatarLarge}>
+        <View style={[styles.avatarCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatarLarge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5', borderColor: isDark ? '#059669' : '#86efac' }]}>
             <Text style={styles.avatarInitialsLarge}>{initials}</Text>
           </View>
-          <Text style={styles.profileName}>{fullName}</Text>
-          <View style={styles.roleBadge}>
+          <Text style={[styles.profileName, { color: colors.text }]}>{fullName}</Text>
+          <View style={[styles.roleBadge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
             <ShieldCheck size={14} color="#00A651" style={{ marginRight: 4 }} />
             <Text style={styles.roleBadgeText}>Agent de Terrain Migrant</Text>
           </View>
@@ -198,45 +200,45 @@ export default function FieldAgentProfileScreen() {
 
         {/* Coordonnées & Mission */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Coordonnées & Mission</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Coordonnées & Mission</Text>
           <TouchableOpacity onPress={handleOpenEdit} style={styles.editBtn}>
             <Edit3 size={15} color="#00A651" style={{ marginRight: 4 }} />
             <Text style={styles.editBtnText}>Modifier</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
               <Mail size={18} color="#00A651" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Email de contact</Text>
-              <Text style={styles.infoValue}>{user?.email || 'Non renseigné'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Email de contact</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{user?.email || 'Non renseigné'}</Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
               <Phone size={18} color="#00A651" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Numéro de téléphone</Text>
-              <Text style={styles.infoValue}>{user?.phoneNumber || 'Non renseigné'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Numéro de téléphone</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{user?.phoneNumber || 'Non renseigné'}</Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
               <Building size={18} color="#00A651" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Site / Centre de rattachement</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Site / Centre de rattachement</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {user?.professionalDefaultCentre?.name || 'Centre de santé & ONG partenaire'}
               </Text>
             </View>
@@ -244,19 +246,19 @@ export default function FieldAgentProfileScreen() {
         </View>
 
         {/* Synchronisation & Mode Hors-Ligne */}
-        <Text style={styles.sectionTitle}>Mode Hors-Ligne & Synchronisation</Text>
-        <View style={styles.infoCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Mode Hors-Ligne & Synchronisation</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.infoRow}>
             <View
               style={[
                 styles.infoIcon,
-                { backgroundColor: isOnline ? '#ecfdf5' : '#fee2e2' },
+                { backgroundColor: isOnline ? (isDark ? '#064e3b' : '#ecfdf5') : (isDark ? '#451a1a' : '#fee2e2') },
               ]}
             >
               {isOnline ? <Wifi size={18} color="#00A651" /> : <WifiOff size={18} color="#ef4444" />}
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Statut réseau actuel</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Statut réseau actuel</Text>
               <Text
                 style={[
                   styles.infoValue,
@@ -268,15 +270,15 @@ export default function FieldAgentProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#431407' : '#fff7ed' }]}>
               <Database size={18} color="#F58220" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>File d’attente locale</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>File d’attente locale</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {queueCount > 0
                   ? `${queueCount} action(s) à synchroniser`
                   : 'Toutes les données sont synchronisées'}
@@ -303,7 +305,7 @@ export default function FieldAgentProfileScreen() {
 
             {queueCount > 0 && (
               <TouchableOpacity
-                style={styles.clearBtn}
+                style={[styles.clearBtn, { backgroundColor: isDark ? '#451a1a' : '#fee2e2' }]}
                 onPress={handleClearCache}
                 activeOpacity={0.8}
               >
@@ -314,25 +316,29 @@ export default function FieldAgentProfileScreen() {
         </View>
 
         {/* Sécurité */}
-        <Text style={styles.sectionTitle}>Sécurité & Compte</Text>
-        <View style={styles.infoCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Sécurité & Compte</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity
             style={styles.securityRow}
             onPress={() => setIsPasswordModalOpen(true)}
             activeOpacity={0.7}
           >
-            <View style={styles.infoIcon}>
-              <Lock size={18} color="#64748b" />
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#334155' : '#f1f5f9' }]}>
+              <Lock size={18} color={colors.textSecondary} />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.securityLabel}>Changer de mot de passe</Text>
-              <Text style={styles.securitySub}>Mettre à jour le mot de passe de votre compte</Text>
+              <Text style={[styles.securityLabel, { color: colors.text }]}>Changer de mot de passe</Text>
+              <Text style={[styles.securitySub, { color: colors.textSecondary }]}>Mettre à jour le mot de passe de votre compte</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Bouton de Déconnexion */}
-        <TouchableOpacity style={styles.logoutFullButton} onPress={handleLogout} activeOpacity={0.8}>
+        <TouchableOpacity 
+          style={[styles.logoutFullButton, { backgroundColor: isDark ? '#451a1a' : '#fef2f2', borderColor: isDark ? '#7f1d1d' : '#fee2e2' }]} 
+          onPress={handleLogout} 
+          activeOpacity={0.8}
+        >
           <LogOut size={18} color="#ef4444" style={{ marginRight: 8 }} />
           <Text style={styles.logoutButtonText}>Déconnexion de l'application</Text>
         </TouchableOpacity>
@@ -341,35 +347,38 @@ export default function FieldAgentProfileScreen() {
       {/* Modal Modification Coordonnées */}
       <Modal visible={isEditModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Modifier mes coordonnées</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mes coordonnées</Text>
               <TouchableOpacity onPress={() => setIsEditModalOpen(false)}>
-                <X size={20} color="#64748b" />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalForm}>
-              <Text style={styles.inputLabel}>Prénom</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Prénom</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 value={editFirstName}
                 onChangeText={setEditFirstName}
+                placeholderTextColor={colors.textMuted}
               />
 
-              <Text style={styles.inputLabel}>Nom</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Nom</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 value={editLastName}
                 onChangeText={setEditLastName}
+                placeholderTextColor={colors.textMuted}
               />
 
-              <Text style={styles.inputLabel}>Numéro de téléphone</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Numéro de téléphone</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 value={editPhone}
                 onChangeText={setEditPhone}
                 keyboardType="phone-pad"
+                placeholderTextColor={colors.textMuted}
               />
 
               <TouchableOpacity
@@ -391,40 +400,43 @@ export default function FieldAgentProfileScreen() {
       {/* Modal Changement Mot de Passe */}
       <Modal visible={isPasswordModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Changer le mot de passe</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Changer le mot de passe</Text>
               <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)}>
-                <X size={20} color="#64748b" />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalForm}>
-              <Text style={styles.inputLabel}>Mot de passe actuel</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Mot de passe actuel</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 secureTextEntry
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 placeholder="Votre mot de passe actuel"
+                placeholderTextColor={colors.textMuted}
               />
 
-              <Text style={styles.inputLabel}>Nouveau mot de passe</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Nouveau mot de passe</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder="Au moins 8 caractères"
+                placeholderTextColor={colors.textMuted}
               />
 
-              <Text style={styles.inputLabel}>Confirmer le nouveau mot de passe</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Confirmer le nouveau mot de passe</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Répétez le mot de passe"
+                placeholderTextColor={colors.textMuted}
               />
 
               <TouchableOpacity style={styles.saveBtn} onPress={handleChangePassword}>

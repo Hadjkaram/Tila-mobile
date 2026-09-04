@@ -20,6 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { agentService, AgentSubmissionItem } from '../../../services/agent';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 interface ClinicalTool {
   key: string;
@@ -86,6 +87,7 @@ const CLINICAL_TOOLS: ClinicalTool[] = [
 
 export default function FieldAgentAssessmentsCatalogScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   // Load questionnaires & submissions
   const { data: questionnaires, isLoading, refetch, isRefetching } = useQuery({
@@ -129,7 +131,7 @@ export default function FieldAgentAssessmentsCatalogScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -137,8 +139,8 @@ export default function FieldAgentAssessmentsCatalogScreen() {
       >
         {/* En-tête du catalogue */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Outils d’évaluation terrain</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Outils d’évaluation terrain</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             Sélectionnez un outil adapté à la situation du migrant pour démarrer un dépistage.
           </Text>
         </View>
@@ -148,24 +150,24 @@ export default function FieldAgentAssessmentsCatalogScreen() {
           {CLINICAL_TOOLS.map((tool) => {
             const IconComponent = tool.icon;
             return (
-              <View key={tool.key} style={styles.toolCard}>
+              <View key={tool.key} style={[styles.toolCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.toolTopRow}>
-                  <View style={[styles.toolIconBox, { backgroundColor: tool.bgLight }]}>
+                  <View style={[styles.toolIconBox, { backgroundColor: isDark ? '#1e293b' : tool.bgLight }]}>
                     <IconComponent size={24} color={tool.color} />
                   </View>
                   <View style={styles.toolHeaderInfo}>
-                    <Text style={styles.toolName}>{tool.name}</Text>
-                    <Text style={styles.toolSubtitle}>{tool.subtitle}</Text>
+                    <Text style={[styles.toolName, { color: colors.text }]}>{tool.name}</Text>
+                    <Text style={[styles.toolSubtitle, { color: colors.textSecondary }]}>{tool.subtitle}</Text>
                   </View>
                 </View>
 
-                <Text style={styles.toolDescription}>{tool.description}</Text>
+                <Text style={[styles.toolDescription, { color: colors.textSecondary }]}>{tool.description}</Text>
 
                 {/* Tags & Durée */}
                 <View style={styles.tagsContainer}>
-                  <View style={styles.durationBadge}>
-                    <Clock size={12} color="#64748b" style={{ marginRight: 4 }} />
-                    <Text style={styles.durationText}>{tool.duration}</Text>
+                  <View style={[styles.durationBadge, { backgroundColor: colors.cardSecondary }]}>
+                    <Clock size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                    <Text style={[styles.durationText, { color: colors.textSecondary }]}>{tool.duration}</Text>
                   </View>
 
                   {tool.tags.map((t) => (
@@ -173,12 +175,14 @@ export default function FieldAgentAssessmentsCatalogScreen() {
                       key={t}
                       style={[
                         styles.tagBadge,
-                        t === 'Prioritaire' && { backgroundColor: '#fff1f2', borderColor: '#fecdd3' },
+                        { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                        t === 'Prioritaire' && { backgroundColor: isDark ? '#451a1a' : '#fff1f2', borderColor: isDark ? '#7f1d1d' : '#fecdd3' },
                       ]}
                     >
                       <Text
                         style={[
                           styles.tagText,
+                          { color: colors.textSecondary },
                           t === 'Prioritaire' && { color: '#e11d48', fontWeight: '600' },
                         ]}
                       >
@@ -207,15 +211,15 @@ export default function FieldAgentAssessmentsCatalogScreen() {
           <View style={styles.historySection}>
             <View style={styles.sectionHeader}>
               <ClipboardList size={18} color="#00A651" />
-              <Text style={styles.historySectionTitle}>Historique récent des évaluations</Text>
+              <Text style={[styles.historySectionTitle, { color: colors.text }]}>Historique récent des évaluations</Text>
             </View>
 
             <View style={styles.historyList}>
               {submissions.slice(0, 5).map((item) => (
-                <View key={item.id} style={styles.historyCard}>
+                <View key={item.id} style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.historyCardHeader}>
-                    <Text style={styles.historyPatientName}>{item.patientName || 'Migrant évalué'}</Text>
-                    <View style={[styles.historyStatus, item.completed ? styles.statusDone : styles.statusPending]}>
+                    <Text style={[styles.historyPatientName, { color: colors.text }]}>{item.patientName || 'Migrant évalué'}</Text>
+                    <View style={[styles.historyStatus, item.completed ? [styles.statusDone, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }] : [styles.statusPending, { backgroundColor: isDark ? '#431407' : '#fef3c7' }]]}>
                       <Text style={[styles.historyStatusText, item.completed ? styles.textDone : styles.textPending]}>
                         {item.completed ? 'Terminé' : 'En cours'}
                       </Text>
@@ -223,8 +227,8 @@ export default function FieldAgentAssessmentsCatalogScreen() {
                   </View>
                   <Text style={styles.historyToolName}>{item.questionnaireTitle || item.questionnaireKey}</Text>
                   <View style={styles.historyDateRow}>
-                    <Calendar size={12} color="#94a3b8" style={{ marginRight: 4 }} />
-                    <Text style={styles.historyDateText}>{formatDate(item.createdAt)}</Text>
+                    <Calendar size={12} color={colors.textMuted} style={{ marginRight: 4 }} />
+                    <Text style={[styles.historyDateText, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
                   </View>
                 </View>
               ))}

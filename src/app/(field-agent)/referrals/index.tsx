@@ -30,10 +30,12 @@ import { useQuery } from '@tanstack/react-query';
 import { agentService, AgentReferralItem } from '../../../services/agent';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 type FilterStatus = 'ALL' | 'PENDING' | 'RECEIVED' | 'URGENT';
 
 export default function FieldAgentReferralsScreen() {
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('ALL');
   const [selectedReferral, setSelectedReferral] = useState<AgentReferralItem | null>(null);
@@ -102,46 +104,50 @@ export default function FieldAgentReferralsScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.card, isUrgent && styles.cardUrgent]}
+        style={[
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          isUrgent && [styles.cardUrgent, { backgroundColor: isDark ? '#451a1a22' : '#fffbfa', borderColor: isDark ? '#7f1d1d' : '#fca5a5' }]
+        ]}
         onPress={() => setSelectedReferral(item)}
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          <View style={styles.badge}>
+          <View style={[styles.badge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
             <ArrowRightLeft size={13} color="#00A651" style={{ marginRight: 4 }} />
             <Text style={styles.badgeText}>Orientation</Text>
           </View>
 
-          <View style={[styles.priorityBadge, { backgroundColor: pStyle.bg }]}>
+          <View style={[styles.priorityBadge, { backgroundColor: isDark ? '#451a1a' : pStyle.bg }]}>
             <Text style={[styles.priorityText, { color: pStyle.text }]}>{pStyle.label}</Text>
           </View>
         </View>
 
         <View style={styles.cardBody}>
           <View style={styles.row}>
-            <User size={16} color="#0f172a" style={{ marginRight: 8 }} />
-            <Text style={styles.patientName}>{item.patientName || 'Migrant orienté'}</Text>
+            <User size={16} color={colors.text} style={{ marginRight: 8 }} />
+            <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || 'Migrant orienté'}</Text>
           </View>
 
           {!!item.motif && (
-            <Text style={styles.motifText} numberOfLines={2}>
+            <Text style={[styles.motifText, { color: colors.textSecondary }]} numberOfLines={2}>
               Motif : {item.motif}
             </Text>
           )}
 
           {!!(item.specialiste || item.referredToCentreName || item.centre) && (
             <View style={styles.rowSub}>
-              <Building size={14} color="#64748b" style={{ marginRight: 6 }} />
-              <Text style={styles.destText} numberOfLines={1}>
+              <Building size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={[styles.destText, { color: colors.textSecondary }]} numberOfLines={1}>
                 Vers : {item.specialiste || item.referredToCentreName || item.centre}
               </Text>
             </View>
           )}
 
-          <View style={styles.cardFooter}>
+          <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
             <View style={styles.rowSub}>
-              <Calendar size={13} color="#94a3b8" style={{ marginRight: 4 }} />
-              <Text style={styles.dateText}>
+              <Calendar size={13} color={colors.textMuted} style={{ marginRight: 4 }} />
+              <Text style={[styles.dateText, { color: colors.textSecondary }]}>
                 {formatDate(item.dateReference || item.dateDepistage)}
               </Text>
             </View>
@@ -157,20 +163,21 @@ export default function FieldAgentReferralsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {/* Search Input */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchInputWrap}>
-          <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+      <View style={[styles.searchSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={[styles.searchInputWrap, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+          <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Rechercher par nom, motif, centre..."
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={16} color="#94a3b8" />
+              <X size={16} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -178,37 +185,69 @@ export default function FieldAgentReferralsScreen() {
         {/* Filter Pills */}
         <View style={styles.filterPillsRow}>
           <TouchableOpacity
-            style={[styles.filterPill, activeFilter === 'ALL' && styles.filterPillActive]}
+            style={[
+              styles.filterPill, 
+              { backgroundColor: colors.cardSecondary },
+              activeFilter === 'ALL' && styles.filterPillActive
+            ]}
             onPress={() => setActiveFilter('ALL')}
           >
-            <Text style={[styles.filterPillText, activeFilter === 'ALL' && styles.filterPillTextActive]}>
+            <Text style={[
+              styles.filterPillText, 
+              { color: colors.textSecondary },
+              activeFilter === 'ALL' && styles.filterPillTextActive
+            ]}>
               Tous ({referrals.length})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterPill, activeFilter === 'URGENT' && styles.filterPillActive]}
+            style={[
+              styles.filterPill, 
+              { backgroundColor: colors.cardSecondary },
+              activeFilter === 'URGENT' && styles.filterPillActive
+            ]}
             onPress={() => setActiveFilter('URGENT')}
           >
-            <Text style={[styles.filterPillText, activeFilter === 'URGENT' && styles.filterPillTextActive]}>
+            <Text style={[
+              styles.filterPillText, 
+              { color: colors.textSecondary },
+              activeFilter === 'URGENT' && styles.filterPillTextActive
+            ]}>
               🚨 Urgents
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterPill, activeFilter === 'PENDING' && styles.filterPillActive]}
+            style={[
+              styles.filterPill, 
+              { backgroundColor: colors.cardSecondary },
+              activeFilter === 'PENDING' && styles.filterPillActive
+            ]}
             onPress={() => setActiveFilter('PENDING')}
           >
-            <Text style={[styles.filterPillText, activeFilter === 'PENDING' && styles.filterPillTextActive]}>
+            <Text style={[
+              styles.filterPillText, 
+              { color: colors.textSecondary },
+              activeFilter === 'PENDING' && styles.filterPillTextActive
+            ]}>
               En attente
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterPill, activeFilter === 'RECEIVED' && styles.filterPillActive]}
+            style={[
+              styles.filterPill, 
+              { backgroundColor: colors.cardSecondary },
+              activeFilter === 'RECEIVED' && styles.filterPillActive
+            ]}
             onPress={() => setActiveFilter('RECEIVED')}
           >
-            <Text style={[styles.filterPillText, activeFilter === 'RECEIVED' && styles.filterPillTextActive]}>
+            <Text style={[
+              styles.filterPillText, 
+              { color: colors.textSecondary },
+              activeFilter === 'RECEIVED' && styles.filterPillTextActive
+            ]}>
               Reçus
             </Text>
           </TouchableOpacity>
@@ -227,9 +266,9 @@ export default function FieldAgentReferralsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <ArrowRightLeft size={40} color="#cbd5e1" style={{ marginBottom: 12 }} />
-            <Text style={styles.emptyTitle}>Aucune orientation trouvée</Text>
-            <Text style={styles.emptySub}>
+            <ArrowRightLeft size={40} color={colors.textMuted} style={{ marginBottom: 12 }} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune orientation trouvée</Text>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
               {searchQuery
                 ? 'Aucune fiche ne correspond à votre recherche.'
                 : 'Les migrants orientés vers un centre partenaire apparaîtront ici.'}
@@ -241,37 +280,37 @@ export default function FieldAgentReferralsScreen() {
       {/* Modal Fiche d'Orientation Détaillée */}
       <Modal visible={!!selectedReferral} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Fiche d’Orientation Terrain</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Fiche d’Orientation Terrain</Text>
               <TouchableOpacity onPress={() => setSelectedReferral(null)}>
-                <X size={20} color="#64748b" />
+                <X size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {selectedReferral && (
               <ScrollView contentContainerStyle={styles.modalBody}>
                 {/* Patient Header */}
-                <View style={styles.detailCard}>
-                  <Text style={styles.detailLabel}>Migrant / Patient</Text>
-                  <Text style={styles.detailValueName}>
+                <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Migrant / Patient</Text>
+                  <Text style={[styles.detailValueName, { color: colors.text }]}>
                     {selectedReferral.patientName || 'Non renseigné'}
                   </Text>
                   {!!selectedReferral.internalPatientCode && (
-                    <Text style={styles.detailSubCode}>
+                    <Text style={[styles.detailSubCode, { color: colors.textMuted }]}>
                       Matricule : {selectedReferral.internalPatientCode}
                     </Text>
                   )}
                 </View>
 
                 {/* Motif & Priorité */}
-                <View style={styles.detailCard}>
-                  <Text style={styles.detailLabel}>Niveau d’urgence</Text>
+                <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Niveau d’urgence</Text>
                   <View style={{ flexDirection: 'row', marginTop: 4 }}>
                     <View
                       style={[
                         styles.priorityBadge,
-                        { backgroundColor: getPriorityStyle(selectedReferral.niveauPriorite).bg },
+                        { backgroundColor: isDark ? '#451a1a' : getPriorityStyle(selectedReferral.niveauPriorite).bg },
                       ]}
                     >
                       <Text
@@ -285,41 +324,41 @@ export default function FieldAgentReferralsScreen() {
                     </View>
                   </View>
 
-                  <Text style={[styles.detailLabel, { marginTop: 12 }]}>Motif d’orientation</Text>
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary, marginTop: 12 }]}>Motif d’orientation</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>
                     {selectedReferral.motif || 'Non renseigné'}
                   </Text>
                 </View>
 
                 {/* Structure de destination */}
-                <View style={styles.detailCard}>
-                  <Text style={styles.detailLabel}>Structure / Destinataire</Text>
-                  <Text style={styles.detailValue}>
+                <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Structure / Destinataire</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>
                     {selectedReferral.specialiste ||
                       selectedReferral.referredToCentreName ||
                       selectedReferral.centre ||
                       'Centre partenaire'}
                   </Text>
 
-                  <Text style={[styles.detailLabel, { marginTop: 12 }]}>Date de référence</Text>
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary, marginTop: 12 }]}>Date de référence</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>
                     {formatDate(selectedReferral.dateReference || selectedReferral.dateDepistage)}
                   </Text>
                 </View>
 
                 {/* Notes de terrain si présentes */}
                 {!!selectedReferral.notes && (
-                  <View style={styles.detailCard}>
-                    <Text style={styles.detailLabel}>Notes cliniques & terrain</Text>
-                    <Text style={styles.detailValue}>{selectedReferral.notes}</Text>
+                  <View style={[styles.detailCard, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Notes cliniques & terrain</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{selectedReferral.notes}</Text>
                   </View>
                 )}
 
                 <TouchableOpacity
-                  style={styles.closeModalBtn}
+                  style={[styles.closeModalBtn, { backgroundColor: colors.cardSecondary }]}
                   onPress={() => setSelectedReferral(null)}
                 >
-                  <Text style={styles.closeModalBtnText}>Fermer la fiche</Text>
+                  <Text style={[styles.closeModalBtnText, { color: colors.text }]}>Fermer la fiche</Text>
                 </TouchableOpacity>
               </ScrollView>
             )}

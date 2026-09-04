@@ -20,9 +20,11 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function AssessmentsScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
@@ -55,9 +57,9 @@ export default function AssessmentsScreen() {
   };
 
   const renderItem = ({ item }: { item: AgentSubmissionItem }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
-        <View style={styles.badge}>
+        <View style={[styles.badge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
           <ClipboardList size={14} color="#00A651" style={{ marginRight: 4 }} />
           <Text style={styles.badgeText}>
             {item.questionnaireTitle || item.questionnaireKey || 'ODS'}
@@ -65,12 +67,12 @@ export default function AssessmentsScreen() {
         </View>
 
         {item.completed ? (
-          <View style={[styles.statusBadge, { backgroundColor: '#ecfdf5' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
             <CheckCircle2 size={12} color="#00A651" style={{ marginRight: 4 }} />
             <Text style={[styles.statusText, { color: '#00A651' }]}>Terminé</Text>
           </View>
         ) : (
-          <View style={[styles.statusBadge, { backgroundColor: '#fff7ed' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: isDark ? '#431407' : '#fff7ed' }]}>
             <Clock size={12} color="#f97316" style={{ marginRight: 4 }} />
             <Text style={[styles.statusText, { color: '#f97316' }]}>En cours</Text>
           </View>
@@ -79,20 +81,20 @@ export default function AssessmentsScreen() {
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
-          <User size={16} color="#64748b" style={styles.rowIcon} />
-          <Text style={styles.patientName}>{item.patientName || 'Patient non renseigné'}</Text>
+          <User size={16} color={colors.textSecondary} style={styles.rowIcon} />
+          <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || 'Patient non renseigné'}</Text>
         </View>
 
         {!!item.centre && (
           <View style={styles.infoRow}>
-            <Building size={16} color="#94a3b8" style={styles.rowIcon} />
-            <Text style={styles.centreName}>{item.centre}</Text>
+            <Building size={16} color={colors.textMuted} style={styles.rowIcon} />
+            <Text style={[styles.centreName, { color: colors.textSecondary }]}>{item.centre}</Text>
           </View>
         )}
 
         <View style={styles.infoRow}>
-          <Calendar size={16} color="#94a3b8" style={styles.rowIcon} />
-          <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+          <Calendar size={16} color={colors.textMuted} style={styles.rowIcon} />
+          <Text style={[styles.dateText, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
         </View>
       </View>
     </View>
@@ -101,7 +103,7 @@ export default function AssessmentsScreen() {
   const renderSkeleton = () => (
     <View style={styles.listContent}>
       {[1, 2, 3, 4].map((i) => (
-        <View key={i} style={[styles.card, { padding: 16 }]}>
+        <View key={i} style={[styles.card, { padding: 16, backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
             <Skeleton height={22} width={120} borderRadius={6} />
             <Skeleton height={22} width={80} borderRadius={6} />
@@ -115,26 +117,26 @@ export default function AssessmentsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       {/* Top Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Dépistages ODS</Text>
-        <Text style={styles.subtitle}>Historique et évaluations de terrain</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Dépistages ODS</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Historique et évaluations de terrain</Text>
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Rechercher par patient, questionnaire..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textMuted}
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearIcon}>
-            <X size={18} color="#94a3b8" />
+            <X size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -158,11 +160,11 @@ export default function AssessmentsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Inbox size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>
+              <Inbox size={48} color={colors.textMuted} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {searchQuery ? "Aucun résultat" : "Aucun dépistage"}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {searchQuery 
                   ? `Aucun dépistage ne correspond à "${searchQuery}".`
                   : "Vous n'avez pas encore enregistré de dépistage sur le terrain."}

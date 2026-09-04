@@ -8,8 +8,10 @@ import { professionalService } from '../../services/professionals';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { format, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ProCalendar() {
+  const { colors, isDark } = useTheme();
   // Par défaut on charge la semaine en cours
   const [dateRange, setDateRange] = useState({
     from: startOfWeek(new Date(), { weekStartsOn: 1 }),
@@ -30,18 +32,18 @@ export default function ProCalendar() {
   const renderAppointment = ({ item }: { item: any }) => {
     const aptDate = parseISO(item.start);
     return (
-      <View style={styles.card}>
-        <View style={styles.timeColumn}>
-          <Text style={styles.dateText}>{format(aptDate, 'EEE dd', { locale: fr })}</Text>
-          <Text style={styles.timeText}>{item.time || format(aptDate, 'HH:mm')}</Text>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
+        <View style={[styles.timeColumn, { borderRightColor: colors.border }]}>
+          <Text style={[styles.dateText, { color: colors.textSecondary }]}>{format(aptDate, 'EEE dd', { locale: fr })}</Text>
+          <Text style={[styles.timeText, { color: colors.text }]}>{item.time || format(aptDate, 'HH:mm')}</Text>
         </View>
         <View style={styles.detailsColumn}>
-          <Text style={styles.patientName}>{item.patientName || (typeof item.patient === 'object' ? item.patient?.name : item.patient) || 'Inconnu'}</Text>
+          <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || (typeof item.patient === 'object' ? item.patient?.name : item.patient) || 'Inconnu'}</Text>
           
           <View style={styles.metaRow}>
             <View style={styles.typeBadge}>
-              {item.type === 'video' ? <Video size={14} color="#64748b" style={styles.metaIcon} /> : <CalendarIcon size={14} color="#64748b" style={styles.metaIcon} />}
-              <Text style={styles.metaText}>{item.type === 'video' ? 'Téléconsultation' : 'Présentiel'}</Text>
+              {item.type === 'video' ? <Video size={14} color={colors.textSecondary} style={styles.metaIcon} /> : <CalendarIcon size={14} color={colors.textSecondary} style={styles.metaIcon} />}
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>{item.type === 'video' ? 'Téléconsultation' : 'Présentiel'}</Text>
             </View>
             <View style={[styles.statusBadge, item.status === 'confirmé' ? styles.statusConfirmed : styles.statusPending]}>
               <Text style={[styles.statusText, item.status === 'confirmé' ? styles.statusTextConfirmed : styles.statusTextPending]}>
@@ -55,10 +57,10 @@ export default function ProCalendar() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Rendez-vous</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>Rendez-vous</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Du {format(dateRange.from, 'dd MMM', { locale: fr })} au {format(dateRange.to, 'dd MMM yyyy', { locale: fr })}
         </Text>
       </View>
@@ -79,9 +81,9 @@ export default function ProCalendar() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={['#00A651']} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <CalendarIcon size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>Aucun rendez-vous</Text>
-              <Text style={styles.emptyText}>Vous n'avez pas de consultations prévues sur cette période.</Text>
+              <CalendarIcon size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun rendez-vous</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Vous n'avez pas de consultations prévues sur cette période.</Text>
             </View>
           }
         />

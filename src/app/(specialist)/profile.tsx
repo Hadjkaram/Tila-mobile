@@ -28,9 +28,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useGetContext, useUpdateProfile } from '../../hooks/useProfessionalApi';
 import { tokenService } from '../../services/apiClient';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SpecialistProfileScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { data: contextData, isLoading } = useGetContext();
   const updateProfileMutation = useUpdateProfile();
 
@@ -110,7 +112,7 @@ export default function SpecialistProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#00A651" />
         </View>
@@ -119,13 +121,13 @@ export default function SpecialistProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mon Profil</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Mon Profil</Text>
         <TouchableOpacity onPress={handleOpenEdit} style={styles.editHeaderButton}>
           <Edit3 size={20} color="#00A651" />
         </TouchableOpacity>
@@ -134,50 +136,50 @@ export default function SpecialistProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Profile Card */}
-        <View style={styles.avatarCard}>
-          <View style={styles.avatarLarge}>
+        <View style={[styles.avatarCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatarLarge, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5', borderColor: isDark ? '#059669' : '#86efac' }]}>
             <Text style={styles.avatarInitialsLarge}>{initials}</Text>
           </View>
-          <Text style={styles.profileName}>{fullName}</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>{fullName}</Text>
           <Text style={styles.profileRole}>
             {user?.specialty || user?.profession?.name || 'Spécialiste de Santé'}
           </Text>
         </View>
 
         {/* Coordonnées & Informations */}
-        <Text style={styles.sectionTitle}>Coordonnées & Profession</Text>
-        <View style={styles.infoCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Coordonnées & Profession</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
               <Mail size={18} color="#00A651" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user?.email || 'Non renseigné'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Email</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{user?.email || 'Non renseigné'}</Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
               <Phone size={18} color="#00A651" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Téléphone</Text>
-              <Text style={styles.infoValue}>{user?.phoneNumber || 'Non renseigné'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Téléphone</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{user?.phoneNumber || 'Non renseigné'}</Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
               <Briefcase size={18} color="#00A651" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Spécialité</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Spécialité</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {user?.specialty || user?.profession?.name || 'Médecin Spécialiste'}
               </Text>
             </View>
@@ -185,14 +187,14 @@ export default function SpecialistProfileScreen() {
 
           {!!user?.professionalDefaultCentre?.name && (
             <>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
               <View style={styles.infoRow}>
-                <View style={styles.infoIcon}>
+                <View style={[styles.infoIcon, { backgroundColor: isDark ? '#064e3b' : '#ecfdf5' }]}>
                   <Building size={18} color="#00A651" />
                 </View>
                 <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Centre / Établissement</Text>
-                  <Text style={styles.infoValue}>{user.professionalDefaultCentre.name}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Centre / Établissement</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{user.professionalDefaultCentre.name}</Text>
                 </View>
               </View>
             </>
@@ -200,26 +202,26 @@ export default function SpecialistProfileScreen() {
         </View>
 
         {/* Sécurité & Paramètres */}
-        <Text style={styles.sectionTitle}>Sécurité</Text>
-        <View style={styles.infoCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Sécurité</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <TouchableOpacity 
             style={styles.securityRow} 
             onPress={() => setIsPasswordModalOpen(true)}
             activeOpacity={0.7}
           >
-            <View style={styles.infoIcon}>
-              <Lock size={18} color="#64748b" />
+            <View style={[styles.infoIcon, { backgroundColor: isDark ? '#334155' : '#f1f5f9' }]}>
+              <Lock size={18} color={colors.textSecondary} />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.securityLabel}>Changer de mot de passe</Text>
-              <Text style={styles.securitySub}>Sécurisez votre compte avec un nouveau mot de passe</Text>
+              <Text style={[styles.securityLabel, { color: colors.text }]}>Changer de mot de passe</Text>
+              <Text style={[styles.securitySub, { color: colors.textSecondary }]}>Sécurisez votre compte avec un nouveau mot de passe</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
         <TouchableOpacity 
-          style={styles.logoutFullButton} 
+          style={[styles.logoutFullButton, { backgroundColor: isDark ? '#451a1a' : '#fef2f2', borderColor: isDark ? '#7f1d1d' : '#fee2e2' }]} 
           onPress={handleLogout}
           activeOpacity={0.8}
         >
@@ -232,35 +234,38 @@ export default function SpecialistProfileScreen() {
       {/* Modal Modification Infos */}
       <Modal visible={isEditModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Modifier mon profil</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mon profil</Text>
               <TouchableOpacity onPress={() => setIsEditModalOpen(false)}>
-                <X size={22} color="#64748b" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.inputLabel}>Prénom</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Prénom</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 value={editFirstName}
                 onChangeText={setEditFirstName}
+                placeholderTextColor={colors.textMuted}
               />
 
-              <Text style={styles.inputLabel}>Nom</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Nom</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 value={editLastName}
                 onChangeText={setEditLastName}
+                placeholderTextColor={colors.textMuted}
               />
 
-              <Text style={styles.inputLabel}>Téléphone</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Téléphone</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 value={editPhone}
                 onChangeText={setEditPhone}
                 keyboardType="phone-pad"
+                placeholderTextColor={colors.textMuted}
               />
 
               <TouchableOpacity
@@ -282,29 +287,31 @@ export default function SpecialistProfileScreen() {
       {/* Modal Changement Mot de Passe */}
       <Modal visible={isPasswordModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Changer de mot de passe</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Changer de mot de passe</Text>
               <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)}>
-                <X size={22} color="#64748b" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.inputLabel}>Nouveau mot de passe</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Nouveau mot de passe</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 secureTextEntry
                 placeholder="Au moins 8 caractères"
+                placeholderTextColor={colors.textMuted}
                 value={newPassword}
                 onChangeText={setNewPassword}
               />
 
-              <Text style={styles.inputLabel}>Confirmer le nouveau mot de passe</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Confirmer le nouveau mot de passe</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 secureTextEntry
                 placeholder="Répétez le mot de passe"
+                placeholderTextColor={colors.textMuted}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
               />

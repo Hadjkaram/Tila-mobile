@@ -13,6 +13,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: ci.tila.app
       vars:
+        BUNDLE_ID: "ci.tila.app"
         EXPO_PUBLIC_API_URL: "https://apiv2.tila.ci"
     scripts:
       - name: Configurer l'environnement de production
@@ -26,6 +27,18 @@ workflows:
         script: |
           echo "EXPO_PUBLIC_API_URL=https://apiv2.tila.ci" > .env
           npx expo prebuild --platform ios --clean
+
+      - name: Incrémenter automatiquement le numéro de build
+        script: |
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo 1)
+          if [ -z "$LATEST_BUILD_NUMBER" ] || [ "$LATEST_BUILD_NUMBER" -le 0 ]; then
+            NEXT_BUILD_NUMBER=2
+          else
+            NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          fi
+          echo "Prochain numéro de build TestFlight: $NEXT_BUILD_NUMBER"
+          cd ios
+          agvtool new-version -all $NEXT_BUILD_NUMBER
 
       - name: Installer les Pods CocoaPods
         script: |

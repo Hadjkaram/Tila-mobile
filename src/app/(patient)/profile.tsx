@@ -28,9 +28,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { tokenService } from '../../services/apiClient';
 import { patientService, PatientProfile } from '../../services/patient';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PatientProfileScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(true);
@@ -109,111 +111,111 @@ export default function PatientProfileScreen() {
   const initials = ((firstName[0] || '') + (lastName[0] || 'P')).toUpperCase() || 'PT';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Top Header avec flèche de retour */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backBtn}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color="#0f172a" />
+          <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Mon Profil</Text>
+        <Text style={[styles.topBarTitle, { color: colors.headerText }]}>Mon Profil</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Carte Identité Patient */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarWrap}>
+        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatarWrap, { backgroundColor: isDark ? 'rgba(0, 166, 81, 0.15)' : '#ecfdf5', borderColor: isDark ? '#00A651' : '#a7f3d0' }]}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <Text style={styles.userName}>{fullName}</Text>
-          <View style={styles.roleBadge}>
+          <Text style={[styles.userName, { color: colors.text }]}>{fullName}</Text>
+          <View style={[styles.roleBadge, { backgroundColor: isDark ? 'rgba(0, 166, 81, 0.15)' : '#ecfdf5' }]}>
             <Heart size={13} color="#00A651" style={{ marginRight: 4 }} />
             <Text style={styles.roleBadgeText}>PATIENT / BÉNÉFICIAIRE</Text>
           </View>
         </View>
 
         {/* 2. Coordonnées */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Mes Coordonnées</Text>
-          <View style={styles.infoRow}>
-            <Mail size={16} color="#64748b" style={{ marginRight: 10 }} />
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Mes Coordonnées</Text>
+          <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+            <Mail size={16} color={colors.textSecondary} style={{ marginRight: 10 }} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.infoLabel}>Adresse email</Text>
-              <Text style={styles.infoValue}>{email}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Adresse email</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{email}</Text>
             </View>
           </View>
-          <View style={styles.infoRow}>
-            <Phone size={16} color="#64748b" style={{ marginRight: 10 }} />
+          <View style={[styles.infoRow, { borderBottomColor: 'transparent' }]}>
+            <Phone size={16} color={colors.textSecondary} style={{ marginRight: 10 }} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.infoLabel}>Numéro de téléphone</Text>
-              <Text style={styles.infoValue}>{phone}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Numéro de téléphone</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{phone}</Text>
             </View>
           </View>
         </View>
 
         {/* 3. Notifications & Rappels de RDV */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
             <Bell size={16} color="#00A651" />
-            <Text style={styles.sectionTitle}>Rappels & Notifications</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Rappels & Notifications</Text>
           </View>
 
-          <View style={styles.prefRow}>
+          <View style={[styles.prefRow, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={styles.prefTitle}>Rappels de rendez-vous Push</Text>
-              <Text style={styles.prefSub}>Notification 1h avant vos consultations</Text>
+              <Text style={[styles.prefTitle, { color: colors.text }]}>Rappels de rendez-vous Push</Text>
+              <Text style={[styles.prefSub, { color: colors.textSecondary }]}>Notification 1h avant vos consultations</Text>
             </View>
             <Switch
               value={pushEnabled}
               onValueChange={setPushEnabled}
-              trackColor={{ false: '#cbd5e1', true: '#00A651' }}
+              trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: '#00A651' }}
               thumbColor="#ffffff"
             />
           </View>
 
-          <View style={styles.prefRow}>
+          <View style={[styles.prefRow, { borderBottomColor: 'transparent' }]}>
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={styles.prefTitle}>Rappels SMS de consultation</Text>
-              <Text style={styles.prefSub}>Confirmation de vos prises de RDV par SMS</Text>
+              <Text style={[styles.prefTitle, { color: colors.text }]}>Rappels SMS de consultation</Text>
+              <Text style={[styles.prefSub, { color: colors.textSecondary }]}>Confirmation de vos prises de RDV par SMS</Text>
             </View>
             <Switch
               value={smsEnabled}
               onValueChange={setSmsEnabled}
-              trackColor={{ false: '#cbd5e1', true: '#00A651' }}
+              trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: '#00A651' }}
               thumbColor="#ffffff"
             />
           </View>
         </View>
 
         {/* 4. Données locales & Cache */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
-            <HardDrive size={16} color="#64748b" />
-            <Text style={styles.sectionTitle}>Stockage local</Text>
+            <HardDrive size={16} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Stockage local</Text>
           </View>
 
           <TouchableOpacity
-            style={styles.clearCacheBtn}
+            style={[styles.clearCacheBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
             onPress={handleClearCache}
             disabled={isClearingCache}
             activeOpacity={0.7}
           >
             {isClearingCache ? (
-              <ActivityIndicator size="small" color="#64748b" style={{ marginRight: 8 }} />
+              <ActivityIndicator size="small" color={colors.textSecondary} style={{ marginRight: 8 }} />
             ) : (
-              <Trash2 size={16} color="#64748b" style={{ marginRight: 8 }} />
+              <Trash2 size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
             )}
-            <Text style={styles.clearCacheBtnText}>Vider les données en cache</Text>
+            <Text style={[styles.clearCacheBtnText, { color: colors.textSecondary }]}>Vider les données en cache</Text>
           </TouchableOpacity>
         </View>
 
         {/* 5. Bouton Déconnexion */}
         <TouchableOpacity
-          style={styles.logoutBtn}
+          style={[styles.logoutBtn, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2', borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#fca5a5' }]}
           onPress={handleLogout}
           activeOpacity={0.85}
         >

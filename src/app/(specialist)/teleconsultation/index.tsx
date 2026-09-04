@@ -9,9 +9,11 @@ import { professionalService } from '../../../services/professionals';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function TeleconsultationList() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
@@ -38,13 +40,13 @@ export default function TeleconsultationList() {
     const formattedDate = item.start ? format(parseISO(item.start), 'EEEE d MMMM à HH:mm', { locale: fr }) : '';
     
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
         <View style={styles.cardHeader}>
-          <View style={styles.avatar}>
-            <User size={20} color="#64748b" />
+          <View style={[styles.avatar, { backgroundColor: colors.inputBg }]}>
+            <User size={20} color={colors.textSecondary} />
           </View>
           <View style={styles.patientInfo}>
-            <Text style={styles.patientName}>{item.patient?.name || 'Patient inconnu'}</Text>
+            <Text style={[styles.patientName, { color: colors.text }]}>{item.patient?.name || 'Patient inconnu'}</Text>
             <Text style={styles.appointmentDate}>{formattedDate}</Text>
           </View>
         </View>
@@ -64,7 +66,7 @@ export default function TeleconsultationList() {
   const renderSkeleton = () => (
     <View style={styles.listContent}>
       {[1, 2, 3].map(i => (
-        <View key={i} style={[styles.card, { padding: 0 }]}>
+        <View key={i} style={[styles.card, { padding: 0, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
           <View style={{ padding: 16 }}>
              <Skeleton height={20} width={150} borderRadius={4} style={{ marginBottom: 12 }} />
              <Skeleton height={14} width={200} borderRadius={4} style={{ marginBottom: 16 }} />
@@ -76,20 +78,20 @@ export default function TeleconsultationList() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Téléconsultation</Text>
-        <Text style={styles.subtitle}>Gérez vos séances vidéo à distance</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Téléconsultation</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Gérez vos séances vidéo à distance</Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Search size={20} color="#94a3b8" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+        <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Rechercher une séance..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textMuted}
         />
       </View>
 
@@ -103,9 +105,9 @@ export default function TeleconsultationList() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={['#00A651']} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Video size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-              <Text style={styles.emptyTitle}>Aucune séance vidéo</Text>
-              <Text style={styles.emptyText}>
+              <Video size={48} color={isDark ? '#334155' : '#cbd5e1'} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune séance vidéo</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 {searchQuery 
                   ? "Aucune téléconsultation ne correspond à votre recherche."
                   : "Vous n'avez pas de téléconsultation programmée."}

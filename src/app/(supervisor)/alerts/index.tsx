@@ -29,6 +29,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { superviseurService, SuperviseurAlertItem } from '../../../services/superviseur';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTheme } from '../../../context/ThemeContext';
 
 const ALERT_TYPE_FILTERS = [
   { key: 'tous', label: 'Toutes' },
@@ -39,6 +40,7 @@ const ALERT_TYPE_FILTERS = [
 ];
 
 export default function SupervisorAlertsScreen() {
+  const { colors, isDark } = useTheme();
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState('tous');
   const [selectedAlert, setSelectedAlert] = useState<SuperviseurAlertItem | null>(null);
@@ -97,20 +99,30 @@ export default function SupervisorAlertsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
       {/* 1. Filtres par Type d'Alerte */}
-      <View style={styles.filterSection}>
+      <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {ALERT_TYPE_FILTERS.map((f) => {
             const isSelected = selectedType === f.key;
             return (
               <TouchableOpacity
                 key={f.key}
-                style={[styles.filterPill, isSelected && styles.filterPillSelected]}
+                style={[
+                  styles.filterPill,
+                  { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                  isSelected && styles.filterPillSelected,
+                ]}
                 onPress={() => setSelectedType(f.key)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.filterPillText, isSelected && styles.filterPillTextSelected]}>
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    { color: colors.textSecondary },
+                    isSelected && styles.filterPillTextSelected,
+                  ]}
+                >
                   {f.label}
                 </Text>
               </TouchableOpacity>
@@ -121,7 +133,7 @@ export default function SupervisorAlertsScreen() {
 
       {/* En-tête statut */}
       <View style={styles.headerInfoRow}>
-        <Text style={styles.headerCountText}>
+        <Text style={[styles.headerCountText, { color: colors.textSecondary }]}>
           {filteredAlerts.length} alerte(s) clinique(s) prioritaire(s)
         </Text>
       </View>
@@ -130,7 +142,7 @@ export default function SupervisorAlertsScreen() {
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#dc2626" />
-          <Text style={styles.loadingText}>Chargement des alertes d'urgence...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des alertes d'urgence...</Text>
         </View>
       ) : (
         <ScrollView
@@ -143,8 +155,8 @@ export default function SupervisorAlertsScreen() {
           {filteredAlerts.length === 0 ? (
             <View style={styles.emptyWrap}>
               <CheckCircle2 size={44} color="#00A651" style={{ marginBottom: 12 }} />
-              <Text style={styles.emptyTitle}>Toutes les alertes sont traitées</Text>
-              <Text style={styles.emptySubtitle}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Toutes les alertes sont traitées</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                 Aucun cas critique en attente d'intervention sur ce filtre.
               </Text>
             </View>
@@ -158,7 +170,14 @@ export default function SupervisorAlertsScreen() {
               } catch {}
 
               return (
-                <View key={item.id} style={[styles.alertCard, isCrit && styles.alertCardCritical]}>
+                <View
+                  key={item.id}
+                  style={[
+                    styles.alertCard,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    isCrit && (isDark ? styles.alertCardCriticalDark : styles.alertCardCritical),
+                  ]}
+                >
                   {/* Badge d'urgence & Date */}
                   <View style={styles.cardTopRow}>
                     <View style={[styles.severityBadge, isCrit ? styles.severityCritical : styles.severityHigh]}>
@@ -167,33 +186,45 @@ export default function SupervisorAlertsScreen() {
                         {isCrit ? 'URGENCE VITALE' : 'PRIORITÉ HAUTE'}
                       </Text>
                     </View>
-                    <Text style={styles.dateText}>{formattedDate}</Text>
+                    <Text style={[styles.dateText, { color: colors.textMuted }]}>{formattedDate}</Text>
                   </View>
 
                   {/* Titre de l'Alerte */}
-                  <Text style={styles.alertTitle}>{item.alertTitle}</Text>
+                  <Text style={[styles.alertTitle, isDark && { color: '#f87171' }]}>{item.alertTitle}</Text>
 
                   {/* Patient & Centre */}
                   <View style={styles.patientInfoRow}>
-                    <Text style={styles.patientName}>{item.patientName}</Text>
-                    <Text style={styles.patientCode}>• Code {item.patientCode}</Text>
+                    <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName}</Text>
+                    <Text style={[styles.patientCode, { color: colors.textSecondary }]}>• Code {item.patientCode}</Text>
                   </View>
 
                   <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
-                      <Building2 size={13} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.metaText}>{item.siteName}</Text>
+                      <Building2 size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.metaText, { color: colors.textSecondary }]}>{item.siteName}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                      <User size={13} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.metaText}>Agent : {item.evaluatorName}</Text>
+                      <User size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.metaText, { color: colors.textSecondary }]}>Agent : {item.evaluatorName}</Text>
                     </View>
                   </View>
 
                   {/* Statut d'orientation */}
                   <View style={styles.statusRow}>
-                    <View style={[styles.statusBadge, item.hasReferral ? styles.statusBadgeDone : styles.statusBadgeWarning]}>
-                      <Text style={[styles.statusBadgeText, item.hasReferral ? styles.textSuccess : styles.textWarning]}>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        item.hasReferral
+                          ? (isDark ? styles.statusBadgeDoneDark : styles.statusBadgeDone)
+                          : (isDark ? styles.statusBadgeWarningDark : styles.statusBadgeWarning),
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusBadgeText,
+                          item.hasReferral ? styles.textSuccess : (isDark ? styles.textWarningDark : styles.textWarning),
+                        ]}
+                      >
                         {item.hasReferral ? '✓ Orientation psychiatrique émise' : '⚠️ Orientation immédiate recommandée'}
                       </Text>
                     </View>
@@ -201,7 +232,7 @@ export default function SupervisorAlertsScreen() {
 
                   {/* Bouton d'action de supervision */}
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={[styles.actionBtn, isDark && { backgroundColor: '#334155' }]}
                     onPress={() => handleOpenActionModal(item)}
                     activeOpacity={0.85}
                   >
@@ -219,65 +250,80 @@ export default function SupervisorAlertsScreen() {
       {/* 3. Modal d'Action et Recommandation Superviseur */}
       <Modal visible={actionModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
+          <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View>
-                <Text style={styles.modalTitle}>Supervision de l'alerte</Text>
-                <Text style={styles.modalSubtitle}>Consignes pour l'équipe terrain</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Supervision de l'alerte</Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>Consignes pour l'équipe terrain</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setActionModalVisible(false)}
-                style={styles.closeBtn}
+                style={[styles.closeBtn, { backgroundColor: colors.cardSecondary }]}
                 activeOpacity={0.7}
               >
-                <X size={20} color="#0f172a" />
+                <X size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             {selectedAlert && (
               <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryTitle}>{selectedAlert.alertTitle}</Text>
-                  <Text style={styles.summarySubtitle}>
+                <View style={[styles.summaryCard, isDark && { backgroundColor: 'rgba(220, 38, 38, 0.15)', borderColor: '#7f1d1d' }]}>
+                  <Text style={[styles.summaryTitle, isDark && { color: '#f87171' }]}>{selectedAlert.alertTitle}</Text>
+                  <Text style={[styles.summarySubtitle, isDark && { color: '#fca5a5' }]}>
                     Patient : {selectedAlert.patientName} ({selectedAlert.patientCode})
                   </Text>
-                  <Text style={styles.summaryAgent}>
+                  <Text style={[styles.summaryAgent, isDark && { color: '#f87171' }]}>
                     Site : {selectedAlert.siteName} • Agent référent : {selectedAlert.evaluatorName}
                   </Text>
                 </View>
 
                 {/* Choix du statut */}
-                <Text style={styles.inputSectionTitle}>Statut de l'intervention</Text>
+                <Text style={[styles.inputSectionTitle, { color: colors.text }]}>Statut de l'intervention</Text>
                 <View style={styles.statusButtonsRow}>
                   <TouchableOpacity
-                    style={[styles.statusChoiceBtn, actionStatus === 'EN_COURS' && styles.statusChoiceBtnActive]}
+                    style={[
+                      styles.statusChoiceBtn,
+                      { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                      actionStatus === 'EN_COURS' && styles.statusChoiceBtnActive,
+                    ]}
                     onPress={() => setActionStatus('EN_COURS')}
                     activeOpacity={0.7}
                   >
                     <Clock size={16} color={actionStatus === 'EN_COURS' ? '#ffffff' : '#d97706'} style={{ marginRight: 6 }} />
-                    <Text style={[styles.statusChoiceText, actionStatus === 'EN_COURS' && styles.statusChoiceTextActive]}>
+                    <Text style={[styles.statusChoiceText, { color: colors.textSecondary }, actionStatus === 'EN_COURS' && styles.statusChoiceTextActive]}>
                       En cours de prise en charge
                     </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.statusChoiceBtn, actionStatus === 'TRAITE' && styles.statusChoiceBtnDone]}
+                    style={[
+                      styles.statusChoiceBtn,
+                      { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+                      actionStatus === 'TRAITE' && styles.statusChoiceBtnDone,
+                    ]}
                     onPress={() => setActionStatus('TRAITE')}
                     activeOpacity={0.7}
                   >
                     <CheckCircle2 size={16} color={actionStatus === 'TRAITE' ? '#ffffff' : '#00A651'} style={{ marginRight: 6 }} />
-                    <Text style={[styles.statusChoiceText, actionStatus === 'TRAITE' && styles.statusChoiceTextActive]}>
+                    <Text style={[styles.statusChoiceText, { color: colors.textSecondary }, actionStatus === 'TRAITE' && styles.statusChoiceTextActive]}>
                       Pris en charge & Clôturé
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 {/* Note de recommandation */}
-                <Text style={styles.inputSectionTitle}>Note clinique & Recommandations</Text>
+                <Text style={[styles.inputSectionTitle, { color: colors.text }]}>Note clinique & Recommandations</Text>
                 <TextInput
-                  style={styles.textArea}
+                  style={[
+                    styles.textArea,
+                    {
+                      backgroundColor: colors.inputBg,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ]}
                   placeholder="Ex : Convoquer le patient en urgence pour évaluation médicale, orienter vers l'hôpital de référence..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={recommendationNote}
                   onChangeText={setRecommendationNote}
                   multiline
@@ -370,6 +416,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff5f5',
     borderColor: '#fca5a5',
   },
+  alertCardCriticalDark: {
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+    borderColor: '#7f1d1d',
+  },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -450,8 +500,14 @@ const styles = StyleSheet.create({
   statusBadgeDone: {
     backgroundColor: '#ecfdf5',
   },
+  statusBadgeDoneDark: {
+    backgroundColor: 'rgba(0, 166, 81, 0.15)',
+  },
   statusBadgeWarning: {
     backgroundColor: '#fef3c7',
+  },
+  statusBadgeWarningDark: {
+    backgroundColor: 'rgba(217, 119, 6, 0.15)',
   },
   statusBadgeText: {
     fontSize: 11.5,
@@ -507,6 +563,9 @@ const styles = StyleSheet.create({
   },
   textWarning: {
     color: '#d97706',
+  },
+  textWarningDark: {
+    color: '#fbbf24',
   },
   modalOverlay: {
     flex: 1,

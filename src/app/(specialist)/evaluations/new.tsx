@@ -37,9 +37,11 @@ import { professionalService } from '../../../services/professionals';
 import { syncService } from '../../../services/syncService';
 import { referentialCache } from '../../../services/referentialCache';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function SpecialistNewEvaluationScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const params = useLocalSearchParams();
   const initialKey = (Array.isArray(params.key) ? params.key[0] : params.key) || 'ods';
 
@@ -268,13 +270,13 @@ export default function SpecialistNewEvaluationScreen() {
   const ToolIcon = toolInfo.icon;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       {/* Top Header with Back Arrow */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={22} color="#0f172a" />
+      <View style={[styles.topBar, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.inputBg }]}>
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Nouvelle évaluation</Text>
+        <Text style={[styles.topBarTitle, { color: colors.headerText }]}>Nouvelle évaluation</Text>
       </View>
 
       <ScrollView 
@@ -283,54 +285,54 @@ export default function SpecialistNewEvaluationScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Selected Tool Summary Header */}
-        <View style={styles.toolHeaderCard}>
-          <View style={[styles.toolIconBox, { backgroundColor: toolInfo.bg }]}>
+        <View style={[styles.toolHeaderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.toolIconBox, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : toolInfo.bg }]}>
             <ToolIcon size={28} color={toolInfo.color} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.toolTitle}>{toolInfo.title}</Text>
-            <Text style={styles.toolSubtitle}>{toolInfo.subtitle}</Text>
+            <Text style={[styles.toolTitle, { color: colors.text }]}>{toolInfo.title}</Text>
+            <Text style={[styles.toolSubtitle, { color: colors.textSecondary }]}>{toolInfo.subtitle}</Text>
           </View>
         </View>
 
         {/* 1. SELECTION DU CENTRE */}
-        <View style={styles.sectionContainer}>
+        <View style={[styles.sectionContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionTitleRow}>
             <Building size={18} color="#00A651" />
-            <Text style={styles.sectionTitle}>Centre de Santé / Prise en charge</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Centre de Santé / Prise en charge</Text>
           </View>
 
           <TouchableOpacity 
-            style={styles.centreSelectorButton}
+            style={[styles.centreSelectorButton, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
             onPress={() => setIsCentreModalOpen(true)}
             activeOpacity={0.7}
           >
-            <Building size={18} color="#64748b" style={{ marginRight: 10 }} />
-            <Text style={styles.centreSelectorText} numberOfLines={1}>
+            <Building size={18} color={colors.textSecondary} style={{ marginRight: 10 }} />
+            <Text style={[styles.centreSelectorText, { color: colors.text }]} numberOfLines={1}>
               {selectedCentre || 'Sélectionner un centre...'}
             </Text>
-            <ChevronDown size={18} color="#64748b" />
+            <ChevronDown size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* 2. SELECTION DU PATIENT */}
-        <View style={styles.sectionContainer}>
+        <View style={[styles.sectionContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionTitleRow}>
             <User size={18} color="#00A651" />
-            <Text style={styles.sectionTitle}>Patient à évaluer</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Patient à évaluer</Text>
           </View>
 
           {/* Selected Patient Card */}
           {selectedPatient ? (
-            <View style={styles.selectedPatientCard}>
-              <View style={styles.selectedPatientAvatar}>
+            <View style={[styles.selectedPatientCard, { backgroundColor: isDark ? 'rgba(0, 166, 81, 0.15)' : '#ecfdf5', borderColor: isDark ? '#00A651' : '#86efac' }]}>
+              <View style={[styles.selectedPatientAvatar, { backgroundColor: colors.card }]}>
                 <User size={22} color="#00A651" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.selectedPatientName}>
+                <Text style={[styles.selectedPatientName, { color: isDark ? '#4ade80' : '#065f46' }]}>
                   {selectedPatient.name || `${selectedPatient.firstName} ${selectedPatient.lastName}`}
                 </Text>
-                <Text style={styles.selectedPatientMeta}>
+                <Text style={[styles.selectedPatientMeta, { color: isDark ? '#86efac' : '#047857' }]}>
                   {selectedPatient.phoneNumber || selectedPatient.email || selectedPatient.internalPatientCode || 'Patient sélectionné'}
                 </Text>
               </View>
@@ -345,19 +347,19 @@ export default function SpecialistNewEvaluationScreen() {
           ) : (
             <>
               {/* Search Bar */}
-              <View style={styles.searchBarContainer}>
-                <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+              <View style={[styles.searchBarContainer, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+                <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={[styles.searchInput, { color: colors.text }]}
                   placeholder="Rechercher par nom, téléphone, code..."
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={colors.textMuted}
                   value={patientSearch}
                   onChangeText={setPatientSearch}
                   autoCapitalize="none"
                 />
                 {!!patientSearch && (
                   <TouchableOpacity onPress={() => setPatientSearch('')}>
-                    <X size={16} color="#94a3b8" />
+                    <X size={16} color={colors.textMuted} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -366,7 +368,7 @@ export default function SpecialistNewEvaluationScreen() {
               <View style={styles.patientResultsList}>
                 {hybridPatients.length === 0 ? (
                   <View style={styles.emptyResultsBox}>
-                    <Text style={styles.emptyResultsText}>
+                    <Text style={[styles.emptyResultsText, { color: colors.textMuted }]}>
                       {patientSearch ? 'Aucun patient correspondant.' : 'Recherchez un patient existant.'}
                     </Text>
                   </View>
@@ -374,23 +376,23 @@ export default function SpecialistNewEvaluationScreen() {
                   hybridPatients.map((p) => (
                     <TouchableOpacity
                       key={p.id}
-                      style={styles.patientItem}
+                      style={[styles.patientItem, { borderBottomColor: colors.border }]}
                       onPress={() => {
                         setSelectedPatient(p);
                         setPatientSearch('');
                       }}
                       activeOpacity={0.7}
                     >
-                      <View style={styles.patientAvatarSmall}>
+                      <View style={[styles.patientAvatarSmall, { backgroundColor: isDark ? 'rgba(0, 166, 81, 0.15)' : '#ecfdf5' }]}>
                         <User size={16} color="#00A651" />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.patientItemName}>{p.firstName} {p.lastName}</Text>
-                        <Text style={styles.patientItemSub}>
+                        <Text style={[styles.patientItemName, { color: colors.text }]}>{p.firstName} {p.lastName}</Text>
+                        <Text style={[styles.patientItemSub, { color: colors.textSecondary }]}>
                           {p.phoneNumber || p.internalPatientCode || p.email || 'Patient'}
                         </Text>
                       </View>
-                      <ChevronRight size={18} color="#cbd5e1" />
+                      <ChevronRight size={18} color={colors.textMuted} />
                     </TouchableOpacity>
                   ))
                 )}
@@ -398,7 +400,7 @@ export default function SpecialistNewEvaluationScreen() {
 
               {/* OU Bouton Nouveau Patient */}
               <TouchableOpacity 
-                style={styles.newPatientButton}
+                style={[styles.newPatientButton, { backgroundColor: isDark ? 'rgba(0, 166, 81, 0.15)' : '#ecfdf5', borderColor: isDark ? '#00A651' : '#86efac' }]}
                 onPress={() => setIsModalOpen(true)}
                 activeOpacity={0.8}
               >
@@ -427,20 +429,20 @@ export default function SpecialistNewEvaluationScreen() {
       {/* MODAL 1 : SÉLECTION DU CENTRE */}
       <Modal visible={isCentreModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Sélectionner un centre</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Sélectionner un centre</Text>
               <TouchableOpacity onPress={() => setIsCentreModalOpen(false)}>
-                <X size={22} color="#64748b" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalSearchBox}>
-              <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+            <View style={[styles.modalSearchBox, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
               <TextInput 
-                style={styles.modalSearchInput}
+                style={[styles.modalSearchInput, { color: colors.text }]}
                 placeholder="Filtrer les centres..."
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textMuted}
                 value={centreSearch}
                 onChangeText={setCentreSearch}
               />
@@ -452,16 +454,18 @@ export default function SpecialistNewEvaluationScreen() {
                   key={c.id || c.name}
                   style={[
                     styles.centreItem,
-                    selectedCentre === c.name && styles.centreItemSelected
+                    { borderBottomColor: colors.border },
+                    selectedCentre === c.name && [styles.centreItemSelected, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]
                   ]}
                   onPress={() => {
                     setSelectedCentre(c.name);
                     setIsCentreModalOpen(false);
                   }}
                 >
-                  <Building size={16} color={selectedCentre === c.name ? '#00A651' : '#64748b'} style={{ marginRight: 10 }} />
+                  <Building size={16} color={selectedCentre === c.name ? '#00A651' : colors.textSecondary} style={{ marginRight: 10 }} />
                   <Text style={[
                     styles.centreItemText,
+                    { color: colors.text },
                     selectedCentre === c.name && styles.centreItemTextSelected
                   ]}>
                     {c.name} {c.careLevel ? `(${c.careLevel})` : ''}
@@ -477,70 +481,83 @@ export default function SpecialistNewEvaluationScreen() {
       {/* MODAL 2 : NOUVEAU PATIENT RAPIDE */}
       <Modal visible={isModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nouveau Patient Rapide</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Nouveau Patient Rapide</Text>
               <TouchableOpacity onPress={() => setIsModalOpen(false)}>
-                <X size={22} color="#64748b" />
+                <X size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={styles.inputLabel}>Prénom *</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Prénom *</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: Moussa"
+                placeholderTextColor={colors.textMuted}
                 value={newFirstName}
                 onChangeText={setNewFirstName}
               />
 
-              <Text style={styles.inputLabel}>Nom *</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom *</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: Koné"
+                placeholderTextColor={colors.textMuted}
                 value={newLastName}
                 onChangeText={setNewLastName}
               />
 
-              <Text style={styles.inputLabel}>Sexe</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Sexe</Text>
               <View style={styles.genderRow}>
                 <TouchableOpacity 
-                  style={[styles.genderButton, newGender === 'M' && styles.genderButtonActive]}
+                  style={[
+                    styles.genderButton,
+                    { backgroundColor: colors.inputBg, borderColor: colors.border },
+                    newGender === 'M' && [styles.genderButtonActive, { backgroundColor: isDark ? 'rgba(0,166,81,0.2)' : '#ecfdf5' }]
+                  ]}
                   onPress={() => setNewGender('M')}
                 >
-                  <Text style={[styles.genderText, newGender === 'M' && styles.genderTextActive]}>Masculin</Text>
+                  <Text style={[styles.genderText, { color: colors.textSecondary }, newGender === 'M' && styles.genderTextActive]}>Masculin</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={[styles.genderButton, newGender === 'F' && styles.genderButtonActive]}
+                  style={[
+                    styles.genderButton,
+                    { backgroundColor: colors.inputBg, borderColor: colors.border },
+                    newGender === 'F' && [styles.genderButtonActive, { backgroundColor: isDark ? 'rgba(0,166,81,0.2)' : '#ecfdf5' }]
+                  ]}
                   onPress={() => setNewGender('F')}
                 >
-                  <Text style={[styles.genderText, newGender === 'F' && styles.genderTextActive]}>Féminin</Text>
+                  <Text style={[styles.genderText, { color: colors.textSecondary }, newGender === 'F' && styles.genderTextActive]}>Féminin</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.inputLabel}>Téléphone</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Téléphone</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: 0707070707"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
                 value={newPhone}
                 onChangeText={setNewPhone}
               />
 
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Email</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: patient@email.com"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={newEmail}
                 onChangeText={setNewEmail}
               />
 
-              <Text style={styles.inputLabel}>Date de naissance (AAAA-MM-JJ)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Date de naissance (AAAA-MM-JJ)</Text>
               <TextInput
-                style={styles.formInput}
+                style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
                 placeholder="Ex: 1990-05-14"
+                placeholderTextColor={colors.textMuted}
                 value={newBirthdate}
                 onChangeText={setNewBirthdate}
               />
