@@ -2,7 +2,7 @@
   "expo": {
     "name": "TILA",
     "slug": "tila-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "scheme": "mindwellconnect",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,10 +15,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ci.tila.app",
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "package": "ci.tila.app",
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
