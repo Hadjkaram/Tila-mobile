@@ -12,13 +12,19 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: ci.tila.app
+      vars:
+        EXPO_PUBLIC_API_URL: "https://apiv2.tila.ci"
     scripts:
+      - name: Configurer l'environnement de production
+        script: |
+          echo "EXPO_PUBLIC_API_URL=https://apiv2.tila.ci" > .env
       - name: Installer les dépendances npm
         script: |
           npm install --legacy-peer-deps
 
       - name: Préparer le projet Expo (Prebuild)
         script: |
+          echo "EXPO_PUBLIC_API_URL=https://apiv2.tila.ci" > .env
           npx expo prebuild --platform ios --clean
 
       - name: Installer les Pods CocoaPods
