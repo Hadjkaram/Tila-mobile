@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: Codemagic TILA   # Le nom de votre intégration dans Codemagic
+      app_store_connect: Codemagic TILA
     environment:
       node: 20.18.0
       xcode: latest
@@ -26,7 +26,7 @@ workflows:
           cd ios
           pod install
 
-      - name: Appliquer les profils de signature Codemagic
+      - name: Appliquer les profils de signature
         script: |
           xcode-project use-profiles --project ios/TILA.xcodeproj
 
