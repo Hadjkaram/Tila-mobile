@@ -68,7 +68,7 @@ export default function SupervisorProfileScreen() {
   const firstName = userContext?.firstName || '';
   const lastName = userContext?.lastName || '';
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || userContext?.name || 'Dr. Superviseur';
-  const email = userContext?.email || 'superviseur@mindwellconnect.com';
+  const email = userContext?.email || 'superviseur@tila.ci';
   const phone = userContext?.phone || userContext?.phoneNumber || '+225 07 00 00 00 00';
   const specialty = userContext?.specialty || 'Psychiatrie & Santé Publique';
 

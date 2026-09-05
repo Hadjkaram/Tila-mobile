@@ -41,11 +41,11 @@ export default function VideoRoom() {
       if (response && response.url) {
         setRoomUrl(response.url);
       } else {
-        setRoomUrl('https://mindwell.daily.co/test-room');
+        setRoomUrl('https://tila.daily.co/test-room');
       }
     } catch (error) {
       console.warn("API Error, using fallback Daily URL", error);
-      setRoomUrl('https://mindwell.daily.co/test-room');
+      setRoomUrl('https://tila.daily.co/test-room');
     }
   };
 

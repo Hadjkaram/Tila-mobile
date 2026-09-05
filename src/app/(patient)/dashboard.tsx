@@ -227,7 +227,7 @@ export default function PatientDashboard() {
           </View>
           <Text style={[styles.greetingTitle, isDark && { color: colors.text }]}>Bonjour, {firstName} 👋</Text>
           <Text style={[styles.greetingSubtitle, isDark && { color: colors.textSecondary }]}>
-            Bienvenue sur votre espace santé mentale et bien-être MindWell Connect.
+            Bienvenue sur votre espace santé mentale et bien-être TILA.
           </Text>
         </View>
 

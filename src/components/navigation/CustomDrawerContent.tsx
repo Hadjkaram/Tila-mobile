@@ -71,7 +71,7 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
     if (user?.roles?.includes('ROLE_COMMUNITY_ACTOR')) return 'Acteur Communautaire';
     if (user?.roles?.includes('ROLE_HEALTH_AGENT')) return 'Agent de Santé';
     if (user?.roles?.includes('ROLE_PROFESSIONAL')) return 'Professionnel de Santé';
-    return 'MindWell Connect';
+    return 'TILA';
   };
 
   const handleLogout = () => {

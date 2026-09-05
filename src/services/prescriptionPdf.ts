@@ -209,14 +209,14 @@ export async function generateAndSharePrescriptionPdf(
         <tr>
           <td style="width: 58%; vertical-align: middle;">
             <div style="display: flex; align-items: center;">
-              <!-- Logo Vectoriel TILA MindWell Connect -->
+              <!-- Logo Vectoriel TILA -->
               <svg width="38" height="38" viewBox="0 0 40 40" fill="none" style="margin-right: 12px;">
                 <rect width="40" height="40" rx="10" fill="#00A651" />
                 <path d="M20 10C14.477 10 10 14.477 10 20C10 25.523 14.477 30 20 30C25.523 30 30 25.523 30 20" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
                 <circle cx="20" cy="20" r="4" fill="#F58220" />
               </svg>
               <div>
-                <h1 class="brand-title">TILA • MINDWELL</h1>
+                <h1 class="brand-title">TILA</h1>
                 <div class="brand-subtitle">Plateforme Nationale de Santé Mentale</div>
                 <div style="font-size: 10.5px; color: #475569; margin-top: 3px; font-weight: 600;">
                   Ministère de la Santé, de l'Hygiène Publique et de la CMU
@@ -295,7 +295,7 @@ export async function generateAndSharePrescriptionPdf(
 
       <div class="footer-text">
         Document médical officiel émis dans le cadre du Programme National de Santé Mentale (PNSM) TILA.<br />
-        Soumis au secret médical professionnel (Art. L. 1110-4). Télémédecine agréée MindWell Connect.
+        Soumis au secret médical professionnel (Art. L. 1110-4). Télémédecine agréée TILA.
       </div>
     </body>
     </html>
