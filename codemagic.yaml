@@ -26,7 +26,8 @@ workflows:
       - name: Préparer le projet Expo (Prebuild)
         script: |
           echo "EXPO_PUBLIC_API_URL=https://apiv2.tila.ci" > .env
-          npx expo prebuild --platform ios --clean
+          npx expo prebuild --platform ios --clean --no-install
+          /usr/libexec/PlistBuddy -c "Delete :aps-environment" ios/TILA/TILA.entitlements 2>/dev/null || true
 
       - name: Incrémenter automatiquement le numéro de build
         script: |

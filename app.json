@@ -43,7 +43,14 @@
         }
       ],
       "expo-asset",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#00A651"
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://apiv2.tila.ci"
