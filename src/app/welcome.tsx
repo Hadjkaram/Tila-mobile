@@ -72,7 +72,7 @@ export default function WelcomeScreen() {
           </Text>
         </View>
 
-        {/* Boutons d'action UX/UI Pro */}
+        {/* Boutons d'action UX/UI Pro Élégants */}
         <View style={styles.bottomContainer}>
           {/* Bouton Urgence Rouge TILA : Signaler un cas maintenant */}
           <TouchableOpacity
@@ -80,7 +80,7 @@ export default function WelcomeScreen() {
             onPress={() => router.push('/alert-case' as any)}
             activeOpacity={0.85}
           >
-            <AlertTriangle size={18} color="#ffffff" style={{ marginRight: 8 }} />
+            <AlertTriangle size={16} color="#ffffff" style={{ marginRight: 7 }} />
             <Text style={styles.alertButtonText}>Signaler un cas maintenant</Text>
           </TouchableOpacity>
 
@@ -91,7 +91,7 @@ export default function WelcomeScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.primaryButtonText}>S'auto-évaluer gratuitement</Text>
-            <ArrowRight size={18} color="#ffffff" style={{ marginLeft: 8 }} />
+            <ArrowRight size={16} color="#ffffff" style={{ marginLeft: 7 }} />
           </TouchableOpacity>
 
           {/* Bouton 2 (Vert TILA Outline) */}
@@ -112,7 +112,7 @@ export default function WelcomeScreen() {
             onPress={() => router.push('/(auth)/register-choice')}
             activeOpacity={0.7}
           >
-            <UserPlus size={15} color="#00A651" style={{ marginRight: 6 }} />
+            <UserPlus size={14} color="#00A651" style={{ marginRight: 6 }} />
             <Text style={[styles.registerLinkText, isDark && { color: colors.textSecondary }]}>
               Pas encore de compte ?{' '}
               <Text style={styles.registerLinkHighlight}>Créer un compte</Text>
@@ -207,49 +207,49 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 350,
     alignItems: 'center',
-    gap: 12,
-    marginTop: 10,
+    gap: 9,
+    marginTop: 8,
   },
   alertButton: {
     width: '100%',
     flexDirection: 'row',
     backgroundColor: '#DC2626',
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 11,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   alertButtonText: {
     color: '#ffffff',
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 14.5,
     fontFamily: 'Montserrat_700Bold',
   },
   primaryButton: {
     width: '100%',
     flexDirection: 'row',
     backgroundColor: '#F58220', // Orange TILA
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#F58220',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   primaryButtonText: {
     color: '#ffffff',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Montserrat_600SemiBold',
   },
   secondaryButton: {
@@ -257,26 +257,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 1.5,
     borderColor: '#00A651', // Vert TILA
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 11.5,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
     color: '#00A651',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Montserrat_600SemiBold',
   },
   registerLink: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    marginTop: 4,
+    paddingVertical: 8,
+    marginTop: 2,
   },
   registerLinkText: {
-    fontSize: 13.5,
+    fontSize: 13,
     color: '#475569',
     fontFamily: 'Montserrat_500Medium',
   },

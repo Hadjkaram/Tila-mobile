@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, Modal, Pressable } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   DrawerContentScrollView, 
   DrawerItemList, 
@@ -74,27 +75,28 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
     return 'TILA';
   };
 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = () => {
-    Alert.alert(
-      "Déconnexion",
-      "Êtes-vous sûr de vouloir vous déconnecter ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        { 
-          text: "Se déconnecter", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await tokenService.clearTokens();
-              router.replace('/(auth)/login');
-            } catch (err) {
-              console.error('Logout error:', err);
-              router.replace('/(auth)/login');
-            }
-          }
-        }
-      ]
-    );
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await tokenService.clearTokens();
+      await AsyncStorage.removeItem('user');
+      setShowLogoutModal(false);
+      props.navigation.closeDrawer();
+      router.replace('/(auth)/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+      setShowLogoutModal(false);
+      router.replace('/(auth)/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const handleProfilePress = () => {
@@ -305,6 +307,75 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Pop-up UX/UI Pro Élégant de Confirmation de Déconnexion */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent={true}
+        onRequestClose={() => !isLoggingOut && setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={styles.modalBackdrop} 
+            onPress={() => !isLoggingOut && setShowLogoutModal(false)} 
+          />
+          <View style={[
+            styles.modalCard,
+            { backgroundColor: isDark ? '#1e293b' : '#ffffff', borderColor: isDark ? '#334155' : '#e2e8f0' }
+          ]}>
+            {/* Badge circulaire rouge déconnexion */}
+            <View style={[
+              styles.modalIconCircle,
+              { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2' }
+            ]}>
+              <LogOut size={28} color="#ef4444" />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+              Confirmer la déconnexion
+            </Text>
+
+            <Text style={[styles.modalSubtitle, { color: isDark ? '#94a3b8' : '#64748b' }]}>
+              Êtes-vous sûr de vouloir vous déconnecter de TILA ? Vos données synchronisées resteront enregistrées en toute sécurité sur votre compte.
+            </Text>
+
+            {/* Boutons d'action modernes */}
+            <View style={styles.modalActionsRow}>
+              <TouchableOpacity
+                style={[
+                  styles.modalCancelBtn,
+                  { backgroundColor: isDark ? '#334155' : '#f1f5f9' }
+                ]}
+                onPress={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.modalCancelText, { color: isDark ? '#cbd5e1' : '#475569' }]}>
+                  Annuler
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={handleConfirmLogout}
+                disabled={isLoggingOut}
+                activeOpacity={0.8}
+              >
+                {isLoggingOut ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <LogOut size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                    <Text style={styles.modalConfirmText}>Se déconnecter</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -312,7 +383,7 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     paddingTop: 0,
@@ -468,5 +539,89 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#ef4444',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  modalIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 22,
+  },
+  modalActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#dc2626',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modalConfirmText: {
+    color: '#ffffff',
+    fontSize: 14.5,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
   },
 });

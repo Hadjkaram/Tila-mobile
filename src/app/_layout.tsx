@@ -44,15 +44,32 @@ const queryClient = new QueryClient({
 
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
+import { notificationService } from '../services/notificationService';
 
 function ThemedAppContent() {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <NetworkBanner />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: false,
+          contentStyle: { backgroundColor: colors.bg },
+          animation: 'fade',
+        }}
+      >
+        <Stack.Screen name="(patient)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(specialist)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(supervisor)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(health-agent)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(field-agent)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(census-agent)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(ong-manager)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(program-agent)" options={{ gestureEnabled: false }} />
+      </Stack>
     </SafeAreaProvider>
   );
 }
@@ -71,6 +88,8 @@ export default function RootLayout() {
       // Silently preload local offline data and sync referentials
       preloadService.preloadAllData(queryClient);
       referentialCache.syncReferentials();
+      // Initialiser les notifications push / locales
+      notificationService.initialize();
     }
   }, [fontsLoaded, error]);
 

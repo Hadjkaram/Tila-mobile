@@ -58,13 +58,16 @@ export default function ProLayout() {
           marginLeft: -10,
           fontFamily: 'Montserrat_500Medium',
         },
+        drawerType: 'front',
+        overlayColor: 'rgba(0, 0, 0, 0.65)',
         drawerStyle: {
           width: '82%',
           maxWidth: 320,
-          backgroundColor: colors.card,
+          backgroundColor: colors.bg,
+          borderRightWidth: 0,
         },
         sceneContainerStyle: {
-          backgroundColor: colors.bgSecondary,
+          backgroundColor: colors.bg,
         },
       })}
     >
