@@ -6,7 +6,7 @@ import { apiClient, tokenService } from './apiClient';
 
 const QUEUE_STORAGE_KEY = '@offline_queue';
 
-export type SyncActionType = 'SUBMIT_ASSESSMENT' | 'CREATE_PATIENT' | 'SUBMIT_RECENSEMENT';
+export type SyncActionType = 'SUBMIT_ASSESSMENT' | 'CREATE_PATIENT' | 'SUBMIT_RECENSEMENT' | 'SUBMIT_REFERRAL';
 
 export interface QueueItem {
   id: string;
@@ -165,6 +165,8 @@ class SyncService {
           await agentService.submitEvaluation(questionnaireKey, restPayload);
         } else if (item.type === 'SUBMIT_RECENSEMENT') {
           await apiClient.post('/api/sensibilisateur/recensements', item.payload);
+        } else if (item.type === 'SUBMIT_REFERRAL') {
+          await agentService.createReferral(item.payload);
         }
 
         // Action successful -> remove from queue

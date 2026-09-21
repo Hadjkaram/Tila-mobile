@@ -22,6 +22,7 @@ import {
   Sparkles,
   ShieldCheck,
   Calendar,
+  FileText,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../../services/apiClient';
@@ -596,6 +597,32 @@ export default function AssessmentScreen() {
             </View>
           </View>
 
+          {/* Détails du score */}
+          <View style={[styles.recommendationsCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }, { marginTop: 16 }]}>
+            <View style={styles.recomHeader}>
+              <FileText size={18} color="#00A651" style={{ marginRight: 6 }} />
+              <Text style={[styles.recomTitle, isDark && { color: colors.text }]}>
+                {lang === 'en' ? 'Score Details' : 'Détails du score'}
+              </Text>
+            </View>
+            <View style={styles.recomList}>
+              {currentConfig.questions.map((q) => {
+                const ansVal = answers[q.id];
+                const ansLabel = currentConfig.options.find(o => o.value === ansVal)?.label;
+                return (
+                  <View key={q.id} style={{ marginBottom: 12 }}>
+                    <Text style={[{ fontSize: 13, color: isDark ? colors.text : '#334155', fontWeight: '600', marginBottom: 4 }]}>
+                      {q.text}
+                    </Text>
+                    <Text style={[{ fontSize: 12.5, color: isDark ? colors.textSecondary : '#64748b' }]}>
+                      Réponse : {ansLabel} ({ansVal} pt{ansVal > 1 ? 's' : ''})
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+
           {/* Section d'attachement & Conversion UX/UI Pro */}
           <View style={styles.conversionSection}>
             <View style={styles.tokenBox}>
@@ -624,6 +651,22 @@ export default function AssessmentScreen() {
               <UserPlus size={18} color="#ffffff" style={{ marginRight: 8 }} />
               <Text style={styles.createAccountBtnText}>
                 Conserver mes résultats & Créer mon compte
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.createAccountBtn, { backgroundColor: '#F58220', marginTop: 10 }]}
+              onPress={() =>
+                router.push({
+                  pathname: '/(auth)/register-patient',
+                  params: { evaluationToken: evaluationResult.token, intent: 'appointment' },
+                })
+              }
+              activeOpacity={0.85}
+            >
+              <Calendar size={18} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.createAccountBtnText}>
+                Prendre rendez-vous
               </Text>
             </TouchableOpacity>
 

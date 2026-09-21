@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sparkles, ArrowRight, UserPlus, AlertTriangle } from 'lucide-react-native';
 import { tokenService } from '../services/apiClient';
 import { useTheme } from '../context/ThemeContext';
+import { FooterLogos } from '../components/FooterLogos';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -31,25 +32,6 @@ export default function WelcomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Logos officiels partenaires libres (sans bloc / boîte) */}
-        <View style={styles.partnerLogosRow}>
-          <Image
-            source={require('../../assets/images/ministere.jpg')}
-            style={styles.ministereLogo}
-            resizeMode="contain"
-          />
-          <Image
-            source={require('../../assets/images/logo.png')}
-            style={styles.tilaLogo}
-            resizeMode="contain"
-          />
-          <Image
-            source={require('../../assets/images/pnsm.png')}
-            style={styles.pnsmLogo}
-            resizeMode="contain"
-          />
-        </View>
-
         {/* Corps central épuré */}
         <View style={styles.centerContent}>
           {/* Badge institutionnel */}
@@ -62,7 +44,7 @@ export default function WelcomeScreen() {
 
           {/* Slogan officiel exact */}
           <Text style={[styles.slogan, isDark && { color: colors.text }]}>
-            « La santé mentale, c'est l'affaire de tous »
+            La santé mentale en un clic
           </Text>
 
           {/* Sous-titre d'accompagnement */}
@@ -118,7 +100,20 @@ export default function WelcomeScreen() {
               <Text style={styles.registerLinkHighlight}>Créer un compte</Text>
             </Text>
           </TouchableOpacity>
+
+          {/* Lien Revoir la présentation / Onboarding */}
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, paddingVertical: 4 }}
+            onPress={() => router.push('/')}
+            activeOpacity={0.7}
+          >
+            <Sparkles size={13} color="#00A651" style={{ marginRight: 5 }} />
+            <Text style={{ fontSize: 13, color: colors.textSecondary, fontFamily: 'Montserrat_500Medium' }}>
+              Revoir la présentation de la plateforme
+            </Text>
+          </TouchableOpacity>
         </View>
+        <FooterLogos />
       </ScrollView>
     </SafeAreaView>
   );

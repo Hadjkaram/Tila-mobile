@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { Text } from '../../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -11,9 +11,10 @@ import {
   Brain, 
   Smile, 
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  FileText
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { agentService } from '../../../services/agent';
 import { useTheme } from '../../../context/ThemeContext';
@@ -85,10 +86,42 @@ export default function SpecialistEvaluationsCatalogScreen() {
   const { data: questionnaires, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['agent_questionnaires'],
     queryFn: () => agentService.getQuestionnaires(),
+    staleTime: 0,
   });
 
+  // Refetch when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
+  // Merge dynamic backend questionnaires with clinical metadata
+  const displayTools: ClinicalTool[] = useMemo(() => {
+    if (questionnaires && Array.isArray(questionnaires) && questionnaires.length > 0) {
+      return questionnaires.map((q: any) => {
+        const canonical = agentService.canonicalKey(q.key || '');
+        const baseMeta = CLINICAL_TOOLS.find(
+          (t) => t.key.toLowerCase() === canonical.toLowerCase() || t.key.toLowerCase() === (q.key || '').toLowerCase()
+        );
+
+        return {
+          key: q.key,
+          name: q.title || q.name || baseMeta?.name || 'Évaluation Clinique',
+          subtitle: q.shortName || baseMeta?.subtitle || 'Questionnaire d’évaluation',
+          description: q.description || baseMeta?.description || 'Outil validé pour le dépistage et l’évaluation clinique.',
+          duration: q.estimatedDuration ? `${q.estimatedDuration} min` : (baseMeta?.duration || '5 - 10 min'),
+          icon: baseMeta?.icon || FileText,
+          color: baseMeta?.color || '#00A651',
+          bgLight: baseMeta?.bgLight || '#ecfdf5',
+          tags: baseMeta?.tags || (q.category ? [q.category] : ['Évaluation']),
+        };
+      });
+    }
+    return CLINICAL_TOOLS;
+  }, [questionnaires]);
+
   const handleSelectTool = (toolKey: string) => {
-    // If backend provides a specific key matching this tool (e.g. bmh-mwt, berger-vih, sdq-fr), map or pass directly
     let effectiveKey = toolKey;
     if (questionnaires && Array.isArray(questionnaires)) {
       const match = questionnaires.find((q: any) => 
@@ -131,55 +164,59 @@ export default function SpecialistEvaluationsCatalogScreen() {
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Questionnaires Disponibles</Text>
           <View style={[styles.toolCountBadge, { backgroundColor: colors.cardSecondary }]}>
-            <Text style={[styles.toolCountText, { color: colors.textSecondary }]}>{CLINICAL_TOOLS.length} Outils</Text>
+            <Text style={[styles.toolCountText, { color: colors.textSecondary }]}>{displayTools.length} Outil{displayTools.length > 1 ? 's' : ''}</Text>
           </View>
         </View>
 
         {/* Tools Cards */}
-        {CLINICAL_TOOLS.map((tool) => {
-          const IconComponent = tool.icon;
-          return (
-            <View key={tool.key} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.cardTopRow}>
-                <View style={[styles.toolIconContainer, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : tool.bgLight }]}>
-                  <IconComponent size={28} color={tool.color} />
+        {isLoading && displayTools.length === 0 ? (
+          <ActivityIndicator size="large" color="#00A651" style={{ marginVertical: 30 }} />
+        ) : (
+          displayTools.map((tool) => {
+            const IconComponent = tool.icon;
+            return (
+              <View key={tool.key} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.cardTopRow}>
+                  <View style={[styles.toolIconContainer, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : tool.bgLight }]}>
+                    <IconComponent size={28} color={tool.color} />
+                  </View>
+                  <View style={styles.cardTitleContainer}>
+                    <Text style={[styles.toolName, { color: colors.text }]}>{tool.name}</Text>
+                    <Text style={[styles.toolSub, { color: colors.textSecondary }]}>{tool.subtitle}</Text>
+                  </View>
                 </View>
-                <View style={styles.cardTitleContainer}>
-                  <Text style={[styles.toolName, { color: colors.text }]}>{tool.name}</Text>
-                  <Text style={[styles.toolSub, { color: colors.textSecondary }]}>{tool.subtitle}</Text>
+
+                <Text style={[styles.toolDescription, { color: colors.textSecondary }]}>{tool.description}</Text>
+
+                {/* Tags and Duration */}
+                <View style={styles.metaRow}>
+                  <View style={[styles.durationBadge, { backgroundColor: colors.cardSecondary }]}>
+                    <Clock size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                    <Text style={[styles.durationText, { color: colors.textSecondary }]}>{tool.duration}</Text>
+                  </View>
+
+                  <View style={styles.tagsContainer}>
+                    {tool.tags.map((tag, idx) => (
+                      <View key={idx} style={[styles.tagBadge, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                        <Text style={[styles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
+
+                {/* Action Button */}
+                <TouchableOpacity 
+                  style={[styles.selectButton, { backgroundColor: tool.color }]}
+                  onPress={() => handleSelectTool(tool.key)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.selectButtonText}>Sélectionner cet outil</Text>
+                  <ArrowRight size={18} color="#ffffff" style={{ marginLeft: 6 }} />
+                </TouchableOpacity>
               </View>
-
-              <Text style={[styles.toolDescription, { color: colors.textSecondary }]}>{tool.description}</Text>
-
-              {/* Tags and Duration */}
-              <View style={styles.metaRow}>
-                <View style={[styles.durationBadge, { backgroundColor: colors.cardSecondary }]}>
-                  <Clock size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                  <Text style={[styles.durationText, { color: colors.textSecondary }]}>{tool.duration}</Text>
-                </View>
-
-                <View style={styles.tagsContainer}>
-                  {tool.tags.map((tag, idx) => (
-                    <View key={idx} style={[styles.tagBadge, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
-                      <Text style={[styles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              {/* Action Button */}
-              <TouchableOpacity 
-                style={[styles.selectButton, { backgroundColor: tool.color }]}
-                onPress={() => handleSelectTool(tool.key)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.selectButtonText}>Sélectionner cet outil</Text>
-                <ArrowRight size={18} color="#ffffff" style={{ marginLeft: 6 }} />
-              </TouchableOpacity>
-            </View>
-          );
-        })}
+            );
+          })
+        )}
       </ScrollView>
     </SafeAreaView>
   );

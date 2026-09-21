@@ -42,6 +42,9 @@ export default function AssessmentRunnerScreen() {
     patientName?: string; 
     centre?: string;
     lang?: string;
+    patientProfile?: string;
+    patientProfileOther?: string;
+    pvvihPatientType?: string;
   }>();
 
   const [lang, setLang] = useState<AssessmentLanguage>(
@@ -52,6 +55,9 @@ export default function AssessmentRunnerScreen() {
   const patientId = params.patientId ? parseInt(params.patientId, 10) : 0;
   const patientName = params.patientName || 'Patient';
   const centreName = params.centre || undefined;
+  const patientProfile = params.patientProfile || undefined;
+  const patientProfileOther = params.patientProfileOther || undefined;
+  const pvvihPatientType = params.pvvihPatientType || undefined;
 
   // Answers state
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
@@ -159,6 +165,9 @@ export default function AssessmentRunnerScreen() {
         patientId,
         centre: centreName,
         answers,
+        patientProfile,
+        patientProfileOther,
+        pvvihPatientType,
       };
       return agentService.submitEvaluation(questionnaireKey, payload);
     },
@@ -178,6 +187,9 @@ export default function AssessmentRunnerScreen() {
             patientId,
             centre: centreName,
             answers,
+            patientProfile,
+            patientProfileOther,
+            pvvihPatientType,
           }
         });
         Alert.alert(
@@ -192,9 +204,10 @@ export default function AssessmentRunnerScreen() {
         );
         return;
       }
+      const errorMessage = err?.response?.data?.message || err?.message || (lang === 'en' ? 'An error occurred during submission.' : 'Une erreur est survenue lors de la soumission du dépistage.');
       Alert.alert(
         lang === 'en' ? 'Submission error' : 'Erreur',
-        err?.message || (lang === 'en' ? 'An error occurred during submission.' : 'Une erreur est survenue lors de la soumission du dépistage.')
+        errorMessage
       );
     }
   });
@@ -442,7 +455,24 @@ export default function AssessmentRunnerScreen() {
                 style={styles.secondaryResultButton}
                 onPress={() => {
                   setShowResultModal(false);
-                  router.push('/(health-agent)/referrals');
+                  const firstScore = resultData?.scores?.[0];
+                  const scoreStr = resultData?.overallScore != null
+                    ? `${resultData.overallScore}${resultData.overallDenominator ? `/${resultData.overallDenominator}` : ''}`
+                    : firstScore?.value != null ? `${firstScore.value}` : '';
+                  const sevStr = firstScore?.severityLabel || firstScore?.interpretation || '';
+
+                  router.push({
+                    pathname: '/(health-agent)/referrals/new',
+                    params: {
+                      submissionId: resultData ? String(resultData.submissionId) : undefined,
+                      patientId: String(resultData?.patientId || patientId),
+                      patientName: patientName,
+                      questionnaireName: questionnaire?.name || questionnaire?.title || questionnaireKey,
+                      score: scoreStr,
+                      severity: sevStr,
+                      centre: centreName,
+                    },
+                  });
                 }}
               >
                 <ArrowRightLeft size={16} color="#00A651" style={{ marginRight: 6 }} />

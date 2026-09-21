@@ -57,7 +57,16 @@ export const tokenService = {
           case 'COMMUNITY_AGENT':
             return '/(health-agent)/dashboard';
           case 'FIELD_AGENT':
+          case 'MIGRANT_FIELD_AGENT':
             return '/(field-agent)/dashboard';
+          case 'CENSUS_AGENT':
+          case 'SENSIBILISATEUR':
+            return '/(census-agent)/dashboard';
+          case 'ONG_MANAGER':
+          case 'RESPONSABLE_ONG':
+            return '/(ong-manager)/dashboard';
+          case 'PROGRAM_AGENT':
+            return '/(program-agent)/dashboard';
           case 'PATIENT':
             return '/(patient)/dashboard';
         }
@@ -77,8 +86,14 @@ export const tokenService = {
             return '/(health-agent)/dashboard';
           } else if (spacePath === '/espace-superviseur' || space.type === 'SUPERVISOR') {
             return '/(supervisor)/dashboard';
-          } else if (spacePath === '/espace-agent-terrain-migrant' || space.type === 'FIELD_AGENT') {
+          } else if (spacePath === '/espace-agent-terrain-migrant' || space.type === 'FIELD_AGENT' || space.type === 'MIGRANT_FIELD_AGENT') {
             return '/(field-agent)/dashboard';
+          } else if (spacePath === '/recensement' || space.type === 'CENSUS_AGENT' || space.type === 'SENSIBILISATEUR') {
+            return '/(census-agent)/dashboard';
+          } else if (spacePath === '/ong' || space.type === 'ONG_MANAGER' || space.type === 'RESPONSABLE_ONG') {
+            return '/(ong-manager)/dashboard';
+          } else if (spacePath === '/agent-programme' || space.type === 'PROGRAM_AGENT') {
+            return '/(program-agent)/dashboard';
           }
         }
         if (userContext?.roles?.some((r: string) => r.includes('ROLE_PRO'))) {
@@ -106,7 +121,8 @@ axiosInstance.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
       if (activeContext) {
-        config.headers['X-Active-Context'] = activeContext;
+        const headerContext = activeContext === 'FIELD_AGENT' ? 'MIGRANT_FIELD_AGENT' : activeContext;
+        config.headers['X-Active-Context'] = headerContext;
       }
       
       console.log(`[Request] ${config.method?.toUpperCase()} ${config.url}`);

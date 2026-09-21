@@ -13,15 +13,33 @@ export const useGetContext = () => {
   });
 };
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (profileData: any) => {
       const data = await apiClient.patch('/api/me/profile', profileData);
+      try {
+        const storedStr = await AsyncStorage.getItem('tila_user_context');
+        if (storedStr) {
+          const current = JSON.parse(storedStr);
+          const updated = {
+            ...current,
+            ...profileData,
+            firstName: profileData.firstName ?? current.firstName,
+            lastName: profileData.lastName ?? current.lastName,
+            phoneNumber: profileData.phoneNumber ?? current.phoneNumber,
+          };
+          await AsyncStorage.setItem('tila_user_context', JSON.stringify(updated));
+        }
+      } catch {}
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proContext'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+      queryClient.invalidateQueries({ queryKey: ['user_profile'] });
     },
   });
 };

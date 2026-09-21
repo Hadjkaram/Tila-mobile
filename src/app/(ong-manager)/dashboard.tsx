@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 import { ongService } from '../../services/ong';
+import { getUserDisplayName } from '../../utils/userUtils';
 
 export default function OngDashboardScreen() {
   const router = useRouter();
@@ -45,8 +46,8 @@ export default function OngDashboardScreen() {
         const stored = await AsyncStorage.getItem('tila_user_context');
         if (stored) {
           const parsed = JSON.parse(stored);
-          const name = [parsed.firstName, parsed.lastName].filter(Boolean).join(' ').trim();
-          if (name) setManagerName(name);
+          const name = getUserDisplayName(parsed, 'Responsable ONG');
+          setManagerName(name);
           if (parsed.organisation?.name || parsed.ong?.name) {
             setOngTitle(parsed.organisation?.name || parsed.ong?.name);
           }
@@ -87,9 +88,9 @@ export default function OngDashboardScreen() {
         <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.headerTopRow}>
             <View style={styles.headerTitleGroup}>
-              <Text style={[styles.greeting, { color: colors.textSecondary }]}>Espace Supervision,</Text>
+              <Text style={[styles.greeting, { color: colors.textSecondary }]}>Bonjour,</Text>
               <Text style={[styles.managerName, { color: colors.text }]} numberOfLines={1}>
-                {managerName}
+                {managerName} 👋
               </Text>
             </View>
             <View style={styles.ongBadge}>

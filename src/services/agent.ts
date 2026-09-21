@@ -37,6 +37,7 @@ export interface Section {
 export interface QuestionnaireDetail {
   id: string;
   name: string;
+  title?: string;
   description: string;
   instructions?: string;
   type?: string;
@@ -163,6 +164,25 @@ export interface AgentReferralItem {
   notes: string | null;
 }
 
+export interface AgentProfessionalItem {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  name: string;
+  speciality: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export interface AgentCreateReferralPayload {
+  submissionId: number;
+  motif: string;
+  niveauPriorite?: "NORMALE" | "HAUTE" | "URGENTE" | string;
+  centreId?: number;
+  professionalId?: number;
+  notes?: string;
+}
+
 /** Orientation adressée au centre de l'agent (à prendre en charge, ou déjà prise en charge — flow 2). */
 export interface AgentPendingReferralItem {
   id: number;
@@ -255,10 +275,18 @@ export const agentService = {
     return apiClient.post<AgentCreatePatientResponse>("/api/agent/patients", payload);
   },
 
-  async getCentres(q?: string, limit = 50): Promise<AgentCentre[]> {
+  async getCentres(q?: string, limit = 100): Promise<AgentCentre[]> {
     const params = new URLSearchParams({ limit: String(limit) });
     if (q?.trim()) params.set("q", q.trim());
     const res = await apiClient.get<{ items: AgentCentre[] }>(`/api/agent/centres?${params}`);
+    return res.items ?? [];
+  },
+
+  async getProfessionals(q?: string, limit = 100): Promise<AgentProfessionalItem[]> {
+    const qs = new URLSearchParams();
+    if (q && q.trim()) qs.set("q", q.trim());
+    qs.set("limit", String(limit));
+    const res = await apiClient.get<{ items: AgentProfessionalItem[] }>(`/api/agent/professionals?${qs.toString()}`);
     return res.items ?? [];
   },
 
@@ -299,6 +327,9 @@ export const agentService = {
       centreId?: number;
       referralId?: number;
       userInfo?: Record<string, any>;
+      patientProfile?: string;
+      patientProfileOther?: string;
+      pvvihPatientType?: string;
     }
   ): Promise<SubmissionResponse> {
     const effectiveKey = this.canonicalKey(questionnaireKey);
@@ -316,6 +347,32 @@ export const agentService = {
     if (payload.referralId != null) {
       body.referralId = payload.referralId;
     }
+
+    // Le backend exige obligatoirement `patientProfile` pour les soumissions avec patientId/userInfo
+    let profile = payload.patientProfile;
+    let profileOther = payload.patientProfileOther;
+    let pvvihType = payload.pvvihPatientType;
+
+    if (!profile) {
+      const lowerKey = effectiveKey.toLowerCase();
+      if (lowerKey.includes('pcl') || lowerKey.includes('migrant') || lowerKey.includes('sdq-terrain')) {
+        profile = 'migrant';
+      } else if (lowerKey.includes('vih') || lowerKey.includes('berger')) {
+        profile = 'pvvih';
+        pvvihType = pvvihType || 'file_active';
+      } else {
+        profile = 'autre';
+        profileOther = profileOther || 'Population générale';
+      }
+    }
+
+    body.patientProfile = profile;
+    if (profile === 'autre') {
+      body.patientProfileOther = profileOther || 'Population générale';
+    } else if (profile === 'pvvih') {
+      body.pvvihPatientType = pvvihType || 'file_active';
+    }
+
     return apiClient.post<SubmissionResponse>("/api/questionnaires/submission", body);
   },
 
@@ -356,7 +413,54 @@ export const agentService = {
     if (params?.sexe && params.sexe !== "tous") search.set("sexe", params.sexe);
     if (params?.ageBucket && params.ageBucket !== "tous") search.set("ageBucket", params.ageBucket);
     const qs = search.toString();
-    return apiClient.get<AgentMigrantsDashboard>(`/api/agent/migrants/dashboard${qs ? `?${qs}` : ""}`);
+    try {
+      return await apiClient.get<AgentMigrantsDashboard>(`/api/agent/migrants/dashboard${qs ? `?${qs}` : ""}`);
+    } catch (e: any) {
+      if (e?.response?.status === 403) {
+        console.warn('403 received on getMigrantsDashboard, returning fallback');
+        return {
+          meta: {
+            dateFrom: null,
+            dateTo: null,
+            availableSites: [],
+          },
+          stats: {
+            personnesEvaluees: 0,
+            enfantsEvalues: 0,
+            adultesAdosEvalues: 0,
+            fichesCompletes: 0,
+            fichesCompletesPct: 0,
+            casAOrienterEnPriorite: 0,
+            trendVsHier: 0,
+          },
+          repartitionSexe: { homme: 0, femme: 0, autre: 0 },
+          repartitionAge: { '0_5': 0, '6_11': 0, '12_17': 0, '18_35': 0, '36_plus': 0 },
+          sdqDistribution: { normal: 0, limite: 0, anormal: 0 },
+          depressionDistribution: {
+            absence: 0,
+            mineurs: 0,
+            mineure: 0,
+            moderee: 0,
+            severe: 0,
+          },
+          alertes: {
+            tspt: 0,
+            ideationSuicidaire: 0,
+            symptomePsychotique: 0,
+            sdqAnormal: 0,
+            fichesIncompletes: 0,
+          },
+          indicateursCliniques: [],
+          expositionEvenements: [],
+          detail: {
+            parTrancheAgeEtSexe: {},
+            casPrioritairesParSexe: {},
+            accompagnementEnfants: {},
+          },
+        };
+      }
+      throw e;
+    }
   },
 
   async getReferrals(params?: { page?: number; limit?: number; dateFrom?: string; dateTo?: string; type?: 'centre' | 'professional' }): Promise<{
@@ -380,6 +484,17 @@ export const agentService = {
       page: res.page ?? page,
       limit: res.limit ?? limit,
     };
+  },
+
+  /** Crée une nouvelle référence / orientation pour une soumission de dépistage. */
+  async createReferral(payload: AgentCreateReferralPayload): Promise<{
+    id: number;
+    submissionId: number;
+    motif: string;
+    niveauPriorite: string;
+    statut: string;
+  }> {
+    return apiClient.post("/api/agent/referrals", payload);
   },
 
   /** `status: "received"` = orientations déjà prises en charge par mon centre. */
@@ -426,20 +541,28 @@ export const agentService = {
     const search = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (dateFrom) search.set("dateFrom", dateFrom);
     if (dateTo) search.set("dateTo", dateTo);
-    const res = await apiClient.get<{
-      items: AgentReceivedPatientItem[];
-      total: number;
-      page: number;
-      limit: number;
-      stats: AgentReceivedPatientsStats;
-    }>(`/api/agent/received-patients?${search}`);
-    return {
-      items: res.items ?? [],
-      total: res.total ?? 0,
-      page: res.page ?? page,
-      limit: res.limit ?? limit,
-      stats: res.stats ?? { total: res.total ?? 0, orientes: 0, referes: 0, nonOrientes: undefined },
-    };
+    try {
+      const res = await apiClient.get<{
+        items: AgentReceivedPatientItem[];
+        total: number;
+        page: number;
+        limit: number;
+        stats: AgentReceivedPatientsStats;
+      }>(`/api/agent/received-patients?${search}`);
+      return {
+        items: res.items ?? [],
+        total: res.total ?? 0,
+        page: res.page ?? page,
+        limit: res.limit ?? limit,
+        stats: res.stats ?? { total: res.total ?? 0, orientes: 0, referes: 0, nonOrientes: undefined },
+      };
+    } catch (e: any) {
+      if (e?.response?.status === 403) {
+        console.warn('403 received on getReceivedPatients, returning empty list');
+        return { items: [], total: 0, page, limit, stats: { total: 0, orientes: 0, referes: 0, nonOrientes: 0 } };
+      }
+      throw e;
+    }
   },
 
   async getSubmissionResult(submissionId: number): Promise<AgentSubmissionResult> {

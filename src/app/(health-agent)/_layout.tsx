@@ -94,20 +94,18 @@ export default function HealthAgentLayout() {
         name="assessments/new"
         options={{
           drawerItemStyle: { display: 'none' },
-          title: 'Nouveau Dépistage',
-          headerLeft: () => (
-            <TouchableOpacity 
-              onPress={() => router.back()}
-              style={{ marginLeft: 16 }}
-              activeOpacity={0.7}
-            >
-              <ArrowLeft color="#00A651" size={24} />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
         }}
       />
       <Drawer.Screen
         name="assessments/run"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          headerShown: false,
+        }}
+      />
+      <Drawer.Screen
+        name="referrals/new"
         options={{
           drawerItemStyle: { display: 'none' },
           headerShown: false,

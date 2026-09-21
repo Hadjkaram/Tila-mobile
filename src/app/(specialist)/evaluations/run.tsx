@@ -22,7 +22,8 @@ import {
   Brain,
   HeartHandshake,
   Smile,
-  Activity
+  Activity,
+  ArrowRightLeft,
 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -103,6 +104,9 @@ export default function SpecialistAssessmentRunnerScreen() {
     patientName?: string; 
     centre?: string;
     lang?: string;
+    patientProfile?: string;
+    patientProfileOther?: string;
+    pvvihPatientType?: string;
   }>();
 
   const [lang, setLang] = useState<AssessmentLanguage>(
@@ -113,6 +117,9 @@ export default function SpecialistAssessmentRunnerScreen() {
   const patientId = params.patientId ? parseInt(params.patientId, 10) : 0;
   const patientName = params.patientName || 'Patient';
   const centreName = params.centre || undefined;
+  const patientProfile = params.patientProfile || undefined;
+  const patientProfileOther = params.patientProfileOther || undefined;
+  const pvvihPatientType = params.pvvihPatientType || undefined;
 
   // Answers state
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
@@ -243,6 +250,9 @@ export default function SpecialistAssessmentRunnerScreen() {
         patientId,
         centre: centreName,
         answers,
+        patientProfile,
+        patientProfileOther,
+        pvvihPatientType,
       };
 
       const isOnline = await syncService.checkConnectivity();
@@ -291,9 +301,10 @@ export default function SpecialistAssessmentRunnerScreen() {
       queryClient.invalidateQueries({ queryKey: ['pro_patient_timeline', String(patientId)] });
     },
     onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error.message || (lang === 'en' ? 'Failed to save evaluation.' : "Échec de l'enregistrement de l'évaluation.");
       Alert.alert(
         lang === 'en' ? 'Submission error' : 'Erreur',
-        error.message || (lang === 'en' ? 'Failed to save evaluation.' : "Échec de l'enregistrement de l'évaluation.")
+        errorMessage
       );
     },
   });
@@ -523,6 +534,17 @@ export default function SpecialistAssessmentRunnerScreen() {
             >
               <User size={18} color="#ffffff" style={{ marginRight: 8 }} />
               <Text style={styles.modalPrimaryButtonText}>Voir la fiche du patient</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalSecondaryButton, { borderColor: '#00A651', marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+              onPress={() => {
+                setShowResultModal(false);
+                router.replace('/(specialist)/referrals');
+              }}
+            >
+              <ArrowRightLeft size={16} color="#00A651" style={{ marginRight: 6 }} />
+              <Text style={[styles.modalSecondaryButtonText, { color: '#00A651' }]}>Gérer les orientations & suivis</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

@@ -7,6 +7,8 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { Text } from '../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,11 +25,14 @@ import {
   Calendar,
   Building2,
   Trash2,
+  Edit3,
+  X,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { tokenService } from '../../services/apiClient';
 import { patientService, PatientProfile } from '../../services/patient';
+import { useUpdateProfile } from '../../hooks/useProfessionalApi';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function PatientProfileScreen() {
@@ -37,6 +42,14 @@ export default function PatientProfileScreen() {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(true);
   const [isClearingCache, setIsClearingCache] = useState(false);
+
+  // Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+
+  const updateProfileMutation = useUpdateProfile();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -52,6 +65,39 @@ export default function PatientProfileScreen() {
     };
     loadProfile();
   }, []);
+
+  const handleOpenEdit = () => {
+    setEditFirstName(profile?.firstName || '');
+    setEditLastName(profile?.lastName || '');
+    setEditPhone((profile as any)?.phoneNumber || (profile as any)?.phone || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate(
+      {
+        firstName: editFirstName.trim(),
+        lastName: editLastName.trim(),
+        phoneNumber: editPhone.trim(),
+      },
+      {
+        onSuccess: () => {
+          setProfile((prev: any) => ({
+            ...prev,
+            firstName: editFirstName.trim(),
+            lastName: editLastName.trim(),
+            phoneNumber: editPhone.trim(),
+            phone: editPhone.trim(),
+          }));
+          setIsEditModalOpen(false);
+          Alert.alert('Succès', 'Vos coordonnées ont été mises à jour.');
+        },
+        onError: (err: any) => {
+          Alert.alert('Erreur', err?.message || 'Impossible de mettre à jour le profil.');
+        },
+      }
+    );
+  };
 
   const handleClearCache = async () => {
     Alert.alert(
@@ -122,7 +168,9 @@ export default function PatientProfileScreen() {
           <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.topBarTitle, { color: colors.headerText }]}>Mon Profil</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={handleOpenEdit} style={styles.editHeaderButton}>
+          <Edit3 size={20} color="#00A651" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -136,6 +184,15 @@ export default function PatientProfileScreen() {
             <Heart size={13} color="#00A651" style={{ marginRight: 4 }} />
             <Text style={styles.roleBadgeText}>PATIENT / BÉNÉFICIAIRE</Text>
           </View>
+
+          <TouchableOpacity
+            style={[styles.editProfileBtn, { borderColor: colors.border }]}
+            onPress={handleOpenEdit}
+            activeOpacity={0.7}
+          >
+            <Edit3 size={15} color="#00A651" style={{ marginRight: 6 }} />
+            <Text style={styles.editProfileBtnText}>Modifier mes coordonnées</Text>
+          </TouchableOpacity>
         </View>
 
         {/* 2. Coordonnées */}
@@ -223,6 +280,71 @@ export default function PatientProfileScreen() {
           <Text style={styles.logoutBtnText}>Se déconnecter</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={isEditModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsEditModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier mes coordonnées</Text>
+              <TouchableOpacity onPress={() => setIsEditModalOpen(false)}>
+                <X size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Prénom</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }]}
+                value={editFirstName}
+                onChangeText={setEditFirstName}
+                placeholder="Votre prénom"
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }]}
+                value={editLastName}
+                onChangeText={setEditLastName}
+                placeholder="Votre nom"
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Téléphone</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.text }]}
+                value={editPhone}
+                onChangeText={setEditPhone}
+                placeholder="Numéro de téléphone"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveButton, updateProfileMutation.isPending && { opacity: 0.7 }]}
+              onPress={handleSaveProfile}
+              disabled={updateProfileMutation.isPending}
+            >
+              {updateProfileMutation.isPending ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <Text style={styles.saveButtonText}>Enregistrer</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -396,5 +518,77 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
+  },
+  editHeaderButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  editProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 14,
+    width: '100%',
+  },
+  editProfileBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#00A651',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+    borderWidth: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 13,
+    marginBottom: 6,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  saveButton: {
+    backgroundColor: '#00A651',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
 });

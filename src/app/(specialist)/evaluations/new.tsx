@@ -38,6 +38,7 @@ import { syncService } from '../../../services/syncService';
 import { referentialCache } from '../../../services/referentialCache';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { useTheme } from '../../../context/ThemeContext';
+import { CentreSelector } from '../../../components/CentreSelector';
 
 export default function SpecialistNewEvaluationScreen() {
   const router = useRouter();
@@ -48,10 +49,6 @@ export default function SpecialistNewEvaluationScreen() {
   const [selectedToolKey, setSelectedToolKey] = useState<string>(initialKey);
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
   const [selectedCentre, setSelectedCentre] = useState<string>('');
-  
-  // Center Picker Modal
-  const [isCentreModalOpen, setIsCentreModalOpen] = useState(false);
-  const [centreSearch, setCentreSearch] = useState('');
 
   // Patient search
   const [patientSearch, setPatientSearch] = useState('');
@@ -154,13 +151,6 @@ export default function SpecialistNewEvaluationScreen() {
       bg: '#ecfdf5',
     };
   }, [selectedToolKey]);
-
-  // Filtered centres in modal
-  const filteredCentres = useMemo(() => {
-    if (!centreSearch.trim()) return centres;
-    const q = centreSearch.toLowerCase();
-    return centres.filter(c => c.name.toLowerCase().includes(q) || (c.description && c.description.toLowerCase().includes(q)));
-  }, [centres, centreSearch]);
 
   // Insert patient in cache
   const insertPatientInLocalCache = async (patient: any) => {
@@ -297,22 +287,11 @@ export default function SpecialistNewEvaluationScreen() {
 
         {/* 1. SELECTION DU CENTRE */}
         <View style={[styles.sectionContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.sectionTitleRow}>
-            <Building size={18} color="#00A651" />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Centre de Santé / Prise en charge</Text>
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.centreSelectorButton, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
-            onPress={() => setIsCentreModalOpen(true)}
-            activeOpacity={0.7}
-          >
-            <Building size={18} color={colors.textSecondary} style={{ marginRight: 10 }} />
-            <Text style={[styles.centreSelectorText, { color: colors.text }]} numberOfLines={1}>
-              {selectedCentre || 'Sélectionner un centre...'}
-            </Text>
-            <ChevronDown size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
+          <CentreSelector
+            selectedCentreName={selectedCentre}
+            onSelect={(c) => setSelectedCentre(c.name)}
+            label="Centre de Santé / Prise en charge"
+          />
         </View>
 
         {/* 2. SELECTION DU PATIENT */}
@@ -426,57 +405,7 @@ export default function SpecialistNewEvaluationScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* MODAL 1 : SÉLECTION DU CENTRE */}
-      <Modal visible={isCentreModalOpen} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Sélectionner un centre</Text>
-              <TouchableOpacity onPress={() => setIsCentreModalOpen(false)}>
-                <X size={22} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
 
-            <View style={[styles.modalSearchBox, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
-              <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
-              <TextInput 
-                style={[styles.modalSearchInput, { color: colors.text }]}
-                placeholder="Filtrer les centres..."
-                placeholderTextColor={colors.textMuted}
-                value={centreSearch}
-                onChangeText={setCentreSearch}
-              />
-            </View>
-
-            <ScrollView style={{ maxHeight: 350 }}>
-              {filteredCentres.map((c) => (
-                <TouchableOpacity
-                  key={c.id || c.name}
-                  style={[
-                    styles.centreItem,
-                    { borderBottomColor: colors.border },
-                    selectedCentre === c.name && [styles.centreItemSelected, { backgroundColor: isDark ? 'rgba(0,166,81,0.15)' : '#ecfdf5' }]
-                  ]}
-                  onPress={() => {
-                    setSelectedCentre(c.name);
-                    setIsCentreModalOpen(false);
-                  }}
-                >
-                  <Building size={16} color={selectedCentre === c.name ? '#00A651' : colors.textSecondary} style={{ marginRight: 10 }} />
-                  <Text style={[
-                    styles.centreItemText,
-                    { color: colors.text },
-                    selectedCentre === c.name && styles.centreItemTextSelected
-                  ]}>
-                    {c.name} {c.careLevel ? `(${c.careLevel})` : ''}
-                  </Text>
-                  {selectedCentre === c.name && <Check size={18} color="#00A651" />}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
 
       {/* MODAL 2 : NOUVEAU PATIENT RAPIDE */}
       <Modal visible={isModalOpen} animationType="slide" transparent>

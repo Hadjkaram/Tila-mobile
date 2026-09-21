@@ -32,6 +32,7 @@ import { syncService } from '../../../services/syncService';
 import { referentialCache } from '../../../services/referentialCache';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { useTheme } from '../../../context/ThemeContext';
+import { CentreSelector } from '../../../components/CentreSelector';
 
 export default function NewAssessmentScreen() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function NewAssessmentScreen() {
   const [selectedQuestionnaireKey, setSelectedQuestionnaireKey] = useState<string>('');
   const [selectedPatient, setSelectedPatient] = useState<AgentPatient | null>(null);
   const [selectedCentre, setSelectedCentre] = useState<string>('');
+  const [selectedCentreId, setSelectedCentreId] = useState<number | null>(null);
 
   // Patient search
   const [patientSearch, setPatientSearch] = useState('');
@@ -125,6 +127,7 @@ export default function NewAssessmentScreen() {
   useEffect(() => {
     if (centres.length > 0 && !selectedCentre) {
       setSelectedCentre(centres[0].name);
+      setSelectedCentreId(centres[0].id);
     }
   }, [centres, selectedCentre]);
 
@@ -246,6 +249,7 @@ export default function NewAssessmentScreen() {
         patientId: String(selectedPatient.id),
         patientName: patientFullName,
         centre: selectedCentre,
+        centreId: selectedCentreId ? String(selectedCentreId) : undefined,
       }
     });
   };
@@ -423,35 +427,20 @@ export default function NewAssessmentScreen() {
         </View>
 
         {/* Étape 3 : Centre de santé (Optionnel) */}
-        {centres.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionNumber}>3</Text>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Centre de Rattachement</Text>
-            </View>
-            <View style={styles.centresRow}>
-              {centres.slice(0, 3).map((c) => {
-                const isSelected = selectedCentre === c.name;
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[
-                      styles.centreChip, 
-                      { backgroundColor: colors.card, borderColor: colors.border },
-                      isSelected && [styles.centreChipSelected, { backgroundColor: isDark ? '#064e3b22' : '#f0fdf4', borderColor: '#00A651' }]
-                    ]}
-                    onPress={() => setSelectedCentre(c.name)}
-                  >
-                    <Building size={14} color={isSelected ? '#00A651' : colors.textSecondary} style={{ marginRight: 6 }} />
-                    <Text style={[styles.centreChipText, { color: isSelected ? '#00A651' : colors.textSecondary }, isSelected && styles.centreChipTextSelected]}>
-                      {c.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionNumber}>3</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Centre de Rattachement</Text>
           </View>
-        )}
+          <CentreSelector
+            selectedCentreName={selectedCentre}
+            selectedCentreId={selectedCentreId}
+            onSelect={(c) => {
+              setSelectedCentre(c.name);
+              setSelectedCentreId(c.id);
+            }}
+          />
+        </View>
 
         {/* Démarrer Button */}
         <TouchableOpacity

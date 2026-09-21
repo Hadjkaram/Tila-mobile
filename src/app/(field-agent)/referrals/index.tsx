@@ -25,7 +25,9 @@ import {
   Clock,
   CheckCircle2,
   Phone,
+  Plus,
 } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { agentService, AgentReferralItem } from '../../../services/agent';
 import { format, parseISO } from 'date-fns';
@@ -35,6 +37,7 @@ import { useTheme } from '../../../context/ThemeContext';
 type FilterStatus = 'ALL' | 'PENDING' | 'RECEIVED' | 'URGENT';
 
 export default function FieldAgentReferralsScreen() {
+  const router = useRouter();
   const { colors, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('ALL');
@@ -164,6 +167,25 @@ export default function FieldAgentReferralsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['bottom']}>
+      {/* Header avec Titre et Bouton + Orienter */}
+      <View style={[styles.topHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Orientations Migrants</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            {referrals.length} orientation{referrals.length !== 1 ? 's' : ''} enregistrée{referrals.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.newReferralBtn}
+          onPress={() => router.push('/(field-agent)/referrals/new' as any)}
+          activeOpacity={0.8}
+        >
+          <Plus size={16} color="#ffffff" style={{ marginRight: 4 }} />
+          <Text style={styles.newReferralBtnText}>+ Orienter</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Search Input */}
       <View style={[styles.searchSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={[styles.searchInputWrap, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
@@ -620,5 +642,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     fontFamily: 'Montserrat_600SemiBold',
+  },
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  newReferralBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00A651',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#00A651',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  newReferralBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
   },
 });

@@ -94,13 +94,8 @@ export default function OnboardingScreen() {
         return;
       }
 
-      // 2. Si pas de session, vérifier si l'onboarding a déjà été complété
-      const value = await AsyncStorage.getItem('@onboarding_complete');
-      if (value !== null) {
-        router.replace('/welcome');
-      } else {
-        setIsReady(true);
-      }
+      // 2. Afficher l'onboarding pour présenter la plateforme
+      setIsReady(true);
     } catch {
       setIsReady(true);
     }

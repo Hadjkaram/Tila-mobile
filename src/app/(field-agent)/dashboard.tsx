@@ -34,6 +34,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
+import { getUserFirstName } from '../../utils/userUtils';
 
 type PeriodPreset = 'today' | 'last_7_days' | 'this_month';
 
@@ -90,9 +91,7 @@ export default function FieldAgentDashboard() {
         const stored = await AsyncStorage.getItem('tila_user_context');
         if (stored) {
           const parsed = JSON.parse(stored);
-          const name = [parsed.firstName, parsed.lastName].filter(Boolean).join(' ').trim();
-          if (name) setAgentName(name);
-          else if (parsed.email) setAgentName(parsed.email);
+          setAgentName(getUserFirstName(parsed, 'Agent'));
         }
       } catch {}
     };

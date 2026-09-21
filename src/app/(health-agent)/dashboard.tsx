@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text } from '../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,8 @@ import {
   Users, 
   ChevronRight, 
   ClipboardList,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react-native';
 import { agentService } from '../../services/agent';
 import { useRouter } from 'expo-router';
@@ -19,10 +20,26 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserFirstName } from '../../utils/userUtils';
 
 export default function HealthAgentDashboard() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const [agentName, setAgentName] = useState<string>('Agent');
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('tila_user_context');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setAgentName(getUserFirstName(parsed, 'Agent'));
+        }
+      } catch {}
+    };
+    loadUser();
+  }, []);
 
   const { 
     data: submissionsData, 
@@ -139,7 +156,11 @@ export default function HealthAgentDashboard() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, isDark && { color: colors.text }]}>Espace Agent de Santé</Text>
+            <View style={styles.badgeRole}>
+              <View style={styles.rolePulse} />
+              <Text style={styles.badgeRoleText}>Agent de Santé</Text>
+            </View>
+            <Text style={[styles.title, isDark && { color: colors.text }]}>Bonjour, {agentName} 👋</Text>
             <Text style={[styles.subtitle, isDark && { color: colors.textSecondary }]}>Aperçu et actions rapides sur le terrain</Text>
           </View>
 
@@ -274,6 +295,31 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
+  },
+  badgeRole: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#ecfdf5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+  },
+  rolePulse: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#00A651',
+    marginRight: 6,
+  },
+  badgeRoleText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#00A651',
+    textTransform: 'uppercase',
   },
   title: {
     fontSize: 24,

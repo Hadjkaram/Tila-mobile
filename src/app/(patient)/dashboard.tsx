@@ -32,6 +32,7 @@ import { patientService, AppointmentItem, AssessmentItem, PatientProfile } from 
 import { format, parseISO, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
+import { getUserFirstName } from '../../utils/userUtils';
 
 export interface DailyMoodEntry {
   value: number;
@@ -43,10 +44,10 @@ export interface DailyMoodEntry {
 }
 
 const MOODS = [
-  { emoji: '😔', label: 'Difficile', value: 1, percent: 20, color: '#ef4444' },
-  { emoji: '🙁', label: 'Bas', value: 2, percent: 40, color: '#f97316' },
-  { emoji: '😐', label: 'Moyen', value: 3, percent: 60, color: '#f59e0b' },
-  { emoji: '🙂', label: 'Bien', value: 4, percent: 80, color: '#10b981' },
+  { emoji: '😞', label: 'Difficile', value: 1, percent: 20, color: '#ef4444' },
+  { emoji: '🙁', label: 'Pas terrible', value: 2, percent: 40, color: '#f97316' },
+  { emoji: '😐', label: 'Moyen', value: 3, percent: 60, color: '#eab308' },
+  { emoji: '🙂', label: 'Bien', value: 4, percent: 80, color: '#3b82f6' },
   { emoji: '😊', label: 'Très bien', value: 5, percent: 100, color: '#00A651' },
 ];
 
@@ -110,7 +111,14 @@ export default function PatientDashboard() {
         patientService.recentAssessments(),
       ]);
 
-      if (meRes.status === 'fulfilled') setProfile(meRes.value);
+      if (meRes.status === 'fulfilled') {
+        setProfile(meRes.value);
+      } else {
+        const stored = await AsyncStorage.getItem('tila_user_context');
+        if (stored) {
+          try { setProfile(JSON.parse(stored)); } catch {}
+        }
+      }
       if (appointmentsRes.status === 'fulfilled') {
         const val: any = appointmentsRes.value;
         setUpcomingAppointments(Array.isArray(val) ? val : (val?.items || []));
@@ -196,7 +204,7 @@ export default function PatientDashboard() {
     }
   })();
 
-  const firstName = profile?.firstName || 'Patient';
+  const firstName = getUserFirstName(profile, 'Bienvenue');
 
   if (isLoading) {
     return (

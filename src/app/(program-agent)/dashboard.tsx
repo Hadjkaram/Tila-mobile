@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 import { programAgentService } from '../../services/programAgent';
+import { getUserDisplayName } from '../../utils/userUtils';
 
 export default function ProgramAgentDashboardScreen() {
   const router = useRouter();
@@ -44,8 +45,8 @@ export default function ProgramAgentDashboardScreen() {
         const stored = await AsyncStorage.getItem('tila_user_context');
         if (stored) {
           const parsed = JSON.parse(stored);
-          const name = [parsed.firstName, parsed.lastName].filter(Boolean).join(' ').trim();
-          if (name) setAgentName(name);
+          const name = getUserDisplayName(parsed, 'Agent Programme National');
+          setAgentName(name);
         }
       } catch {}
     };
@@ -83,9 +84,9 @@ export default function ProgramAgentDashboardScreen() {
         <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.headerTop}>
             <View style={styles.headerTitles}>
-              <Text style={[styles.greeting, { color: colors.textSecondary }]}>Programme National (PNSM)</Text>
+              <Text style={[styles.greeting, { color: colors.textSecondary }]}>Bonjour,</Text>
               <Text style={[styles.agentName, { color: colors.text }]} numberOfLines={1}>
-                {agentName}
+                {agentName} 👋
               </Text>
             </View>
             <View style={styles.badgePnsm}>

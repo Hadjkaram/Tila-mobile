@@ -19,6 +19,7 @@ import {
   Heart,
   HelpCircle,
 } from 'lucide-react-native';
+import { FooterLogos } from '../../components/FooterLogos';
 
 export interface AssessmentMeta {
   id: string;
@@ -36,7 +37,7 @@ export interface AssessmentMeta {
 export const OFFICIAL_ASSESSMENTS: AssessmentMeta[] = [
   {
     id: 'ods',
-    title: 'ODS / BMH-MWT',
+    title: 'POPULATION GÉNÉRALE - ODS / BMH-MWT',
     subtitle: 'Dépistage des Troubles Mentaux Courants',
     description: 'Dépression, anxiété, consommation d’alcool, détresse émotionnelle et idées suicidaires.',
     duration: '5 à 10 min',
@@ -47,37 +48,15 @@ export const OFFICIAL_ASSESSMENTS: AssessmentMeta[] = [
     isRecommended: true,
   },
   {
-    id: 'berger',
-    title: 'Échelle de Berger (VIH)',
-    subtitle: 'Stigmatisation liée au VIH',
-    description: 'Auto-image, attitudes perçues, isolement et gestion de la confidentialité du statut.',
-    duration: '10 min',
-    questionsCount: 12,
-    badge: 'Stigmatisation',
-    color: '#2563eb',
-    bgLight: '#eff6ff',
-  },
-  {
     id: 'sdq',
     title: 'SDQ (Forces et Difficultés)',
-    subtitle: 'Évaluation comportementale enfants & ados',
+    subtitle: 'Évaluation comportementale Ados et Jeunes',
     description: 'Symptômes émotionnels, conduite, hyperactivité et relations avec les pairs (4-17 ans).',
     duration: '8 à 12 min',
     questionsCount: 25,
-    badge: 'Enfants & Ados',
+    badge: 'Ados & Jeunes',
     color: '#F58220',
     bgLight: '#fff7ed',
-  },
-  {
-    id: 'pcl5',
-    title: 'PCL-5 TERRAIN',
-    subtitle: 'Trauma, TSPT & Événements stressants',
-    description: 'Dépistage des symptômes de stress post-traumatique (reviviscence, évitement, hyperréactivité).',
-    duration: '15 min',
-    questionsCount: 20,
-    badge: 'Terrain & Migrants',
-    color: '#8b5cf6',
-    bgLight: '#f5f3ff',
   },
 ];
 
@@ -211,6 +190,7 @@ export default function AssessmentsListScreen() {
             Ces auto-évaluations sont des outils d'orientation et de sensibilisation. Elles ne constituent pas un diagnostic médical formel. En cas d'urgence ou de détresse sévère, contactez immédiatement un professionnel de santé.
           </Text>
         </View>
+        <FooterLogos />
       </ScrollView>
     </SafeAreaView>
   );

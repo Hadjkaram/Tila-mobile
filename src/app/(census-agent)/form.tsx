@@ -30,6 +30,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../context/ThemeContext';
 import { recensementService, RecensementPayload } from '../../services/recensement';
+import { CentreSelector } from '../../components/CentreSelector';
 
 const VULNERABILITY_OPTIONS = [
   { id: 'deplace', label: 'Déplacé / Réfugié / Migrant' },
@@ -417,30 +418,13 @@ export default function CensusFormScreen() {
             </TouchableOpacity>
 
             {refere && (
-              <View style={styles.centresSelectBox}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Sélectionnez le centre de rattachement :</Text>
-                {(centres || []).map((centre) => {
-                  const isSelected = selectedCentreId === centre.id;
-                  return (
-                    <TouchableOpacity
-                      key={centre.id}
-                      style={[
-                        styles.centreRadioItem,
-                        {
-                          backgroundColor: isSelected ? '#eff6ff' : isDark ? colors.bg : '#FFFFFF',
-                          borderColor: isSelected ? '#2563eb' : colors.border,
-                        },
-                      ]}
-                      onPress={() => setSelectedCentreId(centre.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.radioCircle, isSelected && { borderColor: '#2563eb' }]}>
-                        {isSelected && <View style={styles.radioInner} />}
-                      </View>
-                      <Text style={[styles.centreRadioText, { color: colors.text }]}>{centre.name}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              <View style={{ marginBottom: 12 }}>
+                <CentreSelector
+                  selectedCentreId={selectedCentreId}
+                  onSelect={(c) => setSelectedCentreId(c.id)}
+                  label="Centre de santé d’orientation :"
+                  placeholder="Rechercher par nom, ville, niveau..."
+                />
               </View>
             )}
 

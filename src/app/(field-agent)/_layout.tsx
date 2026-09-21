@@ -118,6 +118,14 @@ export default function FieldAgentLayout() {
           headerShown: false,
         }}
       />
+      <Drawer.Screen
+        name="referrals/new"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          title: 'Nouvelle orientation',
+          headerShown: false,
+        }}
+      />
     </Drawer>
   );
 }

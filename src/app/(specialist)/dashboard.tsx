@@ -33,12 +33,24 @@ import { format, startOfWeek, endOfWeek, isSameDay, parseISO } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useTheme } from '../../context/ThemeContext';
+import { getUserDisplayName } from '../../utils/userUtils';
 
-export default function ProDashboard() {
+export default function SpecialistDashboard() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const [userName, setUserName] = useState<string>('Professionnel');
+  const [userName, setUserName] = useState<string>('');
   const [patientRequests, setPatientRequests] = useState<any[]>([]);
+
+  // Teleconsultation states
+  const [activeSession, setActiveSession] = useState<any | null>(null);
+  const [isSubmittingPec, setIsSubmittingPec] = useState(false);
+
+  // PEC Modal form states
+  const [isPecModalVisible, setIsPecModalVisible] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [pecNotes, setPecNotes] = useState('');
+  const [pecDecision, setPecDecision] = useState<'valide' | 'oriente' | 'refuse'>('valide');
+  const [pecPrescription, setPecPrescription] = useState('');
 
   // État Réévaluation Clinique
   const [selectedRequestForReval, setSelectedRequestForReval] = useState<any>(null);
@@ -64,8 +76,8 @@ export default function ProDashboard() {
         const contextStr = await AsyncStorage.getItem('tila_user_context');
         if (contextStr) {
           const userContext = JSON.parse(contextStr);
-          const fullName = [userContext.firstName, userContext.lastName].filter(Boolean).join(" ").trim();
-          setUserName(fullName || userContext.email || 'Professionnel');
+          const name = getUserDisplayName(userContext, '');
+          setUserName(name);
         }
       } catch (err) {}
     };
@@ -216,7 +228,9 @@ export default function ProDashboard() {
       >
         {/* Header */}
         <View style={[styles.header, isDark && { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Text style={[styles.greeting, isDark && { color: colors.text }]} numberOfLines={2}>Bonjour, Dr. {userName}</Text>
+          <Text style={[styles.greeting, isDark && { color: colors.text }]} numberOfLines={2}>
+            {userName ? `Bonjour, Dr. ${userName} 👋` : 'Bonjour, Docteur 👋'}
+          </Text>
           <Text style={[styles.subtitle, isDark && { color: colors.textSecondary }]}>Voici votre résumé d'aujourd'hui</Text>
         </View>
 

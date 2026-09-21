@@ -48,6 +48,9 @@ export default function FieldAgentAssessmentRunnerScreen() {
     patientName?: string;
     centre?: string;
     lang?: string;
+    patientProfile?: string;
+    patientProfileOther?: string;
+    pvvihPatientType?: string;
   }>();
 
   const [lang, setLang] = useState<AssessmentLanguage>(
@@ -58,6 +61,9 @@ export default function FieldAgentAssessmentRunnerScreen() {
   const patientId = params.patientId ? parseInt(params.patientId, 10) : 0;
   const patientName = params.patientName || 'Migrant évalué';
   const centreName = params.centre || undefined;
+  const patientProfile = params.patientProfile || 'migrant';
+  const patientProfileOther = params.patientProfileOther || undefined;
+  const pvvihPatientType = params.pvvihPatientType || undefined;
 
   // Answers state
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
@@ -181,6 +187,9 @@ export default function FieldAgentAssessmentRunnerScreen() {
         patientId,
         answers,
         centre: centreName,
+        patientProfile,
+        patientProfileOther,
+        pvvihPatientType,
       };
 
       if (!isOnline) {
@@ -219,9 +228,10 @@ export default function FieldAgentAssessmentRunnerScreen() {
       queryClient.invalidateQueries({ queryKey: ['agent_patients'] });
     },
     onError: (err: any) => {
+      const errorMessage = err?.response?.data?.message || err?.message || 'Impossible d’enregistrer cette évaluation.';
       Alert.alert(
         lang === 'en' ? 'Submission error' : 'Erreur de soumission',
-        err.message || 'Impossible d’enregistrer cette évaluation.'
+        errorMessage
       );
     },
   });
@@ -438,11 +448,22 @@ export default function FieldAgentAssessmentRunnerScreen() {
                 style={styles.actionOrientBtn}
                 onPress={() => {
                   setShowResultModal(false);
-                  router.replace('/(field-agent)/referrals');
+                  const firstScore = resultData?.scores?.[0];
+                  router.replace({
+                    pathname: '/(field-agent)/referrals/new',
+                    params: {
+                      submissionId: resultData?.submissionId ? String(resultData.submissionId) : undefined,
+                      patientId: patientId ? String(patientId) : undefined,
+                      patientName: patientName || '',
+                      questionnaireName: questionnaire?.title || questionnaireKey || '',
+                      score: firstScore ? `${firstScore.value} (${firstScore.interpretation || ''})` : undefined,
+                      centre: centreName || '',
+                    },
+                  } as any);
                 }}
               >
                 <ArrowRightLeft size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.actionOrientBtnText}>Voir les orientations</Text>
+                <Text style={styles.actionOrientBtnText}>Orienter le Patient</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

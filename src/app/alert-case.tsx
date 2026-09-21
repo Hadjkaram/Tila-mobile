@@ -30,22 +30,14 @@ import { apiClient } from '../services/apiClient';
 import { useTheme } from '../context/ThemeContext';
 
 const REGIONS = [
-  'Abidjan',
-  'Yamoussoukro',
-  'Bouaké',
-  'San Pedro',
-  'Daloa',
-  'Korhogo',
-  'Man',
-  'Gagnoa',
-  'Abengourou',
-  'Divo',
-  'Agboville',
-  'Grand-Bassam',
-  'Bondoukou',
-  'Séguéla',
-  'Odienné',
-];
+  'Abengourou', 'Abidjan', 'Aboisso', 'Adzopé', 'Agboville', 'Agnibilékrou', 'Akoupé', 'Anyama', 'Bangolo',
+  'Béoumi', 'Biankouma', 'Bingerville', 'Bocanda', 'Bondoukou', 'Bongouanou', 'Bonoua', 'Bouaflé', 'Bouaké',
+  'Bouna', 'Boundiali', 'Dabakala', 'Dabou', 'Daloa', 'Danané', 'Daoukro', 'Dimbokro', 'Divo', 'Duékoué',
+  'Ferkessédougou', 'Gagnoa', 'Grand-Bassam', 'Grand-Lahou', 'Guiglo', 'Issia', 'Katiola', 'Korhogo',
+  'Lakota', 'Man', 'Mankono', 'Minignan', 'Ndzianouan', 'Odienné', 'Oumé', 'San-Pédro', 'Sassandra',
+  'Séguéla', 'Sinfra', 'Soubré', 'Tabou', 'Tanda', 'Tiassalé', 'Tingréla', 'Touba', 'Toumodi', 'Vavoua',
+  'Yamoussoukro', 'Zouénoula'
+].sort();
 
 const URGENCY_LEVELS = [
   { value: 'critique', label: 'Critique', desc: 'Danger immédiat', color: '#dc2626' },
@@ -92,6 +84,7 @@ export default function AlertCaseScreen() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [reference, setReference] = useState('');
   const [showRegionModal, setShowRegionModal] = useState(false);
+  const [regionSearch, setRegionSearch] = useState('');
 
   const handleCallEmergency = () => {
     Linking.openURL('tel:143').catch(() => {
@@ -627,8 +620,26 @@ export default function AlertCaseScreen() {
               </TouchableOpacity>
             </View>
 
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.card : '#f8fafc',
+                    borderColor: colors.border,
+                    color: colors.text,
+                    height: 40,
+                  },
+                ]}
+                placeholder="Rechercher une ville..."
+                placeholderTextColor={colors.textMuted}
+                value={regionSearch}
+                onChangeText={setRegionSearch}
+              />
+            </View>
+
             <FlatList
-              data={REGIONS}
+              data={REGIONS.filter(r => r.toLowerCase().includes(regionSearch.toLowerCase()))}
               keyExtractor={(item) => item}
               renderItem={({ item }) => {
                 const isSelected = region === item;

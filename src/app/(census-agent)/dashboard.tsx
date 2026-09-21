@@ -32,6 +32,7 @@ import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 import { recensementService } from '../../services/recensement';
 import { syncService, SyncStatus } from '../../services/syncService';
+import { getUserDisplayName } from '../../utils/userUtils';
 
 type PeriodPreset = 'today' | 'last_7_days' | 'this_month';
 
@@ -65,8 +66,8 @@ export default function CensusAgentDashboard() {
         const stored = await AsyncStorage.getItem('tila_user_context');
         if (stored) {
           const parsed = JSON.parse(stored);
-          const fullName = [parsed.firstName, parsed.lastName].filter(Boolean).join(' ').trim();
-          if (fullName) setAgentName(fullName);
+          const fullName = getUserDisplayName(parsed, 'Agent Sensibilisateur');
+          setAgentName(fullName);
           if (parsed.organisation?.name || parsed.ong?.name) {
             setOngName(parsed.organisation?.name || parsed.ong?.name);
           }
@@ -109,9 +110,9 @@ export default function CensusAgentDashboard() {
         <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.headerTopRow}>
             <View style={styles.headerTitleGroup}>
-              <Text style={[styles.agentGreeting, { color: colors.textSecondary }]}>Bienvenue,</Text>
+              <Text style={[styles.agentGreeting, { color: colors.textSecondary }]}>Bonjour,</Text>
               <Text style={[styles.agentName, { color: colors.text }]} numberOfLines={1}>
-                {agentName}
+                {agentName} 👋
               </Text>
             </View>
             <View style={styles.roleBadge}>

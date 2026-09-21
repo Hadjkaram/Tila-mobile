@@ -35,6 +35,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
+import { getUserDisplayName } from '../../utils/userUtils';
 
 type PeriodPreset = 'today' | 'last_7_days' | 'this_month';
 
@@ -77,9 +78,8 @@ export default function SuperviseurDashboardScreen() {
         const stored = await AsyncStorage.getItem('tila_user_context');
         if (stored) {
           const parsed = JSON.parse(stored);
-          const name = [parsed.firstName, parsed.lastName].filter(Boolean).join(' ').trim();
-          if (name) setSupervisorName(name);
-          else if (parsed.email) setSupervisorName(parsed.email);
+          const name = getUserDisplayName(parsed, '');
+          setSupervisorName(name);
         }
       } catch {}
     };
@@ -179,7 +179,9 @@ export default function SuperviseurDashboardScreen() {
             </View>
             <Text style={[styles.dateText, isDark && { color: colors.textSecondary }]}>{todayFormatted}</Text>
           </View>
-          <Text style={[styles.greetingText, isDark && { color: colors.text }]}>Bonjour, Dr. {supervisorName} 👋</Text>
+          <Text style={[styles.greetingText, isDark && { color: colors.text }]}>
+            {supervisorName ? `Bonjour, Dr. ${supervisorName} 👋` : 'Bonjour, Superviseur 👋'}
+          </Text>
           <Text style={[styles.subtitleText, isDark && { color: colors.textSecondary }]}>
             Pilotage et revue clinique des dépistages réalisés par les équipes terrain.
           </Text>

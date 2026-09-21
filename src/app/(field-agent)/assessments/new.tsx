@@ -35,6 +35,7 @@ import { referentialCache } from '../../../services/referentialCache';
 import { useTheme } from '../../../context/ThemeContext';
 import { AssessmentLanguage } from '../../../constants/bilingualQuestionnaires';
 import { AssessmentLanguageSelector } from '../../../components/AssessmentLanguageSelector';
+import { CentreSelector } from '../../../components/CentreSelector';
 
 export default function FieldAgentNewAssessmentScreen() {
   const router = useRouter();
@@ -79,18 +80,39 @@ export default function FieldAgentNewAssessmentScreen() {
     queryFn: () => agentService.getQuestionnaires(),
   });
 
-  // Load centres
-  const { data: centres = [] } = useQuery({
-    queryKey: ['agent_centres_list'],
-    queryFn: () => referentialCache.getCentres(),
-  });
+  const [debouncedCentreSearch, setDebouncedCentreSearch] = useState('');
+  const [remoteCentres, setRemoteCentres] = useState<AgentCentre[]>([]);
+  const [isSearchingCentres, setIsSearchingCentres] = useState(false);
 
-  // Set default centre
   useEffect(() => {
-    if (centres.length > 0 && !selectedCentre) {
-      setSelectedCentre(centres[0].name);
+    const handler = setTimeout(() => {
+      setDebouncedCentreSearch(centreSearch);
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [centreSearch]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCentres = async () => {
+      setIsSearchingCentres(true);
+      try {
+        const results = await agentService.getCentres(debouncedCentreSearch, 30);
+        if (isMounted) setRemoteCentres(results);
+      } catch (e) {
+        console.warn('Erreur recherche centre:', e);
+      } finally {
+        if (isMounted) setIsSearchingCentres(false);
+      }
+    };
+    fetchCentres();
+    return () => { isMounted = false; };
+  }, [debouncedCentreSearch]);
+
+  useEffect(() => {
+    if (remoteCentres.length > 0 && !selectedCentre && !debouncedCentreSearch) {
+      setSelectedCentre(remoteCentres[0].name);
     }
-  }, [centres, selectedCentre]);
+  }, [remoteCentres, selectedCentre, debouncedCentreSearch]);
 
   // Hybrid Patient Search Effect (branché à la base de données & au cache local)
   useEffect(() => {
@@ -160,16 +182,7 @@ export default function FieldAgentNewAssessmentScreen() {
     };
   }, [selectedQuestionnaireKey]);
 
-  // Filtered centres
-  const filteredCentres = useMemo(() => {
-    if (!centreSearch.trim()) return centres;
-    const q = centreSearch.toLowerCase();
-    return centres.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.description && c.description.toLowerCase().includes(q))
-    );
-  }, [centres, centreSearch]);
+
 
   // Insert patient into cache
   const insertPatientInLocalCache = async (patient: any) => {
@@ -396,20 +409,10 @@ export default function FieldAgentNewAssessmentScreen() {
         {/* Sélection du Centre */}
         <View style={styles.section}>
           <Text style={styles.stepLabel}>Étape 3 : Centre / Site de rattachement</Text>
-          <TouchableOpacity
-            style={styles.centreSelectorCard}
-            onPress={() => setIsCentreModalOpen(true)}
-            activeOpacity={0.7}
-          >
-            <Building size={20} color="#00A651" style={{ marginRight: 12 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.centreSelectedName}>
-                {selectedCentre || 'Sélectionner un centre...'}
-              </Text>
-              <Text style={styles.centreSelectedSub}>Appuyez pour changer de centre</Text>
-            </View>
-            <ChevronRight size={18} color="#94a3b8" />
-          </TouchableOpacity>
+          <CentreSelector
+            selectedCentreName={selectedCentre}
+            onSelect={(c) => setSelectedCentre(c.name)}
+          />
         </View>
 
         {/* Bouton Démarrer l'Évaluation */}
@@ -485,62 +488,7 @@ export default function FieldAgentNewAssessmentScreen() {
         </View>
       </Modal>
 
-      {/* Modal Sélection Centre */}
-      <Modal visible={isCentreModalOpen} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choisir le Centre</Text>
-              <TouchableOpacity onPress={() => setIsCentreModalOpen(false)}>
-                <X size={20} color="#64748b" />
-              </TouchableOpacity>
-            </View>
 
-            <View style={[styles.searchInputWrap, { marginHorizontal: 16, marginBottom: 12 }]}>
-              <Search size={16} color="#94a3b8" style={{ marginRight: 8 }} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Filtrer les centres..."
-                value={centreSearch}
-                onChangeText={setCentreSearch}
-              />
-            </View>
-
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
-              {filteredCentres.map((c) => {
-                const isSelected = selectedCentre === c.name;
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[styles.centreOptionItem, isSelected && styles.centreOptionItemSelected]}
-                    onPress={() => {
-                      setSelectedCentre(c.name);
-                      setIsCentreModalOpen(false);
-                    }}
-                  >
-                    <Building
-                      size={18}
-                      color={isSelected ? '#00A651' : '#64748b'}
-                      style={{ marginRight: 12 }}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={[styles.centreOptionName, isSelected && { color: '#00A651', fontWeight: '700' }]}
-                      >
-                        {c.name}
-                      </Text>
-                      {!!c.description && (
-                        <Text style={styles.centreOptionDesc}>{c.description}</Text>
-                      )}
-                    </View>
-                    {isSelected && <Check size={18} color="#00A651" />}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

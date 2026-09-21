@@ -8,6 +8,7 @@ import {
   Modal,
   ScrollView,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { Text } from '../../components/Text';
 import { useRouter } from 'expo-router';
@@ -401,6 +402,14 @@ export default function LoginScreen() {
         <ArrowLeft size={24} color={isDark ? colors.text : '#334155'} />
       </TouchableOpacity>
 
+      <View style={styles.brandHeader}>
+        <Image
+          source={require('../../../assets/images/logo.png')}
+          style={styles.loginLogo}
+          resizeMode="contain"
+        />
+      </View>
+
       <Text style={[styles.title, isDark && { color: colors.text }]}>Bon retour</Text>
       <Text style={[styles.subtitle, isDark && { color: colors.textSecondary }]}>Connectez-vous pour accéder à votre espace</Text>
 
@@ -619,6 +628,14 @@ const styles = StyleSheet.create({
     left: 24,
     zIndex: 10,
     padding: 8,
+  },
+  brandHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  loginLogo: {
+    width: 140,
+    height: 52,
   },
   title: {
     fontSize: 28,

@@ -12,7 +12,9 @@ import {
   CheckCircle2, 
   Clock, 
   X, 
-  Inbox
+  Inbox,
+  ArrowRightLeft,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { agentService, AgentSubmissionItem } from '../../../services/agent';
@@ -92,9 +94,38 @@ export default function AssessmentsScreen() {
           </View>
         )}
 
-        <View style={styles.infoRow}>
-          <Calendar size={16} color={colors.textMuted} style={styles.rowIcon} />
-          <Text style={[styles.dateText, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
+        <View style={[styles.cardFooter, { borderTopColor: isDark ? '#334155' : '#f1f5f9' }]}>
+          <View style={styles.infoRow}>
+            <Calendar size={14} color={colors.textMuted} style={styles.rowIcon} />
+            <Text style={[styles.dateText, { color: colors.textSecondary }]}>{formatDate(item.createdAt)}</Text>
+          </View>
+          {item.completed && (
+            <TouchableOpacity
+              style={[
+                styles.orienterBtn,
+                {
+                  backgroundColor: isDark ? '#064e3b' : '#ecfdf5',
+                  borderColor: isDark ? '#059669' : '#bbf7d0',
+                },
+              ]}
+              onPress={() =>
+                router.push({
+                  pathname: '/(health-agent)/referrals/new',
+                  params: {
+                    submissionId: String(item.id),
+                    patientId: item.patientId ? String(item.patientId) : undefined,
+                    patientName: item.patientName || '',
+                    questionnaireName: item.questionnaireTitle || item.questionnaireKey || '',
+                    centre: item.centre || '',
+                  },
+                })
+              }
+              activeOpacity={0.8}
+            >
+              <ArrowRightLeft size={13} color="#00A651" style={{ marginRight: 4 }} />
+              <Text style={styles.orienterBtnText}>Orienter</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -340,5 +371,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     marginLeft: 6,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  orienterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  orienterBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#00A651',
   },
 });
