@@ -256,11 +256,11 @@ export default function SuperviseurDashboardScreen() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#ecfdf5' }]}>
               <Users size={18} color="#00A651" />
             </View>
-            <Text style={[styles.kpiValue, isDark && { color: colors.text }]}>{stats.personnesEvaluees}</Text>
-            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]}>Total Dépistages</Text>
+            <Text style={[styles.kpiValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{stats.personnesEvaluees}</Text>
+            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1}>Total Dépistages</Text>
             <View style={styles.trendRow}>
               <TrendingUp size={12} color="#00A651" style={{ marginRight: 4 }} />
-              <Text style={styles.trendText}>+{stats.nouvellesSur7Jours} sur 7 jours</Text>
+              <Text style={styles.trendText} numberOfLines={1}>+{stats.nouvellesSur7Jours} sur 7 jours</Text>
             </View>
           </View>
 
@@ -269,13 +269,13 @@ export default function SuperviseurDashboardScreen() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: stats.casAOrienterEnPriorite > 0 ? '#fee2e2' : '#f8fafc' }]}>
               <AlertTriangle size={18} color={stats.casAOrienterEnPriorite > 0 ? '#dc2626' : '#64748b'} />
             </View>
-            <Text style={[styles.kpiValue, stats.casAOrienterEnPriorite > 0 ? { color: '#dc2626' } : (isDark && { color: colors.text })]}>
+            <Text style={[styles.kpiValue, stats.casAOrienterEnPriorite > 0 ? { color: '#dc2626' } : (isDark && { color: colors.text })]} numberOfLines={1} adjustsFontSizeToFit>
               {stats.casAOrienterEnPriorite}
             </Text>
-            <Text style={[styles.kpiLabel, stats.casAOrienterEnPriorite > 0 && { color: '#991b1b' }]}>
+            <Text style={[styles.kpiLabel, stats.casAOrienterEnPriorite > 0 && { color: '#991b1b' }]} numberOfLines={1}>
               Cas Critiques & Alertes
             </Text>
-            <Text style={[styles.kpiSubdetail, isDark && { color: colors.textSecondary }]}>
+            <Text style={[styles.kpiSubdetail, isDark && { color: colors.textSecondary }]} numberOfLines={1}>
               {stats.casAOrienterEnPriorite > 0 ? 'Priorité de revue haute' : 'Aucune alerte critique'}
             </Text>
           </View>
@@ -285,9 +285,9 @@ export default function SuperviseurDashboardScreen() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#eff6ff' }]}>
               <ArrowRightLeft size={18} color="#3b82f6" />
             </View>
-            <Text style={[styles.kpiValue, isDark && { color: colors.text }]}>{totalOrientes > 0 ? totalOrientes : Math.round(stats.casAOrienterEnPriorite * 0.8)}</Text>
-            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]}>Orientations émises</Text>
-            <Text style={[styles.kpiSubdetail, isDark && { color: colors.textSecondary }]}>Vers spécialistes & centres</Text>
+            <Text style={[styles.kpiValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{totalOrientes > 0 ? totalOrientes : Math.round(stats.casAOrienterEnPriorite * 0.8)}</Text>
+            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1}>Orientations émises</Text>
+            <Text style={[styles.kpiSubdetail, isDark && { color: colors.textSecondary }]} numberOfLines={1}>Vers spécialistes & centres</Text>
           </View>
 
           {/* KPI 4 : Taux de complétion */}
@@ -295,9 +295,9 @@ export default function SuperviseurDashboardScreen() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#fef3c7' }]}>
               <FileCheck2 size={18} color="#d97706" />
             </View>
-            <Text style={styles.kpiValue}>{completionRate}%</Text>
-            <Text style={styles.kpiLabel}>Taux de complétion</Text>
-            <Text style={styles.kpiSubdetail}>Fiches conformes & validées</Text>
+            <Text style={styles.kpiValue} numberOfLines={1} adjustsFontSizeToFit>{completionRate}%</Text>
+            <Text style={styles.kpiLabel} numberOfLines={1}>Taux de complétion</Text>
+            <Text style={styles.kpiSubdetail} numberOfLines={1}>Fiches conformes & validées</Text>
           </View>
         </View>
 
@@ -373,7 +373,7 @@ export default function SuperviseurDashboardScreen() {
               {siteActivity.map((item) => (
                 <View key={item.site} style={styles.siteRow}>
                   <View style={styles.siteLabelRow}>
-                    <Text style={[styles.siteNameText, isDark && { color: colors.text }]}>{item.site}</Text>
+                    <Text style={[styles.siteNameText, isDark && { color: colors.text }]} numberOfLines={1}>{item.site}</Text>
                     <View style={styles.siteCounts}>
                       <Text style={[styles.siteTotalText, isDark && { color: colors.textSecondary }]}>{item.total} dépistages</Text>
                       {item.prioritaires > 0 && (
@@ -580,15 +580,16 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
     marginBottom: 16,
   },
   kpiCard: {
-    flex: 1,
-    minWidth: '46%',
+    width: '48%',
+    flexGrow: 1,
+    maxWidth: '50%',
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -746,8 +747,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   siteNameText: {
+    flex: 1,
+    marginRight: 6,
     fontSize: 12.5,
     fontWeight: '600',
     color: '#0f172a',
@@ -757,6 +761,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   siteTotalText: {
     fontSize: 12,

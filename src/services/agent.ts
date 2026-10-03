@@ -128,6 +128,8 @@ export interface AgentPatientCreatePayload {
   email?: string;
   gender?: string;
   referenceCode?: string;
+  migrantType?: 'migrant' | 'victime_traite';
+  paysProvenance?: string;
 }
 
 /** Réponse quand l'email existe déjà (compte patient) : proposer de continuer avec ce patient. */

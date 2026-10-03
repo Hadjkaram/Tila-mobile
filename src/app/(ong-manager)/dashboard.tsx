@@ -144,14 +144,14 @@ export default function OngDashboardScreen() {
             <View style={[styles.kpiIconBox, { backgroundColor: '#ecfdf5' }]}>
               <Users size={20} color="#00A651" />
             </View>
-            <Text style={[styles.kpiValue, { color: colors.text }]}>
+            <Text style={[styles.kpiValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
               {dashData?.kpis?.sensibilises ?? 0}
             </Text>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} numberOfLines={1}>
               Sensibilisés
             </Text>
             <View style={styles.pctBadgeGreen}>
-              <Text style={styles.pctBadgeGreenText}>
+              <Text style={styles.pctBadgeGreenText} numberOfLines={1}>
                 {dashData?.kpis?.sensibilisesPct ?? 89}% du total
               </Text>
             </View>
@@ -162,13 +162,13 @@ export default function OngDashboardScreen() {
             <View style={[styles.kpiIconBox, { backgroundColor: '#eff6ff' }]}>
               <Activity size={20} color="#2563eb" />
             </View>
-            <Text style={[styles.kpiValue, { color: colors.text }]}>
+            <Text style={[styles.kpiValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
               {dashData?.sensibilisateurs?.actifs ?? 0}
             </Text>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} numberOfLines={1}>
               Agents Actifs
             </Text>
-            <Text style={[styles.kpiSubText, { color: colors.textMuted }]}>
+            <Text style={[styles.kpiSubText, { color: colors.textMuted }]} numberOfLines={1}>
               sur {dashData?.sensibilisateurs?.total ?? 0} enregistrés
             </Text>
           </View>
@@ -178,13 +178,13 @@ export default function OngDashboardScreen() {
             <View style={[styles.kpiIconBox, { backgroundColor: '#fff7ed' }]}>
               <UserCheck size={20} color="#ea580c" />
             </View>
-            <Text style={[styles.kpiValue, { color: '#ea580c' }]}>
+            <Text style={[styles.kpiValue, { color: '#ea580c' }]} numberOfLines={1} adjustsFontSizeToFit>
               {dashData?.sensibilisateurs?.enAttente ?? 0}
             </Text>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} numberOfLines={1}>
               En attente
             </Text>
-            <Text style={[styles.kpiSubText, { color: colors.textMuted }]}>
+            <Text style={[styles.kpiSubText, { color: colors.textMuted }]} numberOfLines={1}>
               Inscriptions agents
             </Text>
           </View>
@@ -194,13 +194,13 @@ export default function OngDashboardScreen() {
             <View style={[styles.kpiIconBox, { backgroundColor: '#f5f3ff' }]}>
               <Building2 size={20} color="#7c3aed" />
             </View>
-            <Text style={[styles.kpiValue, { color: colors.text }]}>
+            <Text style={[styles.kpiValue, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
               {dashData?.centresCount ?? 0}
             </Text>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} numberOfLines={1}>
               Centres Partenaires
             </Text>
-            <Text style={[styles.kpiSubText, { color: colors.textMuted }]}>
+            <Text style={[styles.kpiSubText, { color: colors.textMuted }]} numberOfLines={1}>
               Zones sanitaires
             </Text>
           </View>
@@ -385,13 +385,15 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
     marginBottom: 20,
   },
   kpiCard: {
     width: '48%',
+    flexGrow: 1,
+    maxWidth: '50%',
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

@@ -934,10 +934,13 @@ export function normalizeToolKey(key: string): string {
   if (k === 'gad7' || k === 'gad-7') return 'gad7';
   if (k === 'berger' || k === 'berger-vih' || k === 'berger_scale' || k === 'berger-hiv-stigma') return 'berger';
   if (k === 'sdq' || k === 'sdq-terrain') return 'sdq';
-  if (k === 'pcl5-terrain' || k === 'pcl-5-terrain') return 'pcl-5-terrain';
-  if (k === 'pcl5' || k === 'pcl-5') return 'pcl-5';
+  if (k === 'pcl5-terrain' || k === 'pcl-5-terrain' || k === 'pcl5' || k === 'pcl-5') return 'pcl-5';
   return k;
 }
+
+// Alias pour pcl-5-terrain et compatibilité directe
+(BILINGUAL_QUESTIONNAIRES as any)['pcl-5-terrain'] = BILINGUAL_QUESTIONNAIRES['pcl-5'];
+(BILINGUAL_QUESTIONNAIRES as any)['pcl5-terrain'] = BILINGUAL_QUESTIONNAIRES['pcl-5'];
 
 /**
  * Récupère le contenu bilingue d'un outil d'évaluation selon la langue demandée
@@ -947,7 +950,7 @@ export function getLocalizedQuestionnaire(
   lang: AssessmentLanguage = 'fr'
 ): LocalizedQuestionnaireContent | null {
   const normalizedKey = normalizeToolKey(toolKey);
-  const tool = BILINGUAL_QUESTIONNAIRES[normalizedKey];
+  const tool = BILINGUAL_QUESTIONNAIRES[normalizedKey] || BILINGUAL_QUESTIONNAIRES['pcl-5'];
   if (!tool) return null;
   return tool[lang] || tool.fr;
 }

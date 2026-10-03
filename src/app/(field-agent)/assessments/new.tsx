@@ -65,6 +65,8 @@ export default function FieldAgentNewAssessmentScreen() {
   const [newLastName, setNewLastName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newBirthdate, setNewBirthdate] = useState('');
+  const [newMigrantType, setNewMigrantType] = useState<'migrant' | 'victime_traite'>('migrant');
+  const [newPaysProvenance, setNewPaysProvenance] = useState('Côte d\'Ivoire');
 
   // Debounce search
   useEffect(() => {
@@ -182,8 +184,6 @@ export default function FieldAgentNewAssessmentScreen() {
     };
   }, [selectedQuestionnaireKey]);
 
-
-
   // Insert patient into cache
   const insertPatientInLocalCache = async (patient: any) => {
     await referentialCache.appendLocalPatient(patient);
@@ -200,6 +200,8 @@ export default function FieldAgentNewAssessmentScreen() {
       lastName: string;
       phoneNumber?: string;
       birthdate?: string;
+      migrantType?: 'migrant' | 'victime_traite';
+      paysProvenance?: string;
     }) => {
       const isOnline = await syncService.checkConnectivity();
       if (!isOnline) {
@@ -213,7 +215,10 @@ export default function FieldAgentNewAssessmentScreen() {
         };
         await syncService.addToQueue({
           type: 'CREATE_PATIENT',
-          payload,
+          payload: {
+            ...payload,
+            _tempId: localPatient.id,
+          },
         });
         return localPatient;
       }
@@ -229,6 +234,8 @@ export default function FieldAgentNewAssessmentScreen() {
       setNewLastName('');
       setNewPhone('');
       setNewBirthdate('');
+      setNewMigrantType('migrant');
+      setNewPaysProvenance('Côte d\'Ivoire');
       Alert.alert('Succès', 'Patient créé et sélectionné !');
     },
     onError: (error: any) => {
@@ -247,6 +254,8 @@ export default function FieldAgentNewAssessmentScreen() {
       lastName: newLastName.trim(),
       phoneNumber: newPhone.trim() || undefined,
       birthdate: newBirthdate.trim() || undefined,
+      migrantType: newMigrantType,
+      paysProvenance: newPaysProvenance.trim() || 'Côte d\'Ivoire',
     });
   };
 
@@ -470,6 +479,55 @@ export default function FieldAgentNewAssessmentScreen() {
                 placeholder="Ex : 1995-04-12"
                 value={newBirthdate}
                 onChangeText={setNewBirthdate}
+              />
+
+              <Text style={styles.inputLabel}>Profil du bénéficiaire *</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, marginTop: 4 }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    paddingHorizontal: 8,
+                    borderRadius: 10,
+                    borderWidth: 1.5,
+                    borderColor: newMigrantType === 'migrant' ? '#00A651' : '#cbd5e1',
+                    backgroundColor: newMigrantType === 'migrant' ? '#ecfdf5' : '#f8fafc',
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setNewMigrantType('migrant')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: newMigrantType === 'migrant' ? '#00A651' : '#475569' }}>
+                    Migrant
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    paddingHorizontal: 8,
+                    borderRadius: 10,
+                    borderWidth: 1.5,
+                    borderColor: newMigrantType === 'victime_traite' ? '#dc2626' : '#cbd5e1',
+                    backgroundColor: newMigrantType === 'victime_traite' ? '#fef2f2' : '#f8fafc',
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setNewMigrantType('victime_traite')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: newMigrantType === 'victime_traite' ? '#dc2626' : '#475569' }}>
+                    Victime de traite
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.inputLabel}>Pays de provenance / Nationalité *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Ex : Côte d'Ivoire, Guinée, Mali..."
+                value={newPaysProvenance}
+                onChangeText={setNewPaysProvenance}
               />
 
               <TouchableOpacity

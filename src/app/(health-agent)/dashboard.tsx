@@ -214,16 +214,16 @@ export default function HealthAgentDashboard() {
               <View style={[styles.statIcon, { backgroundColor: 'rgba(0, 166, 81, 0.1)' }]}>
                 <FileText size={18} color="#00A651" />
               </View>
-              <Text style={[styles.statValue, isDark && { color: colors.text }]}>{submissionsData?.total ?? submissions.length}</Text>
-              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]}>Dépistages</Text>
+              <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{submissionsData?.total ?? submissions.length}</Text>
+              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Dépistages</Text>
             </View>
             
             <View style={[styles.statCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.statIcon, { backgroundColor: 'rgba(245, 130, 32, 0.1)' }]}>
                 <ArrowRightLeft size={18} color="#F58220" />
               </View>
-              <Text style={[styles.statValue, isDark && { color: colors.text }]}>{referralsData?.total ?? referrals.length}</Text>
-              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]}>Orientations</Text>
+              <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{referralsData?.total ?? referrals.length}</Text>
+              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Orientations</Text>
             </View>
 
             {canAccessReceived && (
@@ -231,8 +231,8 @@ export default function HealthAgentDashboard() {
                 <View style={[styles.statIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
                   <UserCheck size={18} color="#3b82f6" />
                 </View>
-                <Text style={[styles.statValue, isDark && { color: colors.text }]}>{receivedData?.total ?? receivedPatients.length}</Text>
-                <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]}>Reçus</Text>
+                <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{receivedData?.total ?? receivedPatients.length}</Text>
+                <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Reçus</Text>
               </View>
             )}
           </View>

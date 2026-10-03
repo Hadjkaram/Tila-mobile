@@ -72,34 +72,50 @@ export default function AssessmentRunnerScreen() {
     enabled: !!questionnaireKey,
   });
 
-  // Extract all questions
+  const locQuestionnaire = useMemo(() => {
+    return getLocalizedQuestionnaire(questionnaireKey, lang);
+  }, [questionnaireKey, lang]);
+
+  // Extract all questions with guaranteed offline fallback
   const allQuestions = useMemo(() => {
-    if (!questionnaire) return [];
-    const questions: QuestionItem[] = [];
-    if (questionnaire.sections && Array.isArray(questionnaire.sections) && questionnaire.sections.length > 0) {
-      questionnaire.sections.forEach((sec) => {
-        if (sec.items && Array.isArray(sec.items)) {
-          sec.items.forEach((item) => {
-            questions.push({
-              ...item,
-              section_title: sec.title || item.section_title,
+    if (questionnaire) {
+      const questions: QuestionItem[] = [];
+      if (questionnaire.sections && Array.isArray(questionnaire.sections) && questionnaire.sections.length > 0) {
+        questionnaire.sections.forEach((sec) => {
+          if (sec.items && Array.isArray(sec.items)) {
+            sec.items.forEach((item) => {
+              questions.push({
+                ...item,
+                section_title: sec.title || item.section_title,
+              });
             });
-          });
-        }
-      });
-      if (questions.length > 0) return questions;
+          }
+        });
+        if (questions.length > 0) return questions;
+      }
+
+      const rawQuestions =
+        (questionnaire as any)?.bloc2_questions?.all_questions ||
+        (questionnaire as any)?.questions ||
+        (questionnaire as any)?.items;
+      if (Array.isArray(rawQuestions) && rawQuestions.length > 0) {
+        return rawQuestions;
+      }
     }
 
-    const rawQuestions =
-      (questionnaire as any)?.bloc2_questions?.all_questions ||
-      (questionnaire as any)?.questions ||
-      (questionnaire as any)?.items;
-    if (Array.isArray(rawQuestions) && rawQuestions.length > 0) {
-      return rawQuestions;
+    // Mode Hors-Ligne Garanti : Fallback direct sur le dictionnaire bilingue local
+    if (locQuestionnaire && Array.isArray(locQuestionnaire.questions) && locQuestionnaire.questions.length > 0) {
+      return locQuestionnaire.questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        dimension: q.dimension,
+        required: true,
+        scale_labels: locQuestionnaire.options,
+      }));
     }
 
-    return questions;
-  }, [questionnaire]);
+    return [];
+  }, [questionnaire, locQuestionnaire]);
 
   const currentQuestion: QuestionItem | undefined = allQuestions[currentIndex];
   const totalQuestions = allQuestions.length;
@@ -163,6 +179,9 @@ export default function AssessmentRunnerScreen() {
     if (questionnaire?.scale?.labels && questionnaire.scale.labels.length > 0) {
       return questionnaire.scale.labels;
     }
+    if (locQuestionnaire?.options && locQuestionnaire.options.length > 0) {
+      return locQuestionnaire.options;
+    }
     return [
       { value: 0, label: lang === 'en' ? 'No / Never' : 'Non / Jamais' },
       { value: 1, label: lang === 'en' ? 'A little / Sometimes' : 'Un peu / Parfois' },
@@ -173,12 +192,8 @@ export default function AssessmentRunnerScreen() {
 
   const options = useMemo(
     () => getQuestionOptions(currentQuestion),
-    [currentQuestion, questionnaire, lang]
+    [currentQuestion, questionnaire, locQuestionnaire, lang]
   );
-
-  const locQuestionnaire = useMemo(() => {
-    return getLocalizedQuestionnaire(questionnaireKey, lang);
-  }, [questionnaireKey, lang]);
 
   const displayQuestionText = useMemo(() => {
     if (
@@ -290,7 +305,7 @@ export default function AssessmentRunnerScreen() {
   const answeredCount = Object.keys(answers).length;
   const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
 
-  if (isLoading) {
+  if (isLoading && allQuestions.length === 0) {
     return (
       <SafeAreaView style={[styles.container, isDark && { backgroundColor: colors.bg }, styles.centered]}>
         <ActivityIndicator size="large" color="#00A651" />
@@ -301,7 +316,7 @@ export default function AssessmentRunnerScreen() {
     );
   }
 
-  if (error || allQuestions.length === 0) {
+  if (allQuestions.length === 0) {
     return (
       <SafeAreaView style={[styles.container, isDark && { backgroundColor: colors.bg }, styles.centered]}>
         <AlertTriangle size={48} color="#ef4444" style={{ marginBottom: 16 }} />

@@ -345,11 +345,11 @@ export default function FieldAgentDashboard() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#ecfdf5' }]}>
               <Users size={18} color="#00A651" />
             </View>
-            <Text style={[styles.kpiValue, isDark && { color: colors.text }]}>{stats.personnesEvaluees}</Text>
-            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]}>Personnes évaluées</Text>
+            <Text style={[styles.kpiValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{stats.personnesEvaluees}</Text>
+            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1}>Personnes évaluées</Text>
             <View style={styles.trendRow}>
               <TrendingUp size={12} color="#00A651" style={{ marginRight: 4 }} />
-              <Text style={styles.trendText}>
+              <Text style={styles.trendText} numberOfLines={1}>
                 {stats.trendVsHier >= 0 ? `+${stats.trendVsHier}` : `${stats.trendVsHier}`} vs hier
               </Text>
             </View>
@@ -360,11 +360,11 @@ export default function FieldAgentDashboard() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#eff6ff' }]}>
               <Brain size={18} color="#3b82f6" />
             </View>
-            <Text style={[styles.kpiValue, isDark && { color: colors.text }]}>
+            <Text style={[styles.kpiValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
               {stats.enfantsEvalues} / {stats.adultesAdosEvalues}
             </Text>
-            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]}>Enfants / Adultes</Text>
-            <Text style={[styles.kpiSubdetail, isDark && { color: colors.textSecondary }]}>SDQ · PCL-5 · PHQ-9</Text>
+            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1}>Enfants / Adultes</Text>
+            <Text style={[styles.kpiSubdetail, isDark && { color: colors.textSecondary }]} numberOfLines={1}>SDQ · PCL-5 · PHQ-9</Text>
           </View>
 
           {/* KPI 3 : Fiches Complètes */}
@@ -372,11 +372,11 @@ export default function FieldAgentDashboard() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#fef3c7' }]}>
               <FileCheck2 size={18} color="#d97706" />
             </View>
-            <Text style={[styles.kpiValue, isDark && { color: colors.text }]}>
+            <Text style={[styles.kpiValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
               {stats.fichesCompletes} / {stats.personnesEvaluees}
             </Text>
-            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]}>Fiches complètes</Text>
-            <Text style={[styles.kpiSubdetail, alertes.fichesIncompletes > 0 ? styles.textWarning : styles.textSuccess]}>
+            <Text style={[styles.kpiLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1}>Fiches complètes</Text>
+            <Text style={[styles.kpiSubdetail, alertes.fichesIncompletes > 0 ? styles.textWarning : styles.textSuccess]} numberOfLines={1}>
               {alertes.fichesIncompletes > 0
                 ? `${alertes.fichesIncompletes} à compléter`
                 : '100% complètes'}
@@ -388,11 +388,11 @@ export default function FieldAgentDashboard() {
             <View style={[styles.kpiIconWrapper, { backgroundColor: '#fee2e2' }]}>
               <AlertTriangle size={18} color="#dc2626" />
             </View>
-            <Text style={[styles.kpiValue, { color: '#dc2626' }]}>
+            <Text style={[styles.kpiValue, { color: '#dc2626' }]} numberOfLines={1} adjustsFontSizeToFit>
               {stats.casAOrienterEnPriorite}
             </Text>
-            <Text style={[styles.kpiLabel, { color: '#991b1b' }]}>Cas à orienter en priorité</Text>
-            <Text style={styles.kpiAlertSub}>
+            <Text style={[styles.kpiLabel, { color: '#991b1b' }]} numberOfLines={1}>Cas à orienter en priorité</Text>
+            <Text style={styles.kpiAlertSub} numberOfLines={2}>
               {alertes.ideationSuicidaire > 0
                 ? `⚠️ ${alertes.ideationSuicidaire} idéation(s) suicidaire(s)`
                 : 'Aucune idéation détectée'}
@@ -714,15 +714,16 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
     marginBottom: 16,
   },
   kpiCard: {
-    flex: 1,
-    minWidth: '46%',
+    width: '48%',
+    flexGrow: 1,
+    maxWidth: '50%',
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -753,6 +754,7 @@ const styles = StyleSheet.create({
   trendRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     marginTop: 6,
   },
   trendText: {
@@ -807,8 +809,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   alertBadge: {
-    flex: 1,
-    minWidth: '45%',
+    width: '48%',
+    flexGrow: 1,
+    maxWidth: '50%',
     backgroundColor: '#f8fafc',
     borderRadius: 12,
     padding: 12,

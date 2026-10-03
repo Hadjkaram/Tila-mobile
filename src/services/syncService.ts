@@ -147,26 +147,63 @@ class SyncService {
 
     console.log(`[SyncService] Starting sync for ${queue.length} item(s)...`);
 
+    // Charge la table persistante de correspondance des IDs temporaires -> IDs serveur
+    let idMap: Record<string, number> = {};
+    try {
+      const storedMap = await AsyncStorage.getItem('@offline_patient_id_mappings');
+      if (storedMap) idMap = JSON.parse(storedMap);
+    } catch {}
+
     for (const item of queue) {
       try {
         if (item.type === 'CREATE_PATIENT') {
+          const tempId = item.payload?._tempId || item.payload?.tempId || item.payload?.id;
           const activeContext = await tokenService.getActiveContext();
+          let createdPatientRes: any = null;
+
           if (activeContext === 'PROFESSIONAL') {
-            await professionalService.createPatient(item.payload);
+            createdPatientRes = await professionalService.createPatient(item.payload);
           } else {
             try {
-              await agentService.createPatient(item.payload);
+              createdPatientRes = await agentService.createPatient(item.payload);
             } catch {
-              await professionalService.createPatient(item.payload);
+              createdPatientRes = await professionalService.createPatient(item.payload);
             }
+          }
+
+          const realServerId =
+            createdPatientRes?.id ||
+            createdPatientRes?.existingPatient?.id ||
+            createdPatientRes?.patient?.id;
+
+          if (tempId && realServerId) {
+            idMap[String(tempId)] = realServerId;
+            try {
+              await AsyncStorage.setItem('@offline_patient_id_mappings', JSON.stringify(idMap));
+            } catch {}
           }
         } else if (item.type === 'SUBMIT_ASSESSMENT') {
           const { questionnaireKey, ...restPayload } = item.payload;
+          
+          // Résolution de l'ID patient s'il s'agit d'un ID temporaire
+          let targetPatientId = restPayload.patientId;
+          if (targetPatientId != null && (targetPatientId < 0 || idMap[String(targetPatientId)])) {
+            const mappedId = idMap[String(targetPatientId)];
+            if (mappedId) {
+              targetPatientId = mappedId;
+              restPayload.patientId = mappedId;
+            }
+          }
+
           await agentService.submitEvaluation(questionnaireKey, restPayload);
         } else if (item.type === 'SUBMIT_RECENSEMENT') {
           await apiClient.post('/api/sensibilisateur/recensements', item.payload);
         } else if (item.type === 'SUBMIT_REFERRAL') {
-          await agentService.createReferral(item.payload);
+          const referralPayload = { ...item.payload };
+          if (referralPayload.patientId != null && idMap[String(referralPayload.patientId)]) {
+            referralPayload.patientId = idMap[String(referralPayload.patientId)];
+          }
+          await agentService.createReferral(referralPayload);
         }
 
         // Action successful -> remove from queue
