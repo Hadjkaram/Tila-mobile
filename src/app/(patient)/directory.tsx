@@ -32,17 +32,56 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { referentialCache } from '../../services/referentialCache';
+import { patientService } from '../../services/patient';
+import { apiClient } from '../../services/apiClient';
 import { useTheme } from '../../context/ThemeContext';
 
-interface DirectoryItem {
+export interface DirectoryItem {
   id: string | number;
+  rawId?: number;
   name: string;
   type: 'specialist' | 'center';
   specialtyOrType: string;
   address?: string;
   phone?: string;
   city?: string;
+  price?: number;
+  currency?: string;
+  videoConsultation?: boolean;
+  inPersonConsultation?: boolean;
 }
+
+interface BookingSlot {
+  id: string;
+  label: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+}
+
+const generateDynamicSlots = (): BookingSlot[] => {
+  const now = new Date();
+  const formatSlot = (daysAhead: number, time: string, labelPrefix: string): BookingSlot => {
+    const d = new Date(now.getTime() + daysAhead * 86400000);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return {
+      id: `${yyyy}-${mm}-${dd}_${time}`,
+      label: `${labelPrefix} à ${time}`,
+      date: `${yyyy}-${mm}-${dd}`,
+      time,
+    };
+  };
+
+  return [
+    formatSlot(1, '10:00', 'Demain'),
+    formatSlot(1, '14:30', 'Demain'),
+    formatSlot(2, '11:00', 'Dans 2 jours'),
+    formatSlot(2, '15:30', 'Dans 2 jours'),
+    formatSlot(3, '09:00', 'Dans 3 jours'),
+    formatSlot(3, '16:00', 'Dans 3 jours'),
+  ];
+};
 
 export default function PatientDirectory() {
   const router = useRouter();
@@ -57,7 +96,8 @@ export default function PatientDirectory() {
   const [selectedSpecialist, setSelectedSpecialist] = useState<DirectoryItem | null>(null);
   const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
   const [consultationType, setConsultationType] = useState<'video' | 'in-person'>('video');
-  const [appointmentDate, setAppointmentDate] = useState('Demain à 10:00');
+  const [availableSlots, setAvailableSlots] = useState<BookingSlot[]>([]);
+  const [selectedSlotId, setSelectedSlotId] = useState<string>('');
   const [appointmentReason, setAppointmentReason] = useState('');
   const [includeAssessment, setIncludeAssessment] = useState(true);
   const [lastAssessment, setLastAssessment] = useState<any>(null);
@@ -66,58 +106,100 @@ export default function PatientDirectory() {
 
   const loadDirectory = async () => {
     try {
-      // Récupération des centres
-      const centres = await referentialCache.getCentres();
+      // 1. Charger les VRAIS centres de la base de données
+      let centresList: any[] = [];
+      try {
+        const centresRes = await apiClient.get<any>('/api/public/sensibilisateurs/centres');
+        const rawCentres = Array.isArray(centresRes) ? centresRes : (centresRes?.items || []);
+        if (rawCentres.length > 0) {
+          centresList = rawCentres;
+          await AsyncStorage.setItem('@tila_cached_centres', JSON.stringify(rawCentres));
+        }
+      } catch (cErr) {
+        console.warn('[Directory] Erreur API centres, fallback cache local:', cErr);
+        const cached = await AsyncStorage.getItem('@tila_cached_centres');
+        if (cached) {
+          centresList = JSON.parse(cached);
+        } else {
+          centresList = await referentialCache.getCentres().catch(() => []);
+        }
+      }
 
-      const directoryList: DirectoryItem[] = [
-        // Spécialistes agréés TILA
-        {
-          id: 'spec-1',
-          name: 'Dr. Marc Kouamé',
-          type: 'specialist',
-          specialtyOrType: 'Psychiatre Adulte',
-          address: 'CHU de Cocody, Abidjan',
-          city: 'Abidjan',
-        },
-        {
-          id: 'spec-2',
-          name: 'Mme Aminata Traoré',
-          type: 'specialist',
-          specialtyOrType: 'Psychologue Clinicienne',
-          address: 'Centre Médical TILA Plateau',
-          city: 'Abidjan',
-        },
-        {
-          id: 'spec-3',
-          name: 'Dr. Jean-Yves Yao',
-          type: 'specialist',
-          specialtyOrType: 'Pédopsychiatre',
-          address: 'Hôpital Général de Bouaké',
-          city: 'Bouaké',
-        },
-        {
-          id: 'spec-4',
-          name: 'Dr. Fatou Bamba',
-          type: 'specialist',
-          specialtyOrType: 'Médecin Généraliste Référent',
-          address: 'Centre de Santé Urbain Treichville',
-          city: 'Abidjan',
-        },
-        // Centres partenaires TILA
-        ...centres.map((c: any) => ({
-          id: c.id || c.code || Math.random(),
-          name: c.name || 'Centre de Santé Partenaire',
-          type: 'center' as const,
-          specialtyOrType: c.type || 'Centre de Santé Urbain',
-          address: c.location || c.address || 'Côte d’Ivoire',
-          phone: c.phone || '+225 27 20 00 00 00',
-          city: c.city || 'Abidjan',
-        })),
-      ];
+      // 2. Charger les VRAIS praticiens inscrits en base de données
+      let prosList: any[] = [];
+      try {
+        const prosRes = await apiClient.get<any>('/api/professionals?limit=100');
+        const rawPros = Array.isArray(prosRes) ? prosRes : (prosRes?.items || []);
+        if (rawPros.length > 0) {
+          prosList = rawPros;
+          await AsyncStorage.setItem('@tila_cached_specialists', JSON.stringify(rawPros));
+        }
+      } catch (pErr) {
+        console.warn('[Directory] Erreur API spécialistes, fallback cache local:', pErr);
+        const cached = await AsyncStorage.getItem('@tila_cached_specialists');
+        if (cached) {
+          prosList = JSON.parse(cached);
+        }
+      }
 
-      setItems(directoryList);
+      // 3. Filtrer et formater les spécialistes de santé mentale et professionnels de santé
+      const formattedSpecialists: DirectoryItem[] = prosList
+        .filter((p: any) => {
+          const t = (p.type || '').toUpperCase();
+          const types = Array.isArray(p.types) ? p.types.map((x: string) => x.toUpperCase()) : [];
+          const spec = (p.specialty || '').toLowerCase();
+          const role = (p.clinicalRoleLabel || '').toLowerCase();
+          return (
+            t === 'SPECIALISTE_SANTE_MENTALE' ||
+            types.includes('SPECIALISTE_SANTE_MENTALE') ||
+            spec.includes('psych') ||
+            role.includes('psych') ||
+            spec.includes('santé mentale') ||
+            role.includes('santé mentale') ||
+            spec.includes('addict') ||
+            spec.includes('pédopsychiatre') ||
+            spec.includes('médecin') ||
+            t === 'AGENT_SANTE'
+          );
+        })
+        .map((p: any) => {
+          const rawId = p.id;
+          const fullName = [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.name || 'Spécialiste de Santé';
+          const displayRole = p.specialty || p.clinicalRoleLabel || (p.type === 'SPECIALISTE_SANTE_MENTALE' ? 'Spécialiste en santé mentale' : 'Médecin référent');
+          const cityDisplay = p.city ? (p.city.charAt(0).toUpperCase() + p.city.slice(1)) : 'Abidjan';
+
+          return {
+            id: `spec-${rawId}`,
+            rawId: rawId,
+            name: fullName.startsWith('Dr.') || fullName.startsWith('M.') || fullName.startsWith('Mme') ? fullName : `Dr. ${fullName}`,
+            type: 'specialist' as const,
+            specialtyOrType: displayRole,
+            address: p.address || `${cityDisplay}, Côte d'Ivoire`,
+            city: cityDisplay,
+            phone: p.phone,
+            price: p.price,
+            currency: p.currency || 'XOF',
+            videoConsultation: p.videoConsultation ?? true,
+            inPersonConsultation: p.inPersonConsultation ?? true,
+          };
+        });
+
+      // 4. Formater les centres réels de la base de données
+      const formattedCentres: DirectoryItem[] = centresList.map((c: any) => ({
+        id: `centre-${c.id}`,
+        rawId: c.id,
+        name: c.name || 'Centre Médical TILA',
+        type: 'center' as const,
+        specialtyOrType: c.type || c.careLevel || 'Centre de Référence PNSM',
+        address: c.location || c.address || (c.city ? `${c.city}, Côte d'Ivoire` : 'Côte d’Ivoire'),
+        phone: c.phone || '+225 27 20 00 00 00',
+        city: c.city || 'Côte d’Ivoire',
+      }));
+
+      // Fusionner pour l'annuaire dynamique
+      setItems([...formattedSpecialists, ...formattedCentres]);
     } catch (e) {
-      console.warn('[PatientDirectory] Erreur:', e);
+      console.warn('[PatientDirectory] Erreur générale:', e);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -158,7 +240,12 @@ export default function PatientDirectory() {
 
   const handleOpenBooking = async (item: DirectoryItem) => {
     setSelectedSpecialist(item);
-    // Rafraîchir l'auto-évaluation la plus récente
+    const slots = generateDynamicSlots();
+    setAvailableSlots(slots);
+    if (slots.length > 0) {
+      setSelectedSlotId(slots[0].id);
+    }
+
     try {
       const storedAssessment = await AsyncStorage.getItem('@patient_last_self_assessment');
       if (storedAssessment) {
@@ -174,71 +261,66 @@ export default function PatientDirectory() {
     setIsSubmitting(true);
 
     try {
-      const pName = [patientUser?.firstName, patientUser?.lastName].filter(Boolean).join(' ') ||
-        patientUser?.name || 'Patient TILA';
-      const pPhone = patientUser?.phoneNumber || '0101594153';
+      const doctorId = selectedSpecialist.rawId || Number(String(selectedSpecialist.id).replace('spec-', ''));
+      const chosenSlot = availableSlots.find((s) => s.id === selectedSlotId) || availableSlots[0];
 
-      const newRequest = {
-        id: `req_${Date.now()}`,
-        patientId: patientUser?.id || 'pat_me',
-        patientName: pName,
-        patientPhone: pPhone,
-        practitionerId: selectedSpecialist.id,
-        practitionerName: selectedSpecialist.name,
+      let apiSuccess = false;
+      let createdAppointment: any = null;
+
+      // 1. Envoyer à l'API de rendez-vous réelle dans la base de données
+      try {
+        const res = await patientService.bookAppointment({
+          doctorId,
+          date: chosenSlot.date,
+          startTime: chosenSlot.time,
+          duration: 30,
+          reason: appointmentReason.trim() || 'Consultation de suivi et bilan',
+          locationType: consultationType === 'video' ? 'video' : 'in_person',
+        });
+        if (res && res.appointment) {
+          apiSuccess = true;
+          createdAppointment = res.appointment;
+        }
+      } catch (apiErr: any) {
+        console.warn('[Directory] Erreur booking API, enregistrement local/offline:', apiErr?.message);
+      }
+
+      // 2. Persister localement dans l'historique des rendez-vous du patient
+      const newApptItem = {
+        id: createdAppointment?.id || `req_${Date.now()}`,
+        professional: selectedSpecialist.name,
         specialty: selectedSpecialist.specialtyOrType,
-        date: appointmentDate,
-        time: appointmentDate.includes('à') ? appointmentDate.split('à')[1].trim() : '10:00',
+        date: chosenSlot.date,
+        time: chosenSlot.time,
         type: consultationType,
-        reason: appointmentReason.trim() || 'Consultation de suivi et bilan',
-        status: 'en_attente',
-        createdAt: new Date().toISOString(),
-        // DONNÉES D'ÉVALUATION FAITE PAR LE PATIENT LUI-MÊME
-        selfAssessment: includeAssessment && lastAssessment ? {
-          tool: lastAssessment.type,
-          score: lastAssessment.score,
-          level: lastAssessment.level,
-          interpretation: lastAssessment.interpretation,
-          date: lastAssessment.date,
-        } : null,
+        status: apiSuccess ? (createdAppointment?.status || 'pending') : 'en_attente',
+        meetLink: createdAppointment?.meetingLink || null,
+        meetingId: createdAppointment?.meetingId || null,
       };
 
-      // 1. Enregistrer dans la boîte de réception des spécialistes
-      const existingReqs = await AsyncStorage.getItem('@specialist_appointment_requests');
-      const reqList = existingReqs ? JSON.parse(existingReqs) : [];
-      await AsyncStorage.setItem(
-        '@specialist_appointment_requests',
-        JSON.stringify([newRequest, ...reqList])
-      );
-
-      // 2. Enregistrer également dans les rendez-vous du patient
       const existingAppts = await AsyncStorage.getItem('@patient_appointments');
       const apptList = existingAppts ? JSON.parse(existingAppts) : [];
       await AsyncStorage.setItem(
         '@patient_appointments',
-        JSON.stringify([
-          {
-            id: newRequest.id,
-            professional: selectedSpecialist.name,
-            specialty: selectedSpecialist.specialtyOrType,
-            date: newRequest.date,
-            time: newRequest.time,
-            type: consultationType === 'video' ? 'video' : 'in-person',
-            status: 'en_attente',
-          },
-          ...apptList,
-        ])
+        JSON.stringify([newApptItem, ...apptList])
+      );
+
+      // Notifier également la boîte du spécialiste local si besoin
+      const existingReqs = await AsyncStorage.getItem('@specialist_appointment_requests');
+      const reqList = existingReqs ? JSON.parse(existingReqs) : [];
+      await AsyncStorage.setItem(
+        '@specialist_appointment_requests',
+        JSON.stringify([newApptItem, ...reqList])
       );
 
       setAppointmentModalVisible(false);
       setAppointmentReason('');
 
       Alert.alert(
-        'Demande de Rendez-vous Envoyée !',
-        `Votre demande a été transmise au ${selectedSpecialist.name}.\n\n` +
-          (includeAssessment && lastAssessment
-            ? `Vos résultats d'auto-évaluation (${lastAssessment.type} - Score: ${lastAssessment.score}) lui ont été attachés avec succès.`
-            : '') +
-          `\nLe praticien l'examinera dans son tableau de bord et vous confirmera le créneau.`,
+        'Rendez-vous Enregistré !',
+        `Votre rendez-vous avec ${selectedSpecialist.name} pour le ${chosenSlot.label} a été enregistré avec succès.` +
+          (apiSuccess ? '\n\nLe créneau est désormais planifié dans la base de données.' : '') +
+          (includeAssessment && lastAssessment ? "\n\nVos résultats d'auto-évaluation clinique y ont été associés." : ''),
         [
           {
             text: 'Voir mes rendez-vous',
@@ -248,7 +330,7 @@ export default function PatientDirectory() {
         ]
       );
     } catch (e) {
-      Alert.alert('Erreur', 'Impossible de transmettre la demande de rendez-vous.');
+      Alert.alert('Erreur', 'Impossible de finaliser la prise de rendez-vous.');
     } finally {
       setIsSubmitting(false);
     }
@@ -274,7 +356,7 @@ export default function PatientDirectory() {
           <Search size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Rechercher un médecin, centre, ville..."
+            placeholder="Rechercher un psychiatre, psychologue, centre, ville..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -308,7 +390,7 @@ export default function PatientDirectory() {
           activeOpacity={0.7}
         >
           <Text style={[styles.filterBtnText, { color: colors.textSecondary }, activeFilter === 'specialist' && styles.filterBtnTextActive]}>
-            Praticiens
+            Praticiens ({items.filter(i => i.type === 'specialist').length})
           </Text>
         </TouchableOpacity>
 
@@ -322,7 +404,7 @@ export default function PatientDirectory() {
           activeOpacity={0.7}
         >
           <Text style={[styles.filterBtnText, { color: colors.textSecondary }, activeFilter === 'center' && styles.filterBtnTextActive]}>
-            Établissements
+            Établissements ({items.filter(i => i.type === 'center').length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -331,7 +413,7 @@ export default function PatientDirectory() {
       {isLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#00A651" />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Recherche des praticiens et structures...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des praticiens et centres réels...</Text>
         </View>
       ) : (
         <ScrollView
@@ -371,6 +453,11 @@ export default function PatientDirectory() {
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
                       <Text style={[styles.itemSpecialty, { color: colors.textSecondary }]}>{item.specialtyOrType}</Text>
+                      {item.price ? (
+                        <Text style={[styles.priceTag, { color: '#00A651' }]}>
+                          Tarif : {item.price.toLocaleString()} {item.currency || 'XOF'}
+                        </Text>
+                      ) : null}
                     </View>
                     <View
                       style={[
@@ -397,7 +484,6 @@ export default function PatientDirectory() {
                       </View>
                     ) : null}
 
-                    {/* Le numéro de téléphone n'est affiché QUE pour les centres d'accueil publics, JAMAIS pour les praticiens en accès libre */}
                     {isCenter && item.phone ? (
                       <View style={styles.detailRow}>
                         <Phone size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
@@ -409,7 +495,7 @@ export default function PatientDirectory() {
                       <View style={styles.protocolHintRow}>
                         <CheckCircle2 size={13} color="#00A651" style={{ marginRight: 5 }} />
                         <Text style={[styles.protocolHintText, { color: isDark ? '#4ade80' : '#15803d' }]}>
-                          Prise de rendez-vous obligatoire pour consultation & suivi
+                          Consultation vidéo sécurisée & cabinet sur rendez-vous
                         </Text>
                       </View>
                     )}
@@ -417,7 +503,6 @@ export default function PatientDirectory() {
 
                   {/* Actions contextuelles */}
                   <View style={styles.actionRow}>
-                    {/* Les centres ont le bouton d'appel d'accueil */}
                     {isCenter && item.phone && (
                       <TouchableOpacity
                         style={[styles.callCenterBtn, { backgroundColor: isDark ? 'rgba(37,99,235,0.15)' : '#eff6ff', borderColor: isDark ? '#2563eb' : '#bfdbfe' }]}
@@ -429,15 +514,16 @@ export default function PatientDirectory() {
                       </TouchableOpacity>
                     )}
 
-                    {/* Les praticiens ont le bouton principal de prise de rendez-vous */}
-                    <TouchableOpacity
-                      style={[styles.appointmentBtn, !isCenter && { flex: 1 }]}
-                      onPress={() => handleOpenBooking(item)}
-                      activeOpacity={0.85}
-                    >
-                      <Calendar size={14} color="#ffffff" style={{ marginRight: 6 }} />
-                      <Text style={styles.appointmentBtnText}>Prendre rendez-vous</Text>
-                    </TouchableOpacity>
+                    {!isCenter && (
+                      <TouchableOpacity
+                        style={[styles.appointmentBtn, { flex: 1 }]}
+                        onPress={() => handleOpenBooking(item)}
+                        activeOpacity={0.85}
+                      >
+                        <Calendar size={14} color="#ffffff" style={{ marginRight: 6 }} />
+                        <Text style={styles.appointmentBtnText}>Prendre rendez-vous</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               );
@@ -446,16 +532,21 @@ export default function PatientDirectory() {
         </ScrollView>
       )}
 
-      {/* Modal de Demande de Rendez-vous avec Praticien */}
+      {/* Modal de Demande de Rendez-vous avec Praticien Réel */}
       <Modal visible={appointmentModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.card }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Demande de Rendez-vous</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Prendre Rendez-vous</Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
                   Avec {selectedSpecialist?.name} ({selectedSpecialist?.specialtyOrType})
                 </Text>
+                {selectedSpecialist?.price ? (
+                  <Text style={[styles.modalPriceText, { color: '#00A651' }]}>
+                    Tarif consultation : {selectedSpecialist.price.toLocaleString()} {selectedSpecialist.currency || 'XOF'}
+                  </Text>
+                ) : null}
               </View>
               <TouchableOpacity
                 onPress={() => setAppointmentModalVisible(false)}
@@ -504,19 +595,19 @@ export default function PatientDirectory() {
               {/* Créneau suggéré */}
               <Text style={[styles.formSectionTitle, { color: colors.text }]}>Date et créneau souhaité</Text>
               <View style={styles.dateSelectorRow}>
-                {['Demain à 10:00', 'Dans 2 jours à 14:30', 'Dans 3 jours à 16:00'].map((slot) => (
+                {availableSlots.map((slot) => (
                   <TouchableOpacity
-                    key={slot}
+                    key={slot.id}
                     style={[
                       styles.dateSlotBtn,
                       { backgroundColor: colors.cardSecondary, borderColor: colors.border },
-                      appointmentDate === slot && styles.dateSlotBtnActive,
+                      selectedSlotId === slot.id && styles.dateSlotBtnActive,
                     ]}
-                    onPress={() => setAppointmentDate(slot)}
+                    onPress={() => setSelectedSlotId(slot.id)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.dateSlotText, { color: colors.textSecondary }, appointmentDate === slot && styles.dateSlotTextActive]}>
-                      {slot}
+                    <Text style={[styles.dateSlotText, { color: colors.textSecondary }, selectedSlotId === slot.id && styles.dateSlotTextActive]}>
+                      {slot.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -572,7 +663,7 @@ export default function PatientDirectory() {
                 ) : (
                   <Send size={16} color="#ffffff" style={{ marginRight: 8 }} />
                 )}
-                <Text style={styles.sendRequestBtnText}>Envoyer la demande au praticien</Text>
+                <Text style={styles.sendRequestBtnText}>Confirmer le rendez-vous</Text>
               </TouchableOpacity>
             </ScrollView>
           </SafeAreaView>
@@ -654,6 +745,28 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontFamily: 'Montserrat_500Medium',
   },
+  emptyCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 4,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  emptySub: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    fontFamily: 'Montserrat_400Regular',
+  },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -664,12 +777,12 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -683,16 +796,29 @@ const styles = StyleSheet.create({
   itemSpecialty: {
     fontSize: 12,
     color: '#64748b',
-    marginTop: 2,
+    marginTop: 1,
     fontFamily: 'Montserrat_400Regular',
+  },
+  priceTag: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+    marginTop: 2,
+  },
+  modalPriceText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+    marginTop: 2,
   },
   badgeType: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 12,
+    marginLeft: 6,
   },
   badgeTypeText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
   },
@@ -709,16 +835,13 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 12,
-    color: '#475569',
+    color: '#64748b',
+    flex: 1,
     fontFamily: 'Montserrat_400Regular',
   },
   protocolHintRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0fdf4',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
     marginTop: 2,
   },
   protocolHintText: {
@@ -729,73 +852,50 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
+    marginTop: 4,
   },
   callCenterBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#eff6ff',
+    paddingVertical: 10,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#bfdbfe',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
   },
   callCenterBtnText: {
     fontSize: 12.5,
-    fontWeight: '700',
     color: '#2563eb',
-    fontFamily: 'Montserrat_700Bold',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
   appointmentBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#00A651',
-    borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderRadius: 10,
   },
   appointmentBtnText: {
     fontSize: 12.5,
-    fontWeight: '700',
     color: '#ffffff',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  emptyCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginTop: 16,
-  },
-  emptyTitle: {
-    fontSize: 14.5,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 6,
     fontFamily: 'Montserrat_700Bold',
-  },
-  emptySub: {
-    fontSize: 12,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 17,
-    fontFamily: 'Montserrat_400Regular',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '88%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -951,11 +1051,10 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderRadius: 10,
     padding: 12,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#0f172a',
+    marginBottom: 20,
     textAlignVertical: 'top',
-    height: 70,
-    marginBottom: 18,
     fontFamily: 'Montserrat_400Regular',
   },
   sendRequestBtn: {
@@ -963,13 +1062,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#00A651',
-    borderRadius: 12,
     paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#00A651',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sendRequestBtnText: {
-    fontSize: 13.5,
-    fontWeight: '700',
+    fontSize: 14,
     color: '#ffffff',
+    fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
   },
 });

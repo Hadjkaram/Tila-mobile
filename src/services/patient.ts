@@ -211,6 +211,24 @@ class PatientService {
   async dossier(): Promise<PatientConsultationsView> {
     return this.consultations();
   }
+
+  /**
+   * Prendre un rendez-vous avec un praticien réel dans la base de données
+   */
+  async bookAppointment(payload: {
+    doctorId: number | string;
+    date: string;
+    startTime: string;
+    duration?: number;
+    reason?: string;
+    locationType?: 'video' | 'in_person';
+  }): Promise<{ message: string; appointment: any }> {
+    return apiClient.post('/api/appointments/book', {
+      duration: 30,
+      locationType: 'video',
+      ...payload,
+    });
+  }
 }
 
 export const patientService = new PatientService();

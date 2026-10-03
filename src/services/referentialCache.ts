@@ -31,6 +31,13 @@ export const referentialCache = {
           } catch {}
         }
 
+        if (remoteCentres.length === 0) {
+          try {
+            const res = await apiClient.get<any>('/api/public/sensibilisateurs/centres');
+            remoteCentres = Array.isArray(res) ? res : res?.items || [];
+          } catch {}
+        }
+
         if (Array.isArray(remoteCentres) && remoteCentres.length > 0) {
           const formatted: AgentCentre[] = remoteCentres.map((c: any) => ({
             id: c.id,
