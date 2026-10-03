@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiClient } from '../../services/apiClient';
 import { Text } from '../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -67,6 +69,42 @@ export default function AssessmentsListScreen() {
   const { colors, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const [assessmentsList, setAssessmentsList] = useState<AssessmentMeta[]>(OFFICIAL_ASSESSMENTS);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res: any = await apiClient.get('/api/questionnaires');
+        const items = Array.isArray(res) ? res : (res?.items || []);
+        if (items.length > 0 && isMounted) {
+          const allowedKeys = items
+            .filter((item: any) => item.status === 'active' && item.accessMobile !== false)
+            .map((item: any) => (item.key || item.code || item.name || '').toLowerCase());
+
+          const filtered = OFFICIAL_ASSESSMENTS.filter((meta) => {
+            const mId = meta.id.toLowerCase();
+            return allowedKeys.some((k: string) => k.includes(mId) || mId.includes(k));
+          });
+          if (filtered.length > 0) {
+            setAssessmentsList(filtered);
+            await AsyncStorage.setItem('@public_assessments_filtered', JSON.stringify(filtered.map(f => f.id)));
+          }
+        }
+      } catch (e) {
+        try {
+          const cached = await AsyncStorage.getItem('@public_assessments_filtered');
+          if (cached && isMounted) {
+            const ids: string[] = JSON.parse(cached);
+            setAssessmentsList(OFFICIAL_ASSESSMENTS.filter(a => ids.includes(a.id)));
+          }
+        } catch {}
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
@@ -112,9 +150,9 @@ export default function AssessmentsListScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Catalogue des Outils Cliniques</Text>
         </View>
 
-        {/* Liste des 4 Cartes Cliniques */}
+        {/* Liste des Cartes Cliniques */}
         <View style={styles.listContainer}>
-          {OFFICIAL_ASSESSMENTS.map((assessment) => (
+          {assessmentsList.map((assessment) => (
             <TouchableOpacity
               key={assessment.id}
               style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}

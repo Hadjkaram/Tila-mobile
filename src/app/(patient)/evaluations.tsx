@@ -30,6 +30,7 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { patientService, AssessmentItem } from '../../services/patient';
+import { apiClient } from '../../services/apiClient';
 import { useTheme } from '../../context/ThemeContext';
 import {
   AssessmentLanguage,
@@ -214,6 +215,39 @@ export default function PatientEvaluations() {
     toolTitle: string;
   } | null>(null);
 
+  const [availableToolKeys, setAvailableToolKeys] = useState<string[] | null>(null);
+
+  const fetchAvailableTools = async () => {
+    try {
+      const res: any = await apiClient.get('/api/questionnaires');
+      const items = Array.isArray(res) ? res : (res?.items || []);
+      if (items.length > 0) {
+        const keys = items
+          .filter((item: any) => item.status === 'active' && item.accessMobile !== false)
+          .map((item: any) => {
+            const raw = (item.key || item.code || item.name || '').toLowerCase();
+            if (raw.includes('phq')) return 'phq9';
+            if (raw.includes('gad')) return 'gad7';
+            if (raw.includes('ods') || raw.includes('bmh')) return 'ods';
+            return raw;
+          });
+        setAvailableToolKeys(keys);
+        await AsyncStorage.setItem('@patient_available_tool_keys', JSON.stringify(keys));
+      }
+    } catch {
+      try {
+        const cached = await AsyncStorage.getItem('@patient_available_tool_keys');
+        if (cached) {
+          setAvailableToolKeys(JSON.parse(cached));
+        }
+      } catch {}
+    }
+  };
+
+  const visibleTools = availableToolKeys
+    ? EVALUATION_TOOLS.filter((t) => availableToolKeys.includes(t.key))
+    : EVALUATION_TOOLS;
+
   const fetchAssessments = async () => {
     try {
       const data: any = await patientService.recentAssessments();
@@ -229,11 +263,13 @@ export default function PatientEvaluations() {
 
   useEffect(() => {
     fetchAssessments();
+    fetchAvailableTools();
   }, []);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
     fetchAssessments();
+    fetchAvailableTools();
   };
 
   // Démarrer une nouvelle auto-évaluation
@@ -475,41 +511,55 @@ export default function PatientEvaluations() {
             />
 
             <ScrollView contentContainerStyle={styles.toolsList} showsVerticalScrollIndicator={false}>
-              {EVALUATION_TOOLS.map((tool) => {
-                const loc = getLocalizedQuestionnaire(tool.key, lang);
-                const toolTitle = loc?.title || tool.title;
-                const toolCategory = loc?.category || tool.category;
-                const toolDesc = loc?.description || tool.description;
-                const questionsCount = loc?.questions.length || tool.questions.length;
+              {visibleTools.length === 0 ? (
+                <View style={{ paddingVertical: 36, paddingHorizontal: 16, alignItems: 'center' }}>
+                  <Info size={36} color="#94a3b8" style={{ marginBottom: 12 }} />
+                  <Text style={[{ textAlign: 'center', fontSize: 15, fontWeight: '600' }, isDark && { color: colors.text }]}>
+                    {lang === 'en' ? 'No assessment available' : 'Aucun outil disponible'}
+                  </Text>
+                  <Text style={[{ textAlign: 'center', fontSize: 13, marginTop: 6, color: '#64748b' }, isDark && { color: colors.textSecondary }]}>
+                    {lang === 'en'
+                      ? 'Screening tools are temporarily disabled on the mobile app by the administrator.'
+                      : 'Les outils de dépistage sont temporairement désactivés sur l’application mobile par l’administrateur.'}
+                  </Text>
+                </View>
+              ) : (
+                visibleTools.map((tool) => {
+                  const loc = getLocalizedQuestionnaire(tool.key, lang);
+                  const toolTitle = loc?.title || tool.title;
+                  const toolCategory = loc?.category || tool.category;
+                  const toolDesc = loc?.description || tool.description;
+                  const questionsCount = loc?.questions.length || tool.questions.length;
 
-                return (
-                  <TouchableOpacity
-                    key={tool.key}
-                    style={[
-                      styles.toolCard,
-                      isDark && { backgroundColor: colors.card, borderColor: colors.border },
-                    ]}
-                    onPress={() => handleStartTool(tool)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.toolCardTop}>
-                      <View style={styles.toolCategoryBadge}>
-                        <Text style={styles.toolCategoryText}>{toolCategory}</Text>
+                  return (
+                    <TouchableOpacity
+                      key={tool.key}
+                      style={[
+                        styles.toolCard,
+                        isDark && { backgroundColor: colors.card, borderColor: colors.border },
+                      ]}
+                      onPress={() => handleStartTool(tool)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.toolCardTop}>
+                        <View style={styles.toolCategoryBadge}>
+                          <Text style={styles.toolCategoryText}>{toolCategory}</Text>
+                        </View>
+                        <Text style={[styles.toolQuestionsCount, isDark && { color: colors.textSecondary }]}>
+                          {questionsCount} {lang === 'en' ? 'questions' : 'questions'}
+                        </Text>
                       </View>
-                      <Text style={[styles.toolQuestionsCount, isDark && { color: colors.textSecondary }]}>
-                        {questionsCount} {lang === 'en' ? 'questions' : 'questions'}
-                      </Text>
-                    </View>
-                    <Text style={[styles.toolTitle, isDark && { color: colors.text }]}>{toolTitle}</Text>
-                    <Text style={[styles.toolDesc, isDark && { color: colors.textSecondary }]}>{toolDesc}</Text>
-                    <View style={styles.toolCardFooter}>
-                      <Text style={styles.toolStartText}>
-                        {lang === 'en' ? 'Start test →' : 'Démarrer le test →'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text style={[styles.toolTitle, isDark && { color: colors.text }]}>{toolTitle}</Text>
+                      <Text style={[styles.toolDesc, isDark && { color: colors.textSecondary }]}>{toolDesc}</Text>
+                      <View style={styles.toolCardFooter}>
+                        <Text style={styles.toolStartText}>
+                          {lang === 'en' ? 'Start test →' : 'Démarrer le test →'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
             </ScrollView>
           </SafeAreaView>
         </View>

@@ -13,6 +13,7 @@ export const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'X-Client-Platform': 'mobile',
   },
 });
 
@@ -124,6 +125,7 @@ axiosInstance.interceptors.request.use(
         const headerContext = activeContext === 'FIELD_AGENT' ? 'MIGRANT_FIELD_AGENT' : activeContext;
         config.headers['X-Active-Context'] = headerContext;
       }
+      config.headers['X-Client-Platform'] = 'mobile';
       
       console.log(`[Request] ${config.method?.toUpperCase()} ${config.url}`);
       console.log(`[Headers] X-Active-Context: ${config.headers['X-Active-Context']}, Auth: ${token ? 'Present' : 'Missing'}`);

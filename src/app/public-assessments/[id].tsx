@@ -472,7 +472,15 @@ export default function AssessmentScreen() {
       if (res && res.evaluationToken) {
         token = res.evaluationToken;
       }
-    } catch {
+    } catch (err: any) {
+      if (err?.response?.status === 403) {
+        Alert.alert(
+          'Outil indisponible',
+          'Cet outil d’évaluation est actuellement désactivé sur l’application mobile par l’administrateur.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
       // Mode hors-ligne ou fallback résilient
       token = `EVAL-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
     }
