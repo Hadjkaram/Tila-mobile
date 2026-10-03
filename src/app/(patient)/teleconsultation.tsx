@@ -5,8 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Linking,
   Alert,
+  Modal,
+  StatusBar,
 } from 'react-native';
 import { Text } from '../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,15 +22,56 @@ import {
   CheckCircle2,
   ExternalLink,
   PhoneCall,
+  PhoneOff,
+  Shield,
+  ArrowLeft,
 } from 'lucide-react-native';
+import { WebView } from 'react-native-webview';
 import { patientService, TeleconsultationItem, AppointmentItem } from '../../services/patient';
 import { useTheme } from '../../context/ThemeContext';
+
+function extractDailyRoomUrl(item: any): string | null {
+  if (!item) return null;
+
+  if (typeof item.externalMeetingLink === 'string' && item.externalMeetingLink.includes('daily.co')) {
+    return item.externalMeetingLink;
+  }
+  if (typeof item.meetLink === 'string' && item.meetLink.includes('daily.co')) {
+    return item.meetLink;
+  }
+  if (typeof item.meetingLink === 'string' && item.meetingLink.includes('daily.co')) {
+    return item.meetingLink;
+  }
+
+  const meetingId = item.meetingId || item.meeting_id;
+  if (meetingId && typeof meetingId === 'string' && meetingId.trim()) {
+    return `https://tila.daily.co/${meetingId.trim()}`;
+  }
+
+  const urlsToCheck = [item.meetLink, item.meetingLink, item.url];
+  for (const u of urlsToCheck) {
+    if (typeof u === 'string') {
+      const match = u.match(/\/teleconsultation\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://tila.daily.co/${match[1]}`;
+      }
+    }
+  }
+
+  if (item.id) {
+    return `https://tila.daily.co/tila-rdv-${item.id}`;
+  }
+
+  return null;
+}
 
 export default function PatientTeleconsultation() {
   const { colors, isDark } = useTheme();
   const [nextTeleconsultation, setNextTeleconsultation] = useState<TeleconsultationItem | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<AppointmentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInCall, setIsInCall] = useState(false);
+  const [callUrl, setCallUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTeleconsultation = async () => {
@@ -53,17 +95,45 @@ export default function PatientTeleconsultation() {
     loadTeleconsultation();
   }, []);
 
-  const handleJoinCall = (meetLink?: string | null) => {
-    if (meetLink) {
-      Linking.openURL(meetLink).catch(() => {
-        Alert.alert('Erreur', 'Impossible d’ouvrir le lien vidéo.');
-      });
-    } else {
+  const handleJoinCall = (appointment?: AppointmentItem | null) => {
+    if (!appointment && !nextTeleconsultation) {
       Alert.alert(
         'Salle d’attente',
         'Votre praticien n’a pas encore démarré la session. Vous serez notifié dès qu’il sera connecté.'
       );
+      return;
     }
+
+    const target = appointment || nextTeleconsultation;
+    const directUrl = extractDailyRoomUrl(target);
+
+    if (directUrl) {
+      setCallUrl(directUrl);
+      setIsInCall(true);
+    } else {
+      Alert.alert(
+        'Salle d’attente',
+        'La salle de consultation est en cours de préparation par votre praticien.'
+      );
+    }
+  };
+
+  const handleLeaveCall = () => {
+    Alert.alert(
+      'Quitter la consultation',
+      'Êtes-vous sûr de vouloir quitter la téléconsultation ?',
+      [
+        { text: 'Rester', style: 'cancel' },
+        { 
+          text: 'Quitter', 
+          style: 'destructive', 
+          onPress: () => {
+            setIsInCall(false);
+            setCallUrl(null);
+          } 
+        }
+      ]
+    );
   };
 
   const activeMeeting = upcomingAppointments.length > 0 ? upcomingAppointments[0] : null;
@@ -101,12 +171,11 @@ export default function PatientTeleconsultation() {
 
               <TouchableOpacity
                 style={styles.startBtn}
-                onPress={() => handleJoinCall(activeMeeting.meetLink)}
+                onPress={() => handleJoinCall(activeMeeting)}
                 activeOpacity={0.85}
               >
                 <Video size={18} color="#ffffff" style={{ marginRight: 8 }} />
                 <Text style={styles.startBtnText}>Entrer dans la consultation</Text>
-                <ExternalLink size={16} color="#ffffff" style={{ marginLeft: 'auto' }} />
               </TouchableOpacity>
             </View>
           ) : (
@@ -164,11 +233,130 @@ export default function PatientTeleconsultation() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Modal Consultation Vidéo Intégrée (100% In-App) */}
+      <Modal visible={isInCall} animationType="slide" onRequestClose={handleLeaveCall}>
+        <SafeAreaView style={styles.callModalContainer} edges={['top', 'bottom']}>
+          <StatusBar barStyle="light-content" backgroundColor="#000000" />
+          
+          <View style={styles.callTopBar}>
+            <TouchableOpacity
+              onPress={handleLeaveCall}
+              style={styles.callCircleBtn}
+              activeOpacity={0.7}
+            >
+              <ArrowLeft size={20} color="#ffffff" />
+            </TouchableOpacity>
+
+            <View style={styles.callBadgeContainer}>
+              <View style={styles.callOnlineDot} />
+              <Shield size={14} color="#00A651" style={{ marginRight: 5 }} />
+              <Text style={styles.callBadgeText}>Téléconsultation Sécurisée</Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleLeaveCall}
+              style={styles.callHangupBtn}
+              activeOpacity={0.8}
+            >
+              <PhoneOff size={18} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+
+          {callUrl ? (
+            <WebView
+              source={{ uri: callUrl }}
+              style={styles.callWebview}
+              allowsInlineMediaPlayback={true}
+              mediaPlaybackRequiresUserAction={false}
+              mediaCapturePermissionGrantType="grant"
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              cacheEnabled={true}
+              originWhitelist={['*']}
+              userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36"
+              onPermissionRequest={(event: any) => {
+                event.grant();
+              }}
+              onNavigationStateChange={(navState) => {
+                if (navState.url && (navState.url.includes('/leave') || navState.url.includes('/logout'))) {
+                  setIsInCall(false);
+                  setCallUrl(null);
+                }
+              }}
+            />
+          ) : (
+            <View style={styles.centerBox}>
+              <ActivityIndicator size="large" color="#00A651" />
+            </View>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  callModalContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  callTopBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  callCircleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  callBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  callOnlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#00A651',
+    marginRight: 6,
+  },
+  callBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  callHangupBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  callWebview: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  centerBox: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',

@@ -136,41 +136,23 @@ export default function ReferralsScreen() {
         </Text>
       </View>
 
-      <TouchableOpacity 
-        style={[styles.primaryButton, acceptMutation.isPending && { opacity: 0.7 }]}
-        onPress={() => handleAccept(item.id)}
-        disabled={acceptMutation.isPending}
-      >
-        <Text style={styles.primaryButtonText}>
-          {acceptMutation.isPending ? 'Chargement...' : 'Accepter la prise en charge'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderActiveItem = ({ item }: { item: any }) => (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
-      <View style={styles.cardHeader}>
-        <View style={styles.patientInfo}>
-          <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || item.patient?.name || 'Patient Inconnu'}</Text>
-          <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-            Suivi depuis : {item.startDate ? format(parseISO(item.startDate), 'dd MMM yyyy', { locale: fr }) : 'N/A'}
-          </Text>
-        </View>
-      </View>
-
       <View style={styles.actionRow}>
         <TouchableOpacity 
-          style={styles.secondaryButton}
-          onPress={() => handleOpenCounterRefer(item.id)}
+          style={[styles.primaryButton, { flex: 1 }, acceptMutation.isPending && { opacity: 0.7 }]}
+          onPress={() => handleAccept(item.referralId || item.id)}
+          disabled={acceptMutation.isPending}
         >
-          <HeartHandshake size={18} color="#f59e0b" />
-          <Text style={styles.secondaryButtonText}>Contre-référer</Text>
+          <Text style={styles.primaryButtonText}>
+            {acceptMutation.isPending ? 'Chargement...' : 'Accepter la prise en charge'}
+          </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity 
-          style={styles.outlineButton}
-          onPress={() => router.push('/(specialist)/patients')}
+          style={[styles.outlineButton, { marginLeft: 8 }]}
+          onPress={() => {
+            const targetPatientId = item.patientId || item.personId || item.id;
+            router.push(`/(specialist)/patients/${targetPatientId}` as any);
+          }}
         >
           <Text style={styles.outlineButtonText}>Voir dossier</Text>
           <ChevronRight size={16} color="#00A651" />
@@ -178,6 +160,46 @@ export default function ReferralsScreen() {
       </View>
     </View>
   );
+
+  const renderActiveItem = ({ item }: { item: any }) => {
+    const targetPatientId = item.patientId || item.personId || item.patient?.id || item.id;
+
+    return (
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
+        <TouchableOpacity 
+          style={styles.cardHeader}
+          onPress={() => router.push(`/(specialist)/patients/${targetPatientId}` as any)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.patientInfo}>
+            <Text style={[styles.patientName, { color: colors.text }]}>{item.patientName || item.patient?.name || 'Patient Inconnu'}</Text>
+            <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+              Suivi depuis : {item.startDate ? format(parseISO(item.startDate), 'dd MMM yyyy', { locale: fr }) : 'N/A'}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => handleOpenCounterRefer(item.id)}
+          >
+            <HeartHandshake size={18} color="#f59e0b" />
+            <Text style={styles.secondaryButtonText}>Contre-référer</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.outlineButton}
+            onPress={() => router.push(`/(specialist)/patients/${targetPatientId}` as any)}
+          >
+            <Text style={styles.outlineButtonText}>Voir dossier</Text>
+            <ChevronRight size={16} color="#00A651" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   const renderSkeleton = () => (
     <View style={{ padding: 24 }}>
