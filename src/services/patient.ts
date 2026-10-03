@@ -66,6 +66,8 @@ export interface TeleconsultationItem {
   date?: string; // ISO date
   time?: string; // HH:mm
   duration?: string; // e.g., "45 min"
+  meetLink?: string | null;
+  [key: string]: any;
 }
 
 export interface PrescriptionLineItem {
@@ -149,7 +151,34 @@ class PatientService {
   }
 
   async nextTeleconsultation(): Promise<TeleconsultationItem | null> {
-    return apiClient.get<TeleconsultationItem | null>("/api/patient/teleconsultations/next");
+    try {
+      const res = await apiClient.get<TeleconsultationItem | null>("/api/patient/teleconsultations/next");
+      if (res) return res;
+    } catch {}
+
+    try {
+      const upcoming = await this.upcomingAppointments();
+      const videoApt = upcoming.find(
+        (a: any) =>
+          a.locationType === 'video' ||
+          a.channel === 'teleconsultation' ||
+          a.type === 'video' ||
+          !!a.meetLink
+      );
+      if (videoApt) {
+        return {
+          id: videoApt.id,
+          date: videoApt.date,
+          time: videoApt.time,
+          duration: videoApt.duration ? `${videoApt.duration} min` : undefined,
+          professional: videoApt.professional || 'Dr. Spécialiste',
+          specialty: videoApt.specialty || 'Santé mentale',
+          meetLink: videoApt.meetLink,
+        };
+      }
+    } catch {}
+
+    return null;
   }
 
   async updateProfile(data: Partial<PatientProfile>): Promise<PatientProfile> {

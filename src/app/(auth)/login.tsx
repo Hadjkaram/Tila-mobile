@@ -221,10 +221,17 @@ function mapUserSpacesToDashboards(spaces: any[]): DashboardOption[] {
         icon: Building2,
       };
     }
-    if (spacePath === '/agent-programme' || type === 'PROGRAM_AGENT') {
+    if (
+      spacePath === '/agent-programme' ||
+      type === 'PROGRAM_AGENT' ||
+      spacePath === '/centre-pnsm' ||
+      type === 'CENTRE_PNSM' ||
+      spacePath === '/espace-chercheur' ||
+      type === 'CHERCHEUR'
+    ) {
       return {
         id: space.id || 'program-agent',
-        title: space.label || space.name || 'Agent Programme National',
+        title: space.label || space.name || (type === 'CENTRE_PNSM' ? 'Centre PNSM' : type === 'CHERCHEUR' ? 'Espace Chercheur' : 'Agent Programme National'),
         subtitle: 'Macro-surveillance & alertes sanitaires',
         badge: 'Programme',
         type: 'PROGRAM_AGENT',
@@ -343,7 +350,15 @@ export default function LoginScreen() {
           router.replace('/(census-agent)/dashboard');
         } else if (spacePath === '/ong' || space.type === 'ONG_MANAGER' || space.type === 'RESPONSABLE_ONG') {
           router.replace('/(ong-manager)/dashboard');
-        } else if (spacePath === '/agent-programme' || space.type === 'PROGRAM_AGENT') {
+        } else if (
+          spacePath === '/agent-programme' ||
+          space.type === 'PROGRAM_AGENT' ||
+          spacePath === '/centre-pnsm' ||
+          space.type === 'CENTRE_PNSM' ||
+          spacePath === '/espace-chercheur' ||
+          space.type === 'CHERCHEUR'
+        ) {
+          await tokenService.setActiveContext('PROGRAM_AGENT');
           router.replace('/(program-agent)/dashboard');
         } else {
           router.replace('/(patient)/dashboard');

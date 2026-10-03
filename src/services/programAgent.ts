@@ -226,10 +226,21 @@ export const programAgentService = {
    */
   async getCentresStatistics(): Promise<ProgramAgentCentreStat[]> {
     try {
-      const res: any = await apiClient.get('/api/centres/statistics');
-      if (Array.isArray(res?.items)) return res.items;
-      if (Array.isArray(res)) return res;
-    } catch {}
+      const res: any = await apiClient.get('/api/program-agent/dashboard');
+      if (Array.isArray(res?.centres) && res.centres.length > 0) {
+        return res.centres.map((c: any, idx: number) => ({
+          id: c.id || idx + 1,
+          nom: c.nom || c.name || 'Centre de santé',
+          ville: c.ville || c.city || 'Abidjan',
+          depistages: c.depistages || 0,
+          tauxRef: typeof c.tauxRef === 'string' ? parseFloat(c.tauxRef) : (c.tauxRef || 0),
+          specialistes: c.specialistes || 0,
+          delaiPriseEnChargeJours: c.delaiPriseEnChargeJours || 1.5,
+        }));
+      }
+    } catch (e) {
+      console.warn('[ProgramAgentService] getCentresStatistics error:', e);
+    }
 
     return [
       { id: 1, nom: 'PNSM Institut National Cocody', ville: 'Abidjan', depistages: 890, tauxRef: 42, specialistes: 12, delaiPriseEnChargeJours: 1.2 },

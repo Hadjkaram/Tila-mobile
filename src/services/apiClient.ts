@@ -67,6 +67,8 @@ export const tokenService = {
           case 'RESPONSABLE_ONG':
             return '/(ong-manager)/dashboard';
           case 'PROGRAM_AGENT':
+          case 'CENTRE_PNSM':
+          case 'CHERCHEUR':
             return '/(program-agent)/dashboard';
           case 'PATIENT':
             return '/(patient)/dashboard';
@@ -93,7 +95,14 @@ export const tokenService = {
             return '/(census-agent)/dashboard';
           } else if (spacePath === '/ong' || space.type === 'ONG_MANAGER' || space.type === 'RESPONSABLE_ONG') {
             return '/(ong-manager)/dashboard';
-          } else if (spacePath === '/agent-programme' || space.type === 'PROGRAM_AGENT') {
+          } else if (
+            spacePath === '/agent-programme' ||
+            space.type === 'PROGRAM_AGENT' ||
+            spacePath === '/centre-pnsm' ||
+            space.type === 'CENTRE_PNSM' ||
+            spacePath === '/espace-chercheur' ||
+            space.type === 'CHERCHEUR'
+          ) {
             return '/(program-agent)/dashboard';
           }
         }

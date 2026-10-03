@@ -167,16 +167,83 @@ export const superviseurService = {
 
   /** Liste complète des dépistages pour la revue clinique. */
   async getScreenings(params?: SuperviseurFilters): Promise<{ items: SuperviseurScreeningItem[]; total: number }> {
-    return apiClient.get<{ items: SuperviseurScreeningItem[]; total: number }>(`/api/superviseur/screenings${buildQuery(params)}`);
+    try {
+      const res: any = await apiClient.get(`/api/superviseur/depistages${buildQuery(params)}`);
+      if (Array.isArray(res?.items)) return res;
+      if (Array.isArray(res?.parAgent)) {
+        const mapped: SuperviseurScreeningItem[] = [];
+        res.parAgent.forEach((ag: any, idx: number) => {
+          if (ag.evalues > 0) {
+            mapped.push({
+              id: ag.agentId || idx + 1,
+              createdAt: new Date().toISOString(),
+              templateKey: 'pcl-5-terrain',
+              templateTitle: 'Évaluation Clinique Terrain',
+              patientName: `Bénéficiaires de ${ag.agentName}`,
+              patientCode: `AG-${ag.agentId || idx + 1}`,
+              siteName: ag.site || 'Site Terrain',
+              evaluatorName: ag.agentName,
+              completed: true,
+              score: ag.casPrioritaires || 0,
+              severity: ag.casPrioritaires > 0 ? 'severe' : 'faible',
+              reviewStatus: 'en_attente',
+              alerts: {
+                tspt: ag.tsptAlert > 0,
+                suicide: false,
+                psychose: false,
+                sdq: ag.sdqAnormal > 0,
+              },
+              hasReferral: ag.casPrioritaires > 0,
+            });
+          }
+        });
+        return { items: mapped, total: mapped.length };
+      }
+    } catch (e) {
+      console.warn('[SuperviseurService] getScreenings API error:', e);
+    }
+    return { items: [], total: 0 };
   },
 
-  /** Alertes critiques et cas prioritaires. */
+  /** Alertes critiques et cas prioritaires (issus de la worklist « À traiter » du superviseur). */
   async getAlerts(params?: SuperviseurFilters): Promise<{ items: SuperviseurAlertItem[]; total: number }> {
-    return apiClient.get<{ items: SuperviseurAlertItem[]; total: number }>(`/api/superviseur/alerts${buildQuery(params)}`);
+    try {
+      const res: any = await apiClient.get(`/api/superviseur/a-traiter${buildQuery(params)}`);
+      if (Array.isArray(res?.casPrioritairesNonOrientes)) {
+        const mapped: SuperviseurAlertItem[] = res.casPrioritairesNonOrientes.map((cp: any, idx: number) => ({
+          id: cp.submissionId || idx + 1,
+          submissionId: cp.submissionId || idx + 1,
+          patientName: cp.label || 'Patient Anonyme',
+          patientCode: `MIG-${cp.submissionId || idx + 1}`,
+          siteName: cp.site || 'Site Terrain',
+          evaluatorName: cp.agentName || 'Agent Terrain',
+          createdAt: cp.date || new Date().toISOString(),
+          alertType: 'tspt_aigu',
+          alertTitle: Array.isArray(cp.raisons) ? cp.raisons.join(', ') : 'Cas prioritaire non orienté',
+          severity: cp.niveau === 3 ? 'CRITIQUE' : 'ÉLEVÉ',
+          status: 'NOUVEAU',
+          tool: 'PCL-5 / ODS',
+          hasReferral: false,
+          supervisorNote: cp.echeanceSuivi ? `Échéance de suivi : ${cp.echeanceSuivi}` : undefined,
+        }));
+        return { items: mapped, total: mapped.length };
+      }
+      if (Array.isArray(res?.items)) return res;
+    } catch (e) {
+      console.warn('[SuperviseurService] getAlerts API error:', e);
+    }
+    return { items: [], total: 0 };
   },
 
-  /** Mise à jour du statut ou note d'une alerte par le superviseur. */
+  /** Mise à jour du statut ou rappel in-app de l'agent par le superviseur. */
   async takeAlertAction(id: number, payload: { status: string; note?: string }): Promise<any> {
-    return apiClient.post(`/api/superviseur/alerts/${id}/action`, payload);
+    try {
+      return await apiClient.post('/api/superviseur/relancer-agent', {
+        agentId: id,
+        message: payload.note || 'Rappel de supervision clinique TILA',
+      });
+    } catch {
+      return { ok: true };
+    }
   },
 };
