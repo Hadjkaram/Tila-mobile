@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { Text } from '../../../components/Text';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { useGenerateDailyRoom, useStartSession } from '../../../hooks/useProfessionalApi';
+import { professionalService } from '../../../services/professionals';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import { Camera, Mic, ArrowLeft } from 'lucide-react-native';
+import { Camera, Mic, ArrowLeft, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '../../../context/ThemeContext';
 
 export default function VideoRoom() {
@@ -32,19 +33,58 @@ export default function VideoRoom() {
   const initRoom = async () => {
     if (roomUrl) return; // Prevent double init
     try {
-      // 1. Tell backend session has started
-      await startSession.mutateAsync(id);
+      // 1. Tell backend session has started (non-blocking)
+      await startSession.mutateAsync(id).catch((err) => {
+        console.warn('startSession non-blocking warning:', err?.message);
+      });
 
-      // 2. Request Daily Room URL from Backend
-      const response = await generateRoom.mutateAsync(id);
-      
-      if (response && response.url) {
-        setRoomUrl(response.url);
+      // 2. Request Room URL from Backend
+      let resolvedUrl: string | null = null;
+      try {
+        const response: any = await generateRoom.mutateAsync(id);
+        const item = response?.item || response;
+        resolvedUrl =
+          item?.meetLink ||
+          item?.meetingLink ||
+          item?.externalMeetingLink ||
+          item?.url ||
+          response?.url ||
+          null;
+      } catch (genErr: any) {
+        console.warn('generateRoom caught, checking for existing room:', genErr?.message);
+        const errItem = genErr?.response?.data?.item;
+        resolvedUrl =
+          errItem?.meetLink ||
+          errItem?.meetingLink ||
+          errItem?.externalMeetingLink ||
+          errItem?.url ||
+          null;
+      }
+
+      // 3. If still not resolved, query appointment details
+      if (!resolvedUrl) {
+        try {
+          const appts = await professionalService.listAppointmentsRange({
+            from: new Date().toISOString().slice(0, 10),
+            to: new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 10),
+            limit: 50,
+          });
+          const match = appts?.items?.find((a: any) => String(a.id) === String(id));
+          if (match?.meetLink) {
+            resolvedUrl = match.meetLink;
+          }
+        } catch (findErr) {
+          console.warn('Appointments lookup failed:', findErr);
+        }
+      }
+
+      if (resolvedUrl) {
+        setRoomUrl(resolvedUrl);
       } else {
         setRoomUrl('https://tila.daily.co/test-room');
       }
     } catch (error) {
-      console.warn("API Error, using fallback Daily URL", error);
+      console.warn('API Error, using fallback Daily URL', error);
       setRoomUrl('https://tila.daily.co/test-room');
     }
   };
@@ -109,6 +149,23 @@ export default function VideoRoom() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.roomHeader}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.roomHeaderBtn}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={20} color="#ffffff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => roomUrl && Linking.openURL(roomUrl)}
+          style={styles.openExternalBtn}
+          activeOpacity={0.8}
+        >
+          <ExternalLink size={14} color="#ffffff" style={{ marginRight: 6 }} />
+          <Text style={styles.openExternalText}>Ouvrir dans le navigateur</Text>
+        </TouchableOpacity>
+      </View>
       <WebView
         source={{ uri: roomUrl }}
         style={styles.webview}
@@ -116,6 +173,7 @@ export default function VideoRoom() {
         mediaCapturePermissionGrantType="grant"
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36"
         onPermissionRequest={(event: any) => {
           event.grant();
         }}
@@ -133,6 +191,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  roomHeader: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    right: 16,
+    zIndex: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  roomHeaderBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  openExternalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 166, 81, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  openExternalText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

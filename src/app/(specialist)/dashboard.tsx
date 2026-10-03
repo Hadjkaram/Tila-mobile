@@ -439,39 +439,53 @@ export default function SpecialistDashboard() {
               <Text style={[styles.emptyStateText, isDark && { color: colors.textSecondary }]}>Aucun rendez-vous prévu aujourd'hui</Text>
             </View>
           ) : (
-            todayAppointments.map((apt: any) => (
-              <View key={apt.id} style={[styles.appointmentCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={styles.appointmentTimeContainer}>
-                  <Text style={styles.appointmentTime}>{apt.time || format(parseISO(apt.start), 'HH:mm')}</Text>
-                </View>
-                
-                <View style={styles.appointmentDetails}>
-                  <Text style={[styles.patientName, isDark && { color: colors.text }]}>{apt.patientName || (typeof apt.patient === 'object' ? apt.patient?.name : apt.patient) || 'Inconnu'}</Text>
-                  <View style={styles.appointmentMeta}>
-                    <Text style={[styles.appointmentType, isDark && { color: colors.textSecondary }]}>
-                      {apt.type === 'video' ? 'Téléconsultation' : 'Au cabinet'}
-                    </Text>
-                    <View style={[
-                      styles.statusBadge, 
-                      apt.status === 'confirmé' ? styles.statusConfirmed : styles.statusPending
-                    ]}>
-                      <Text style={[
-                        styles.statusText,
-                        apt.status === 'confirmé' ? styles.statusTextConfirmed : styles.statusTextPending
-                      ]}>
-                        {apt.status}
+            todayAppointments.map((apt: any) => {
+              const isVideo = apt.locationType === 'video' || apt.type === 'video' || !!apt.meetLink;
+              const isConfirmed = apt.status === 'confirmed' || apt.status === 'confirmé';
+              const statusDisplay = isConfirmed
+                ? 'Confirmé'
+                : apt.status === 'pending' || apt.status === 'en_attente'
+                ? 'En attente'
+                : apt.status || 'Planifié';
+
+              return (
+                <View key={apt.id} style={[styles.appointmentCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.appointmentTimeContainer}>
+                    <Text style={styles.appointmentTime}>{apt.time || format(parseISO(apt.start), 'HH:mm')}</Text>
+                  </View>
+                  
+                  <View style={styles.appointmentDetails}>
+                    <Text style={[styles.patientName, isDark && { color: colors.text }]}>{apt.patientName || (typeof apt.patient === 'object' ? apt.patient?.name : apt.patient) || 'Inconnu'}</Text>
+                    <View style={styles.appointmentMeta}>
+                      <Text style={[styles.appointmentType, isDark && { color: colors.textSecondary }]}>
+                        {isVideo ? 'Téléconsultation' : 'Au cabinet'}
                       </Text>
+                      <View style={[
+                        styles.statusBadge, 
+                        isConfirmed ? styles.statusConfirmed : styles.statusPending
+                      ]}>
+                        <Text style={[
+                          styles.statusText,
+                          isConfirmed ? styles.statusTextConfirmed : styles.statusTextPending
+                        ]}>
+                          {statusDisplay}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
 
-                {apt.type === 'video' && apt.status === 'confirmé' && (
-                  <TouchableOpacity style={styles.joinButton}>
-                    <Video size={20} color="#ffffff" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))
+                  {isVideo && (
+                    <TouchableOpacity
+                      style={styles.joinButton}
+                      onPress={() => router.push(`/(specialist)/teleconsultation/${apt.id}` as any)}
+                      activeOpacity={0.8}
+                    >
+                      <Video size={20} color="#ffffff" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })
           )}
         </View>
 

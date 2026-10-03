@@ -122,7 +122,27 @@ axiosInstance.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
       if (activeContext) {
-        const headerContext = activeContext === 'FIELD_AGENT' ? 'MIGRANT_FIELD_AGENT' : activeContext;
+        const CONTEXT_MAPPING: Record<string, string> = {
+          SUPERVISOR: 'SUPERVISEUR',
+          SUPERVISEUR: 'SUPERVISEUR',
+          PRO: 'MENTAL_SPECIALIST',
+          SPECIALIST: 'MENTAL_SPECIALIST',
+          PROFESSIONAL: 'MENTAL_SPECIALIST',
+          MENTAL_SPECIALIST: 'MENTAL_SPECIALIST',
+          HEALTH_AGENT: 'HEALTH_AGENT',
+          COMMUNITY_AGENT: 'COMMUNITY_AGENT',
+          FIELD_AGENT: 'MIGRANT_FIELD_AGENT',
+          MIGRANT_FIELD_AGENT: 'MIGRANT_FIELD_AGENT',
+          CENSUS_AGENT: 'SENSIBILISATEUR',
+          SENSIBILISATEUR: 'SENSIBILISATEUR',
+          ONG_MANAGER: 'ONG',
+          RESPONSABLE_ONG: 'ONG',
+          ONG: 'ONG',
+          PROGRAM_AGENT: 'PROGRAM_AGENT',
+          PATIENT: 'PATIENT',
+          ADMIN: 'ADMIN',
+        };
+        const headerContext = CONTEXT_MAPPING[activeContext.toUpperCase()] || activeContext;
         config.headers['X-Active-Context'] = headerContext;
       }
       config.headers['X-Client-Platform'] = 'mobile';

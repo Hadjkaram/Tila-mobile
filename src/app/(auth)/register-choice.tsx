@@ -31,7 +31,7 @@ export default function RegisterChoiceScreen() {
       {/* Header avec retour */}
       <View style={styles.topBar}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/welcome')}
           style={[styles.backButton, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
           activeOpacity={0.7}
         >

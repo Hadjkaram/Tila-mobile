@@ -10,7 +10,10 @@ import { format, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 
+import { useRouter } from 'expo-router';
+
 export default function ProCalendar() {
+  const router = useRouter();
   const { colors, isDark } = useTheme();
   // Par défaut on charge la semaine en cours
   const [dateRange, setDateRange] = useState({
@@ -31,6 +34,14 @@ export default function ProCalendar() {
 
   const renderAppointment = ({ item }: { item: any }) => {
     const aptDate = parseISO(item.start);
+    const isVideo = item.locationType === 'video' || item.type === 'video' || !!item.meetLink;
+    const isConfirmed = item.status === 'confirmed' || item.status === 'confirmé';
+    const statusDisplay = isConfirmed
+      ? 'Confirmé'
+      : item.status === 'pending' || item.status === 'en_attente'
+      ? 'En attente'
+      : item.status || 'Planifié';
+
     return (
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
         <View style={[styles.timeColumn, { borderRightColor: colors.border }]}>
@@ -42,16 +53,34 @@ export default function ProCalendar() {
           
           <View style={styles.metaRow}>
             <View style={styles.typeBadge}>
-              {item.type === 'video' ? <Video size={14} color={colors.textSecondary} style={styles.metaIcon} /> : <CalendarIcon size={14} color={colors.textSecondary} style={styles.metaIcon} />}
-              <Text style={[styles.metaText, { color: colors.textSecondary }]}>{item.type === 'video' ? 'Téléconsultation' : 'Présentiel'}</Text>
+              {isVideo ? <Video size={14} color={colors.textSecondary} style={styles.metaIcon} /> : <CalendarIcon size={14} color={colors.textSecondary} style={styles.metaIcon} />}
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>{isVideo ? 'Téléconsultation' : 'Présentiel'}</Text>
             </View>
-            <View style={[styles.statusBadge, item.status === 'confirmé' ? styles.statusConfirmed : styles.statusPending]}>
-              <Text style={[styles.statusText, item.status === 'confirmé' ? styles.statusTextConfirmed : styles.statusTextPending]}>
-                {item.status}
+            <View style={[styles.statusBadge, isConfirmed ? styles.statusConfirmed : styles.statusPending]}>
+              <Text style={[styles.statusText, isConfirmed ? styles.statusTextConfirmed : styles.statusTextPending]}>
+                {statusDisplay}
               </Text>
             </View>
           </View>
         </View>
+        {isVideo && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#00A651',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 10,
+              justifyContent: 'center',
+              alignItems: 'center',
+              alignSelf: 'center',
+              marginLeft: 8,
+            }}
+            onPress={() => router.push(`/(specialist)/teleconsultation/${item.id}` as any)}
+            activeOpacity={0.8}
+          >
+            <Video size={18} color="#ffffff" />
+          </TouchableOpacity>
+        )}
       </View>
     );
   };

@@ -232,34 +232,42 @@ export default function ProgramAgentDashboardScreen() {
         </View>
 
         <View style={styles.alertsList}>
-          {(dashData?.recentAlerts || []).map((alert) => (
-            <TouchableOpacity
-              key={String(alert.id)}
-              style={[
-                styles.alertCard,
-                { backgroundColor: colors.card, borderColor: colors.border },
-              ]}
-              onPress={() => router.push('/(program-agent)/alerts')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.alertCardHeader}>
-                <View style={styles.alertCodeGroup}>
-                  <Text style={[styles.alertPatientCode, { color: colors.text }]}>
-                    {alert.codePatient}
-                  </Text>
-                  <Text style={[styles.alertLocation, { color: colors.textSecondary }]}>
-                    {alert.ville} • {alert.centre}
-                  </Text>
-                </View>
-                <View style={styles.critiqueBadge}>
-                  <Text style={styles.critiqueBadgeText}>{alert.priorite}</Text>
-                </View>
-              </View>
-              <Text style={[styles.alertDesc, { color: colors.text }]} numberOfLines={2}>
-                {alert.description}
+          {(!dashData?.recentAlerts || dashData.recentAlerts.length === 0) ? (
+            <View style={[styles.alertCard, { backgroundColor: colors.card, borderColor: colors.border, padding: 16, alignItems: 'center' }]}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+                Aucune alerte critique récente enregistrée.
               </Text>
-            </TouchableOpacity>
-          ))}
+            </View>
+          ) : (
+            dashData.recentAlerts.map((alert) => (
+              <TouchableOpacity
+                key={String(alert.id)}
+                style={[
+                  styles.alertCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+                onPress={() => router.push('/(program-agent)/alerts')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.alertCardHeader}>
+                  <View style={styles.alertCodeGroup}>
+                    <Text style={[styles.alertPatientCode, { color: colors.text }]}>
+                      {alert.codePatient || `Alerte #${alert.id}`}
+                    </Text>
+                    <Text style={[styles.alertLocation, { color: colors.textSecondary }]}>
+                      {alert.ville || 'Abidjan'} • {alert.centre || 'Centre de santé'}
+                    </Text>
+                  </View>
+                  <View style={styles.critiqueBadge}>
+                    <Text style={styles.critiqueBadgeText}>{alert.priorite || 'Critique'}</Text>
+                  </View>
+                </View>
+                <Text style={[styles.alertDesc, { color: colors.text }]} numberOfLines={2}>
+                  {alert.description || 'Signalement clinique urgent sous suivi.'}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

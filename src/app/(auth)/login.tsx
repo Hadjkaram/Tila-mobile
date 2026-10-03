@@ -397,7 +397,13 @@ export default function LoginScreen() {
     <SafeAreaView style={[styles.container, isDark && { backgroundColor: colors.bg }]}>
       <TouchableOpacity
         style={[styles.backButton, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={() => router.back()}
+        onPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/welcome');
+          }
+        }}
       >
         <ArrowLeft size={24} color={isDark ? colors.text : '#334155'} />
       </TouchableOpacity>

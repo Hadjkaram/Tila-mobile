@@ -108,8 +108,8 @@ export const preloadService = {
     // Données spécifiques Agents de Terrain Migrants (Préchargement 100% Hors-Ligne du Dashboard)
     const isMigrantAgent =
       activeContext === 'MIGRANT_FIELD_AGENT' ||
-      roles.some((r) => r.includes('MIGRANT') || r.includes('AGENT_TERRAIN_MIGRANT')) ||
-      !isSpecialist;
+      activeContext === 'FIELD_AGENT' ||
+      roles.some((r) => r.includes('MIGRANT') || r.includes('AGENT_TERRAIN_MIGRANT'));
 
     if (isMigrantAgent) {
       const now = new Date();
