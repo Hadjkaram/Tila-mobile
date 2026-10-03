@@ -1,7 +1,7 @@
 import { apiClient } from "./apiClient";
 const normalizeSearchQuery = (q: string) => q;
 export interface ScaleLabel {
-  value: number;
+  value: number | string;
   label: string;
 }
 
@@ -26,6 +26,13 @@ export interface QuestionItem {
   subcategory?: string;
   conditional?: boolean;
   condition?: string;
+  type?: string;
+  placeholder?: string;
+  input_format?: string;
+  scored?: boolean;
+  critical?: boolean;
+  note?: string;
+  options?: Array<{ value: string | number; label: string; requires_text?: boolean }>;
 }
 
 export interface Section {
@@ -301,7 +308,8 @@ export const agentService = {
     if (k === 'berger' || k === 'berger-vih' || k === 'berger_scale' || k === 'berger-hiv-stigma') return 'berger-hiv-stigma';
     if (k === 'ods' || k === 'bmh-mwt' || k === 'bmh_mwt') return 'bmh_mwt';
     if (k === 'sdq' || k === 'sdq-terrain') return 'sdq';
-    if (k === 'pcl5' || k === 'pcl-5' || k === 'pcl5-terrain' || k === 'pcl-5-terrain') return 'pcl-5-terrain';
+    if (k === 'pcl5-terrain' || k === 'pcl-5-terrain') return 'pcl-5-terrain';
+    if (k === 'pcl5' || k === 'pcl-5') return 'pcl-5';
     return key;
   },
 
@@ -322,7 +330,7 @@ export const agentService = {
     questionnaireKey: string,
     payload: {
       patientId: number;
-      answers: Record<string, number | string>;
+      answers: Record<string, any>;
       centre?: string;
       centreId?: number;
       referralId?: number;

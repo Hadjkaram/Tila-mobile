@@ -934,7 +934,8 @@ export function normalizeToolKey(key: string): string {
   if (k === 'gad7' || k === 'gad-7') return 'gad7';
   if (k === 'berger' || k === 'berger-vih' || k === 'berger_scale' || k === 'berger-hiv-stigma') return 'berger';
   if (k === 'sdq' || k === 'sdq-terrain') return 'sdq';
-  if (k === 'pcl5' || k === 'pcl-5' || k === 'pcl5-terrain' || k === 'pcl-5-terrain') return 'pcl-5';
+  if (k === 'pcl5-terrain' || k === 'pcl-5-terrain') return 'pcl-5-terrain';
+  if (k === 'pcl5' || k === 'pcl-5') return 'pcl-5';
   return k;
 }
 

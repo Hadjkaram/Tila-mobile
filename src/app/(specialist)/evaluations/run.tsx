@@ -35,6 +35,7 @@ import {
   getLocalizedQuestionnaire,
 } from '../../../constants/bilingualQuestionnaires';
 import { AssessmentLanguageSelector } from '../../../components/AssessmentLanguageSelector';
+import { EvaluationResultsView } from '../../../components/EvaluationResultsView';
 
 // Default Fallback Questions with canonical q1, q2... IDs (matching Symfony database)
 const FALLBACK_QUESTIONS: Record<string, QuestionItem[]> = {
@@ -172,6 +173,43 @@ export default function SpecialistAssessmentRunnerScreen() {
   const getQuestionOptions = (q: QuestionItem | undefined): ScaleLabel[] => {
     if (!q) return [];
     if (q.scale_labels && q.scale_labels.length > 0) return q.scale_labels;
+    if (q.options && q.options.length > 0 && q.scale_type !== 'multiple_choice') {
+      return q.options.map((opt) => ({
+        value: opt.value,
+        label: opt.label,
+      }));
+    }
+    if (q.scale_type === 'yes_no') {
+      return [
+        { value: 0, label: lang === 'en' ? 'No' : 'Non' },
+        { value: 1, label: lang === 'en' ? 'Yes' : 'Oui' },
+      ];
+    }
+    if (q.scale_type === 'frequency_4point') {
+      return [
+        { value: 0, label: lang === 'en' ? 'Not at all' : 'Jamais' },
+        { value: 1, label: lang === 'en' ? 'Several days' : 'Plusieurs jours' },
+        { value: 2, label: lang === 'en' ? 'More than half the days' : 'Plus de la moitié du temps' },
+        { value: 3, label: lang === 'en' ? 'Nearly every day' : 'Presque tous les jours' },
+      ];
+    }
+    if (q.scale_type === 'frequency_5point') {
+      return [
+        { value: 0, label: lang === 'en' ? 'Not at all' : 'Pas du tout' },
+        { value: 1, label: lang === 'en' ? 'Rarely' : 'Rarement' },
+        { value: 2, label: lang === 'en' ? 'Sometimes' : 'Quelquefois' },
+        { value: 3, label: lang === 'en' ? 'Several times' : 'Plusieurs fois' },
+        { value: 4, label: lang === 'en' ? 'Every day' : 'Tous les jours' },
+      ];
+    }
+    if (q.scale_type === 'impact_scale') {
+      return [
+        { value: 0, label: lang === 'en' ? 'Not difficult at all' : 'Pas du tout difficile(s)' },
+        { value: 1, label: lang === 'en' ? 'Somewhat difficult' : 'Assez difficile(s)' },
+        { value: 2, label: lang === 'en' ? 'Very difficult' : 'Très difficile(s)' },
+        { value: 3, label: lang === 'en' ? 'Extremely difficult' : 'Extrêmement difficile(s)' },
+      ];
+    }
     if (q.scoring && typeof q.scoring === 'object') {
       const labels: ScaleLabel[] = [];
       let idx = 0;
@@ -205,13 +243,20 @@ export default function SpecialistAssessmentRunnerScreen() {
   }, [questionnaireKey, lang]);
 
   const displayQuestionText = useMemo(() => {
-    if (locQuestionnaire && locQuestionnaire.questions[currentIndex]) {
+    if (
+      locQuestionnaire &&
+      locQuestionnaire.questions[currentIndex] &&
+      locQuestionnaire.questions[currentIndex].id === currentQuestion?.id
+    ) {
       return locQuestionnaire.questions[currentIndex].text;
     }
     return currentQuestion?.text || '';
   }, [locQuestionnaire, currentIndex, currentQuestion]);
 
   const displayOptions = useMemo(() => {
+    if (currentOptions && currentOptions.length > 0) {
+      return currentOptions;
+    }
     if (locQuestionnaire && locQuestionnaire.options && locQuestionnaire.options.length > 0) {
       return locQuestionnaire.options;
     }
@@ -235,8 +280,12 @@ export default function SpecialistAssessmentRunnerScreen() {
 
   const isCurrentAnswered = useMemo(() => {
     if (!currentQuestion) return false;
+    if (currentQuestion.required === false) return true;
     const qKey = currentQuestion.id || `q_${currentIndex}`;
-    return answers[qKey] !== undefined;
+    const ans = answers[qKey];
+    if (ans === undefined || ans === null || ans === '') return false;
+    if (Array.isArray(ans) && ans.length === 0) return false;
+    return true;
   }, [currentQuestion, answers, currentIndex]);
 
   const currentAnswerValue = currentQuestion 
@@ -487,77 +536,29 @@ export default function SpecialistAssessmentRunnerScreen() {
       </View>
 
       {/* RESULT MODAL */}
-      <Modal visible={showResultModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.resultModalCard}>
-            <View style={styles.resultIconContainer}>
-              <CheckCircle2 size={54} color="#00A651" />
-            </View>
-
-            <Text style={styles.resultModalTitle}>Évaluation Terminée !</Text>
-            <Text style={styles.resultModalSubtitle}>
-              Les réponses ont été enregistrées pour {patientName}.
-            </Text>
-
-            {/* Score Summary Box */}
-            <View style={styles.scoreBox}>
-              <View style={styles.scoreRow}>
-                <Text style={styles.scoreLabel}>Score Global Obtenu</Text>
-                <Text style={styles.scoreValue}>{String(primaryScore)}</Text>
-              </View>
-
-              {!!primarySeverity && (
-                <View style={styles.severityRow}>
-                  <Text style={styles.severityLabel}>Niveau de sévérité clinique :</Text>
-                  <View style={[
-                    styles.severityBadge,
-                    primarySeverity.toLowerCase().includes('élevé') ? styles.sevHigh :
-                    primarySeverity.toLowerCase().includes('modéré') ? styles.sevMedium : styles.sevLow
-                  ]}>
-                    <Text style={styles.severityBadgeText}>{primarySeverity}</Text>
-                  </View>
-                </View>
-              )}
-
-              {!!primaryInterpretation && (
-                <Text style={styles.interpretationText}>{primaryInterpretation}</Text>
-              )}
-            </View>
-
-            {/* Action Buttons */}
-            <TouchableOpacity
-              style={styles.modalPrimaryButton}
-              onPress={() => {
-                setShowResultModal(false);
-                router.replace(`/(specialist)/patients/${patientId}` as any);
-              }}
-            >
-              <User size={18} color="#ffffff" style={{ marginRight: 8 }} />
-              <Text style={styles.modalPrimaryButtonText}>Voir la fiche du patient</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.modalSecondaryButton, { borderColor: '#00A651', marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
-              onPress={() => {
+      <Modal visible={showResultModal} animationType="slide" presentationStyle="fullScreen">
+        <SafeAreaView
+          style={{ flex: 1, backgroundColor: isDark ? colors.bg : '#f8fafc' }}
+          edges={['top', 'bottom']}
+        >
+          {resultData && (
+            <EvaluationResultsView
+              submissionResponse={resultData}
+              patientName={patientName}
+              centreName={centreName}
+              questionnaireTitle={displayTitle}
+              orientButtonLabel="Gérer les orientations & suivis"
+              onOrient={() => {
                 setShowResultModal(false);
                 router.replace('/(specialist)/referrals');
               }}
-            >
-              <ArrowRightLeft size={16} color="#00A651" style={{ marginRight: 6 }} />
-              <Text style={[styles.modalSecondaryButtonText, { color: '#00A651' }]}>Gérer les orientations & suivis</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.modalSecondaryButton}
-              onPress={() => {
+              onClose={() => {
                 setShowResultModal(false);
                 router.replace('/(specialist)/dashboard');
               }}
-            >
-              <Text style={styles.modalSecondaryButtonText}>Retour au tableau de bord</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+            />
+          )}
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );

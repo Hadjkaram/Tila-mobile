@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  TextInput,
 } from 'react-native';
 import { Text } from '../../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,8 +18,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowRightLeft,
-  RotateCcw,
-  Sparkles,
   ClipboardList,
 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -36,6 +35,7 @@ import {
   getLocalizedQuestionnaire,
 } from '../../../constants/bilingualQuestionnaires';
 import { AssessmentLanguageSelector } from '../../../components/AssessmentLanguageSelector';
+import { EvaluationResultsView } from '../../../components/EvaluationResultsView';
 
 export default function FieldAgentAssessmentRunnerScreen() {
   const router = useRouter();
@@ -65,8 +65,8 @@ export default function FieldAgentAssessmentRunnerScreen() {
   const patientProfileOther = params.patientProfileOther || undefined;
   const pvvihPatientType = params.pvvihPatientType || undefined;
 
-  // Answers state
-  const [answers, setAnswers] = useState<Record<string, number | string>>({});
+  // Answers state: supports numbers, strings, and string arrays (for multiple choice)
+  const [answers, setAnswers] = useState<Record<string, any>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Results modal state
@@ -120,10 +120,47 @@ export default function FieldAgentAssessmentRunnerScreen() {
   const currentQuestion: QuestionItem | undefined = allQuestions[currentIndex];
   const totalQuestions = allQuestions.length;
 
-  // Helper to extract options/labels
+  // Helper to extract options/labels strictly respecting the question's specific scale
   const getQuestionOptions = (q: QuestionItem | undefined): ScaleLabel[] => {
     if (!q) return [];
     if (q.scale_labels && q.scale_labels.length > 0) return q.scale_labels;
+    if (q.options && q.options.length > 0 && q.scale_type !== 'multiple_choice') {
+      return q.options.map((opt) => ({
+        value: opt.value,
+        label: opt.label,
+      }));
+    }
+    if (q.scale_type === 'yes_no') {
+      return [
+        { value: 0, label: lang === 'en' ? 'No' : 'Non' },
+        { value: 1, label: lang === 'en' ? 'Yes' : 'Oui' },
+      ];
+    }
+    if (q.scale_type === 'frequency_4point') {
+      return [
+        { value: 0, label: lang === 'en' ? 'Not at all' : 'Jamais' },
+        { value: 1, label: lang === 'en' ? 'Several days' : 'Plusieurs jours' },
+        { value: 2, label: lang === 'en' ? 'More than half the days' : 'Plus de la moitié du temps' },
+        { value: 3, label: lang === 'en' ? 'Nearly every day' : 'Presque tous les jours' },
+      ];
+    }
+    if (q.scale_type === 'frequency_5point') {
+      return [
+        { value: 0, label: lang === 'en' ? 'Not at all' : 'Pas du tout' },
+        { value: 1, label: lang === 'en' ? 'Rarely' : 'Rarement' },
+        { value: 2, label: lang === 'en' ? 'Sometimes' : 'Quelquefois' },
+        { value: 3, label: lang === 'en' ? 'Several times' : 'Plusieurs fois' },
+        { value: 4, label: lang === 'en' ? 'Every day' : 'Tous les jours' },
+      ];
+    }
+    if (q.scale_type === 'impact_scale') {
+      return [
+        { value: 0, label: lang === 'en' ? 'Not difficult at all' : 'Pas du tout difficile(s)' },
+        { value: 1, label: lang === 'en' ? 'Somewhat difficult' : 'Assez difficile(s)' },
+        { value: 2, label: lang === 'en' ? 'Very difficult' : 'Très difficile(s)' },
+        { value: 3, label: lang === 'en' ? 'Extremely difficult' : 'Extrêmement difficile(s)' },
+      ];
+    }
     if (q.scoring && typeof q.scoring === 'object') {
       const labels: ScaleLabel[] = [];
       let idx = 0;
@@ -143,16 +180,16 @@ export default function FieldAgentAssessmentRunnerScreen() {
       return questionnaire.scale.labels;
     }
     return [
-      { value: 0, label: 'Non / Jamais' },
-      { value: 1, label: 'Un peu / Parfois' },
-      { value: 2, label: 'Moyennement / Souvent' },
-      { value: 3, label: 'Beaucoup / Presque toujours' },
+      { value: 0, label: lang === 'en' ? 'No / Never' : 'Non / Jamais' },
+      { value: 1, label: lang === 'en' ? 'A little / Sometimes' : 'Un peu / Parfois' },
+      { value: 2, label: lang === 'en' ? 'Moderately / Often' : 'Moyennement / Souvent' },
+      { value: 3, label: lang === 'en' ? 'A lot / Almost always' : 'Beaucoup / Presque toujours' },
     ];
   };
 
   const options = useMemo(
     () => getQuestionOptions(currentQuestion),
-    [currentQuestion, questionnaire]
+    [currentQuestion, questionnaire, lang]
   );
 
   const locQuestionnaire = useMemo(() => {
@@ -160,18 +197,26 @@ export default function FieldAgentAssessmentRunnerScreen() {
   }, [questionnaireKey, lang]);
 
   const displayQuestionText = useMemo(() => {
-    if (locQuestionnaire && locQuestionnaire.questions[currentIndex]) {
+    if (
+      locQuestionnaire &&
+      locQuestionnaire.questions[currentIndex] &&
+      locQuestionnaire.questions[currentIndex].id === currentQuestion?.id
+    ) {
       return locQuestionnaire.questions[currentIndex].text;
     }
     return currentQuestion?.text || '';
   }, [locQuestionnaire, currentIndex, currentQuestion]);
 
+  // Only fall back to localized generic options if question has no specific scale
   const displayOptions = useMemo(() => {
+    if (options && options.length > 0) {
+      return options;
+    }
     if (locQuestionnaire && locQuestionnaire.options && locQuestionnaire.options.length > 0) {
       return locQuestionnaire.options;
     }
     return options;
-  }, [locQuestionnaire, options]);
+  }, [options, locQuestionnaire]);
 
   const displayTitle = useMemo(() => {
     if (locQuestionnaire) return locQuestionnaire.title;
@@ -228,7 +273,8 @@ export default function FieldAgentAssessmentRunnerScreen() {
       queryClient.invalidateQueries({ queryKey: ['agent_patients'] });
     },
     onError: (err: any) => {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Impossible d’enregistrer cette évaluation.';
+      const errorMessage =
+        err?.response?.data?.message || err?.message || 'Impossible d’enregistrer cette évaluation.';
       Alert.alert(
         lang === 'en' ? 'Submission error' : 'Erreur de soumission',
         errorMessage
@@ -236,7 +282,7 @@ export default function FieldAgentAssessmentRunnerScreen() {
     },
   });
 
-  const handleSelectOption = (value: number) => {
+  const handleSelectOption = (value: number | string) => {
     if (!currentQuestion) return;
     const qKey = currentQuestion.id || `q_${currentIndex}`;
     setAnswers((prev) => ({
@@ -254,8 +300,14 @@ export default function FieldAgentAssessmentRunnerScreen() {
 
   const isCurrentAnswered = useMemo(() => {
     if (!currentQuestion) return false;
+    // Optional questions can be skipped without answering!
+    if (currentQuestion.required === false) return true;
+
     const qKey = currentQuestion.id || `q_${currentIndex}`;
-    return answers[qKey] !== undefined;
+    const ans = answers[qKey];
+    if (ans === undefined || ans === null || ans === '') return false;
+    if (Array.isArray(ans) && ans.length === 0) return false;
+    return true;
   }, [currentQuestion, answers, currentIndex]);
 
   const answeredCount = Object.keys(answers).length;
@@ -284,11 +336,21 @@ export default function FieldAgentAssessmentRunnerScreen() {
           Le formulaire "{questionnaireKey}" est indisponible ou ne contient aucune question.
         </Text>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>{lang === 'en' ? 'Back to selection' : 'Retourner à la sélection'}</Text>
+          <Text style={styles.backBtnText}>
+            {lang === 'en' ? 'Back to selection' : 'Retourner à la sélection'}
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
+
+  const qKey = currentQuestion?.id || `q_${currentIndex}`;
+  const isTextInput =
+    currentQuestion?.scale_type === 'text_input' ||
+    currentQuestion?.type === 'open_text' ||
+    currentQuestion?.type === 'open_text_long';
+  const isNumberInput = currentQuestion?.scale_type === 'number_input';
+  const isMultipleChoice = currentQuestion?.scale_type === 'multiple_choice';
 
   return (
     <SafeAreaView style={[styles.container, isDark && { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
@@ -328,79 +390,247 @@ export default function FieldAgentAssessmentRunnerScreen() {
         {/* Section Title if exists */}
         {!!currentQuestion?.section_title && (
           <View style={[styles.sectionTitleWrap, isDark && { backgroundColor: colors.bgSecondary }]}>
-            <Text style={[styles.sectionTitleText, isDark && { color: colors.textSecondary }]}>{currentQuestion.section_title}</Text>
+            <Text style={[styles.sectionTitleText, isDark && { color: colors.textSecondary }]}>
+              {currentQuestion.section_title}
+            </Text>
           </View>
         )}
 
         {/* Question Box */}
         <View style={[styles.questionBox, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.questionIndexLabel, isDark && { color: colors.textSecondary }]}>
-            Question {currentIndex + 1}
+          <View style={styles.questionHeaderRow}>
+            <Text style={[styles.questionIndexLabel, isDark && { color: colors.textSecondary }]}>
+              Question {currentIndex + 1}
+            </Text>
+            {currentQuestion?.required === false && (
+              <View style={styles.optionalBadge}>
+                <Text style={styles.optionalBadgeText}>Optionnel</Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.questionText, isDark && { color: colors.text }]}>
+            {displayQuestionText}
           </Text>
-          <Text style={[styles.questionText, isDark && { color: colors.text }]}>{displayQuestionText}</Text>
         </View>
 
-        {/* Options List */}
-        <View style={styles.optionsList}>
-          {displayOptions.map((opt, idx) => {
-            const qKey = currentQuestion?.id || `q_${currentIndex}`;
-            const isSelected = answers[qKey] === opt.value;
+        {/* --- Dynamic Question Input Area --- */}
 
-            return (
+        {/* 1. Free Text Input */}
+        {isTextInput && (
+          <View style={styles.inputCard}>
+            <TextInput
+              style={[
+                styles.textInputField,
+                isDark && { backgroundColor: colors.card, borderColor: colors.border, color: colors.text },
+                currentQuestion?.type === 'open_text_long' && styles.textInputMultiline,
+              ]}
+              placeholder={
+                currentQuestion?.placeholder ||
+                (lang === 'en' ? 'Type response...' : 'Saisir la réponse...')
+              }
+              placeholderTextColor={isDark ? colors.textSecondary : '#94a3b8'}
+              value={String(answers[qKey] ?? '')}
+              onChangeText={(txt) => {
+                setAnswers((prev) => ({
+                  ...prev,
+                  [qKey]: txt,
+                }));
+              }}
+              multiline={currentQuestion?.type === 'open_text_long'}
+              keyboardType={currentQuestion?.input_format === 'phone' ? 'phone-pad' : 'default'}
+            />
+          </View>
+        )}
+
+        {/* 2. Numeric Input */}
+        {isNumberInput && (
+          <View style={styles.inputCard}>
+            <TextInput
+              style={[
+                styles.textInputField,
+                isDark && { backgroundColor: colors.card, borderColor: colors.border, color: colors.text },
+              ]}
+              placeholder="0"
+              placeholderTextColor={isDark ? colors.textSecondary : '#94a3b8'}
+              keyboardType="numeric"
+              value={answers[qKey] !== undefined ? String(answers[qKey]) : ''}
+              onChangeText={(txt) => {
+                const num = txt === '' ? '' : parseFloat(txt);
+                setAnswers((prev) => ({
+                  ...prev,
+                  [qKey]: !isNaN(num as number) ? num : txt,
+                }));
+              }}
+            />
+          </View>
+        )}
+
+        {/* 3. Multiple Choice (Checkboxes, e.g. Événements stressants) */}
+        {isMultipleChoice && (
+          <View style={styles.optionsList}>
+            {(currentQuestion.options || [
+              { value: 'vecu', label: 'Vécu' },
+              { value: 'temoin', label: 'Témoin' },
+              { value: 'rapporte', label: 'Rapporté' },
+            ]).map((opt, idx) => {
+              const selectedValues = Array.isArray(answers[qKey])
+                ? (answers[qKey] as string[])
+                : [];
+              const isChecked = selectedValues.includes(String(opt.value));
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.optionCard,
+                    isDark && { backgroundColor: colors.card, borderColor: colors.border },
+                    isChecked && styles.optionCardSelected,
+                  ]}
+                  onPress={() => {
+                    const cur = Array.isArray(answers[qKey]) ? [...(answers[qKey] as string[])] : [];
+                    const optVal = String(opt.value);
+                    const next = isChecked ? cur.filter((v) => v !== optVal) : [...cur, optVal];
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [qKey]: next,
+                    }));
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkboxSquare, isChecked && styles.checkboxSquareSelected]}>
+                    {isChecked && <Check size={14} color="#ffffff" />}
+                  </View>
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      isDark && { color: colors.text },
+                      isChecked && styles.optionLabelSelected,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            {currentQuestion?.required === false && (
               <TouchableOpacity
-                key={idx}
                 style={[
                   styles.optionCard,
                   isDark && { backgroundColor: colors.card, borderColor: colors.border },
-                  isSelected && styles.optionCardSelected,
+                  (!answers[qKey] || (Array.isArray(answers[qKey]) && (answers[qKey] as string[]).length === 0)) &&
+                    styles.optionCardNeutral,
                 ]}
-                onPress={() => handleSelectOption(opt.value as number)}
-                activeOpacity={0.7}
+                onPress={() => {
+                  setAnswers((prev) => ({
+                    ...prev,
+                    [qKey]: [],
+                  }));
+                  if (currentIndex < totalQuestions - 1) {
+                    setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
+                  }
+                }}
               >
-                <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
-                  {isSelected && <View style={styles.radioDot} />}
-                </View>
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    isDark && { color: colors.text },
-                    isSelected && styles.optionLabelSelected,
-                  ]}
-                >
-                  {opt.label}
+                <Text style={[styles.optionLabel, { color: '#64748b', fontStyle: 'italic' }]}>
+                  {lang === 'en' ? 'None / Not applicable' : 'Aucun / Non concerné'}
                 </Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            )}
+          </View>
+        )}
+
+        {/* 4. Single Choice / Likert Scale (Radio buttons) */}
+        {!isTextInput && !isNumberInput && !isMultipleChoice && (
+          <View style={styles.optionsList}>
+            {displayOptions.map((opt, idx) => {
+              const isSelected =
+                answers[qKey] === opt.value || String(answers[qKey]) === String(opt.value);
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.optionCard,
+                    isDark && { backgroundColor: colors.card, borderColor: colors.border },
+                    isSelected && styles.optionCardSelected,
+                  ]}
+                  onPress={() => handleSelectOption(opt.value)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                    {isSelected && <View style={styles.radioDot} />}
+                  </View>
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      isDark && { color: colors.text },
+                      isSelected && styles.optionLabelSelected,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         {/* Bottom Navigation Row */}
         <View style={styles.navButtonsRow}>
           <TouchableOpacity
-            style={[styles.navBtn, currentIndex === 0 && styles.navBtnDisabled, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              styles.navBtn,
+              currentIndex === 0 && styles.navBtnDisabled,
+              isDark && { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
             onPress={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
             disabled={currentIndex === 0}
           >
-            <ArrowLeft size={18} color={currentIndex === 0 ? '#94a3b8' : (isDark ? colors.text : '#334155')} />
-            <Text style={[styles.navBtnText, currentIndex === 0 && { color: '#94a3b8' }, isDark && currentIndex > 0 && { color: colors.text }]}>
+            <ArrowLeft
+              size={18}
+              color={currentIndex === 0 ? '#94a3b8' : isDark ? colors.text : '#334155'}
+            />
+            <Text
+              style={[
+                styles.navBtnText,
+                currentIndex === 0 && { color: '#94a3b8' },
+                isDark && currentIndex > 0 && { color: colors.text },
+              ]}
+            >
               {lang === 'en' ? 'Previous' : 'Précédent'}
             </Text>
           </TouchableOpacity>
 
           {currentIndex < totalQuestions - 1 ? (
             <TouchableOpacity
-              style={[styles.navBtn, !isCurrentAnswered && styles.navBtnDisabled, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+              style={[
+                styles.navBtn,
+                !isCurrentAnswered && styles.navBtnDisabled,
+                isDark && { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
               onPress={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
               disabled={!isCurrentAnswered}
             >
-              <Text style={[styles.navBtnText, !isCurrentAnswered && { color: '#94a3b8' }, isDark && isCurrentAnswered && { color: colors.text }]}>
+              <Text
+                style={[
+                  styles.navBtnText,
+                  !isCurrentAnswered && { color: '#94a3b8' },
+                  isDark && isCurrentAnswered && { color: colors.text },
+                ]}
+              >
                 {lang === 'en' ? 'Next' : 'Suivant'}
               </Text>
-              <ArrowRight size={18} color={!isCurrentAnswered ? '#94a3b8' : (isDark ? colors.text : '#334155')} />
+              <ArrowRight
+                size={18}
+                color={!isCurrentAnswered ? '#94a3b8' : isDark ? colors.text : '#334155'}
+              />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.submitBtn, (!isCurrentAnswered || submitMutation.isPending) && styles.navBtnDisabled]}
+              style={[
+                styles.submitBtn,
+                (!isCurrentAnswered || submitMutation.isPending) && styles.navBtnDisabled,
+              ]}
               onPress={() => submitMutation.mutate()}
               disabled={!isCurrentAnswered || submitMutation.isPending}
             >
@@ -419,65 +649,55 @@ export default function FieldAgentAssessmentRunnerScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal Résultats de l'Évaluation */}
-      <Modal visible={showResultModal} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.resultCard}>
-            <View style={styles.resultHeader}>
-              <CheckCircle2 size={40} color="#00A651" />
-              <Text style={styles.resultTitle}>Évaluation Enregistrée !</Text>
-              <Text style={styles.resultPatientName}>{patientName}</Text>
-            </View>
+      {/* Full-Screen Evaluation Results View (Mirrors Web AgentSanteResultatReferral) */}
+      <Modal visible={showResultModal} animationType="slide" presentationStyle="fullScreen">
+        <SafeAreaView
+          style={{ flex: 1, backgroundColor: isDark ? colors.bg : '#f8fafc' }}
+          edges={['top', 'bottom']}
+        >
+          {resultData && (
+            <EvaluationResultsView
+              submissionResponse={resultData}
+              patientName={patientName}
+              centreName={centreName}
+              questionnaireTitle={displayTitle}
+              orientButtonLabel="Orienter le Patient"
+              onOrient={() => {
+                setShowResultModal(false);
+                const firstScore = resultData?.scores?.[0];
+                const scoreStr =
+                  resultData?.overallScore != null
+                    ? `${resultData.overallScore}${
+                        resultData.overallDenominator ? `/${resultData.overallDenominator}` : ''
+                      }`
+                    : firstScore?.value != null
+                    ? `${firstScore.value}`
+                    : '';
+                const sevStr = firstScore?.severityLabel || firstScore?.interpretation || '';
 
-            <ScrollView style={styles.scoresList}>
-              {resultData?.scores?.map((score, i) => (
-                <View key={i} style={styles.scoreRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.scoreScaleTitle}>{score.label || score.scale}</Text>
-                    <Text style={styles.scoreInterpretation}>{score.interpretation}</Text>
-                  </View>
-                  <View style={styles.scoreValueBadge}>
-                    <Text style={styles.scoreValueText}>{score.value}</Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-
-            <View style={styles.resultActions}>
-              <TouchableOpacity
-                style={styles.actionOrientBtn}
-                onPress={() => {
-                  setShowResultModal(false);
-                  const firstScore = resultData?.scores?.[0];
-                  router.replace({
-                    pathname: '/(field-agent)/referrals/new',
-                    params: {
-                      submissionId: resultData?.submissionId ? String(resultData.submissionId) : undefined,
-                      patientId: patientId ? String(patientId) : undefined,
-                      patientName: patientName || '',
-                      questionnaireName: questionnaire?.title || questionnaireKey || '',
-                      score: firstScore ? `${firstScore.value} (${firstScore.interpretation || ''})` : undefined,
-                      centre: centreName || '',
-                    },
-                  } as any);
-                }}
-              >
-                <ArrowRightLeft size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.actionOrientBtnText}>Orienter le Patient</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.actionCloseBtn}
-                onPress={() => {
-                  setShowResultModal(false);
-                  router.replace('/(field-agent)/dashboard');
-                }}
-              >
-                <Text style={styles.actionCloseBtnText}>Retour au tableau de bord</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+                router.replace({
+                  pathname: '/(field-agent)/referrals/new',
+                  params: {
+                    submissionId: resultData?.submissionId
+                      ? String(resultData.submissionId)
+                      : undefined,
+                    patientId: patientId ? String(patientId) : undefined,
+                    patientName: patientName || '',
+                    questionnaireName:
+                      questionnaire?.title || questionnaire?.name || questionnaireKey || '',
+                    score: scoreStr,
+                    severity: sevStr,
+                    centre: centreName || '',
+                  },
+                } as any);
+              }}
+              onClose={() => {
+                setShowResultModal(false);
+                router.replace('/(field-agent)/dashboard');
+              }}
+            />
+          )}
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -503,26 +723,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#0f172a',
+    textAlign: 'center',
     marginBottom: 8,
-    fontFamily: 'Montserrat_700Bold',
   },
   errorDesc: {
     fontSize: 13,
     color: '#64748b',
     textAlign: 'center',
+    lineHeight: 18,
     marginBottom: 20,
-    fontFamily: 'Montserrat_400Regular',
   },
   backBtn: {
     backgroundColor: '#00A651',
-    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   backBtnText: {
     color: '#ffffff',
     fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontSize: 14,
   },
   topBar: {
     flexDirection: 'row',
@@ -530,10 +750,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
   backButton: {
-    padding: 4,
     marginRight: 12,
+    padding: 4,
   },
   toolTitle: {
     fontSize: 15,
@@ -545,23 +767,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
     marginTop: 1,
-    fontFamily: 'Montserrat_500Medium',
   },
   counterBadge: {
-    backgroundColor: '#f1f5f9',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    backgroundColor: '#f1f5f9',
   },
   counterText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontWeight: '700',
+    color: '#0f172a',
   },
   progressBarTrack: {
     height: 4,
     backgroundColor: '#e2e8f0',
+    width: '100%',
   },
   progressBarFill: {
     height: '100%',
@@ -572,64 +793,99 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionTitleWrap: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f1f5f9',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   sectionTitleText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#2563eb',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontWeight: '700',
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   questionBox: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 14,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    marginBottom: 16,
+  },
+  questionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   questionIndexLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#00A651',
+    color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-    fontFamily: 'Montserrat_600SemiBold',
+  },
+  optionalBadge: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  optionalBadgeText: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '500',
   },
   questionText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#0f172a',
-    lineHeight: 22,
+    lineHeight: 23,
     fontFamily: 'Montserrat_600SemiBold',
+  },
+  inputCard: {
+    marginBottom: 16,
+  },
+  textInputField: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#0f172a',
+  },
+  textInputMultiline: {
+    minHeight: 90,
+    textAlignVertical: 'top',
   },
   optionsList: {
     gap: 10,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
   optionCardSelected: {
     borderColor: '#00A651',
-    backgroundColor: '#f0fdf4',
+    backgroundColor: 'rgba(0, 166, 81, 0.05)',
+  },
+  optionCardNeutral: {
+    borderColor: '#cbd5e1',
   },
   radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#cbd5e1',
     justifyContent: 'center',
@@ -645,22 +901,36 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#00A651',
   },
+  checkboxSquare: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: '#cbd5e1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  checkboxSquareSelected: {
+    backgroundColor: '#00A651',
+    borderColor: '#00A651',
+  },
   optionLabel: {
     fontSize: 14,
-    color: '#334155',
+    fontWeight: '500',
+    color: '#1e293b',
     flex: 1,
-    lineHeight: 20,
-    fontFamily: 'Montserrat_500Medium',
   },
   optionLabelSelected: {
-    color: '#0f172a',
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
+    color: '#00A651',
+    fontWeight: '700',
   },
   navButtonsRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
     gap: 12,
-    marginTop: 8,
   },
   navBtn: {
     flex: 1,
@@ -668,141 +938,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#cbd5e1',
+    borderRadius: 12,
+    paddingVertical: 14,
     gap: 6,
   },
   navBtnDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   navBtnText: {
     fontSize: 14,
+    fontWeight: '600',
     color: '#334155',
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  navBtnNext: {
-    backgroundColor: '#00A651',
-    borderColor: '#00A651',
-  },
-  navBtnNextText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
   },
   submitBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F58220',
-    borderRadius: 12,
-    paddingVertical: 12,
-  },
-  submitBtnText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '700',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  resultCard: {
-    width: '100%',
-    maxHeight: '80%',
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-  },
-  resultHeader: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginTop: 8,
-    fontFamily: 'Montserrat_700Bold',
-  },
-  resultPatientName: {
-    fontSize: 13,
-    color: '#64748b',
-    marginTop: 2,
-    fontFamily: 'Montserrat_500Medium',
-  },
-  scoresList: {
-    maxHeight: 200,
-    marginBottom: 16,
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  scoreScaleTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0f172a',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  scoreInterpretation: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 1,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  scoreValueBadge: {
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    marginLeft: 10,
-  },
-  scoreValueText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#00A651',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  resultActions: {
-    gap: 10,
-  },
-  actionOrientBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#00A651',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
-  actionOrientBtnText: {
+  submitBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
-  },
-  actionCloseBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    paddingVertical: 12,
-  },
-  actionCloseBtnText: {
-    color: '#475569',
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: 'Montserrat_700Bold',
   },
 });
