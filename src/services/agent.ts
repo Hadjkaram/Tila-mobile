@@ -299,14 +299,73 @@ export const agentService = {
     return res.items ?? [];
   },
 
-  /** Liste des questionnaires disponibles pour l'agent. */
+  /** Liste des questionnaires disponibles pour l'agent (avec fallback hors-ligne résilient). */
   async getQuestionnaires(): Promise<AgentQuestionnaireItem[]> {
-    return apiClient.get<AgentQuestionnaireItem[]>("/api/agent/questionnaires");
+    try {
+      const res = await apiClient.get<AgentQuestionnaireItem[]>("/api/agent/questionnaires");
+      if (Array.isArray(res) && res.length > 0) return res;
+    } catch {}
+    return [
+      {
+        key: 'ods-monde-du-travail',
+        name: 'ODS • Monde du Travail',
+        title: 'ODS • Monde du Travail',
+        category: 'Santé au travail',
+        description: 'OUTIL DE DÉPISTAGE SIMPLIFIÉ — MONDE DU TRAVAIL : Dépistage rapide en milieu professionnel (dépression, anxiété, stress COPSOQ, alcool, substances, risque suicidaire).',
+      },
+      {
+        key: 'bmh_mwt',
+        name: 'ODS • Population Générale (> 18 ans)',
+        title: 'ODS • Population Générale (> 18 ans)',
+        category: 'Santé mentale générale',
+        description: 'Questionnaire population générale ODS de plus de 18 ans : Dépistage des troubles mentaux courants dans les soins primaires.',
+      },
+      {
+        key: 'sdq',
+        name: 'SDQ • Questionnaire Ados & Jeunes (2-17 ans)',
+        title: 'SDQ • Questionnaire Ados & Jeunes (2-17 ans)',
+        category: 'Enfants & Jeunes',
+        description: 'Forces et difficultés : Dépistage des difficultés émotionnelles et comportementales des 2-17 ans.',
+      },
+      {
+        key: 'pcl-5-terrain',
+        name: 'PCL-5 • Dépistage Stress Post-Traumatique',
+        title: 'PCL-5 • Dépistage Stress Post-Traumatique',
+        category: 'Traumatisme & Urgence',
+        description: 'Dépistage des symptômes de stress post-traumatique.',
+      },
+      {
+        key: 'berger-hiv-stigma',
+        name: 'Échelle Berger • Stigmatisation PVVIH',
+        title: 'Échelle Berger • Stigmatisation PVVIH',
+        category: 'Stigmatisation & VIH',
+        description: 'Évaluation de la stigmatisation perçue ou vécue liée au VIH.',
+      },
+    ];
+  },
+
+  /** Tableau de bord statistique de l'agent (/api/agent/dashboard) */
+  async getDashboard(params?: {
+    dateFrom?: string;
+    dateTo?: string;
+    region?: number | null;
+    templateKey?: string | null;
+    periodAll?: boolean;
+  }): Promise<any> {
+    const search = new URLSearchParams();
+    if (params?.dateFrom) search.set("dateFrom", params.dateFrom);
+    if (params?.dateTo) search.set("dateTo", params.dateTo);
+    if (params?.region != null) search.set("region", String(params.region));
+    if (params?.templateKey) search.set("templateKey", params.templateKey);
+    if (params?.periodAll) search.set("period", "all");
+    const qs = search.toString();
+    return apiClient.get<any>(`/api/agent/dashboard${qs ? `?${qs}` : ""}`);
   },
 
   /** Résout la clé canonique du questionnaire reconnue par Symfony */
   canonicalKey(key: string): string {
     const k = (key || '').toLowerCase().trim();
+    if (k === 'ods-monde-du-travail' || k === 'ods_monde_du_travail' || k === 'monde-du-travail') return 'ods-monde-du-travail';
     if (k === 'berger' || k === 'berger-vih' || k === 'berger_scale' || k === 'berger-hiv-stigma') return 'berger-hiv-stigma';
     if (k === 'ods' || k === 'bmh-mwt' || k === 'bmh_mwt') return 'bmh_mwt';
     if (k === 'sdq' || k === 'sdq-terrain') return 'sdq';

@@ -27,7 +27,7 @@ import {
   ArrowRight,
   Check,
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { patientService, AssessmentItem } from '../../services/patient';
 import { apiClient } from '../../services/apiClient';
@@ -39,153 +39,422 @@ import {
 import { AssessmentLanguageSelector } from '../../components/AssessmentLanguageSelector';
 
 // Outils d'évaluation certifiés disponibles pour le patient
-interface ToolDef {
+export interface ToolOption {
+  label: string;
+  value: number;
+}
+
+export interface ToolQuestionItem {
+  id?: string;
+  text: string;
+  dimension?: string;
+  options?: ToolOption[];
+}
+
+export interface ToolDef {
   key: string;
   title: string;
   category: string;
   description: string;
-  options: { label: string; value: number }[];
-  questions: string[];
-  interpret: (score: number) => { level: string; message: string; needConsult: boolean };
+  options: ToolOption[];
+  questions: (string | ToolQuestionItem)[];
+  interpret: (score: number, answers?: Record<number, number>) => { level: string; message: string; needConsult: boolean };
 }
 
 const EVALUATION_TOOLS: ToolDef[] = [
   {
-    key: 'phq9',
-    title: 'PHQ-9 • Humeur & Dépression',
-    category: 'Santé émotionnelle',
-    description: 'Évaluez la présence et l’intensité des symptômes dépressifs sur les 2 dernières semaines.',
+    key: 'ods-monde-du-travail',
+    title: 'ODS • Monde du Travail',
+    category: 'Santé au travail',
+    description: 'OUTIL DE DÉPISTAGE SIMPLIFIÉ — MONDE DU TRAVAIL : Dépistage rapide en milieu professionnel (dépression, anxiété, stress COPSOQ, alcool, substances, risque suicidaire).',
     options: [
-      { label: 'Jamais', value: 0 },
-      { label: 'Plusieurs jours', value: 1 },
-      { label: 'Plus de la moitié du temps', value: 2 },
-      { label: 'Presque tous les jours', value: 3 },
+      { label: '0 jour', value: 0 },
+      { label: '1-7 j', value: 1 },
+      { label: '8-11 j', value: 2 },
+      { label: '12-14 j', value: 3 },
     ],
     questions: [
-      'Avoir peu d’intérêt ou de plaisir à faire les choses',
-      'Vous sentir triste, déprimé(e) ou désespéré(e)',
-      'Difficultés à vous endormir, réveils fréquents ou trop dormir',
-      'Vous sentir fatigué(e) ou manquer d’énergie',
-      'Manque d’appétit ou manger de manière excessive',
-      'Avoir une mauvaise image de vous-même ou sentiment d’échec',
-      'Difficultés de concentration (lecture, travail, télévision)',
-      'Ralentissement physique ou au contraire grande agitation motrice',
-      'Pensées sombres ou sentiment que vous seriez mieux mort(e)',
+      {
+        id: 'q1',
+        text: 'Peu d’intérêt ou de plaisir à faire les choses au travail.',
+        options: [
+          { label: '0 jour', value: 0 },
+          { label: '1-7 j', value: 1 },
+          { label: '8-11 j', value: 2 },
+          { label: '12-14 j', value: 3 },
+        ],
+      },
+      {
+        id: 'q2',
+        text: 'Vous sentir triste, déprimé(e) ou désespéré(e) en lien avec votre travail.',
+        options: [
+          { label: '0 jour', value: 0 },
+          { label: '1-7 j', value: 1 },
+          { label: '8-11 j', value: 2 },
+          { label: '12-14 j', value: 3 },
+        ],
+      },
+      {
+        id: 'q3',
+        text: 'Se sentir nerveux, anxieux ou sur les nerfs au travail.',
+        options: [
+          { label: '0 jour', value: 0 },
+          { label: '1-7 j', value: 1 },
+          { label: '8-11 j', value: 2 },
+          { label: '12-14 j', value: 3 },
+        ],
+      },
+      {
+        id: 'q4',
+        text: 'Ne pas arriver à arrêter ou à contrôler les inquiétudes concernant votre travail.',
+        options: [
+          { label: '0 jour', value: 0 },
+          { label: '1-7 j', value: 1 },
+          { label: '8-11 j', value: 2 },
+          { label: '12-14 j', value: 3 },
+        ],
+      },
+      {
+        id: 'q5',
+        text: 'Difficultés à vous détendre après ou pendant votre travail.',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Rarement', value: 1 },
+          { label: 'Parfois', value: 2 },
+          { label: 'Souvent', value: 3 },
+          { label: 'Toujours', value: 4 },
+        ],
+      },
+      {
+        id: 'q6',
+        text: 'Vous sentir irritable ou facilement agacé(e) à cause de votre travail.',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Rarement', value: 1 },
+          { label: 'Parfois', value: 2 },
+          { label: 'Souvent', value: 3 },
+          { label: 'Toujours', value: 4 },
+        ],
+      },
+      {
+        id: 'q7',
+        text: 'Vous sentir tendu(e) ou sous pression au travail.',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Rarement', value: 1 },
+          { label: 'Parfois', value: 2 },
+          { label: 'Souvent', value: 3 },
+          { label: 'Toujours', value: 4 },
+        ],
+      },
+      {
+        id: 'q8',
+        text: 'À quelle fréquence buvez-vous de l’alcool ?',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: '1 fois/mois ou moins', value: 1 },
+          { label: '2-4 fois/mois', value: 2 },
+          { label: '2-3 fois/semaine', value: 3 },
+          { label: '4 fois/semaine ou plus', value: 4 },
+        ],
+      },
+      {
+        id: 'q9',
+        text: 'Combien de verres buvez-vous un jour typique ?',
+        options: [
+          { label: '1-2', value: 0 },
+          { label: '3-4', value: 1 },
+          { label: '5-6', value: 2 },
+          { label: '7-9', value: 3 },
+          { label: '10 ou plus', value: 4 },
+        ],
+      },
+      {
+        id: 'q10',
+        text: 'À quelle fréquence buvez-vous 6 verres ou plus ?',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Moins que mensuel', value: 1 },
+          { label: 'Mensuel', value: 2 },
+          { label: 'Hebdomadaire', value: 3 },
+          { label: 'Quotidien', value: 4 },
+        ],
+      },
+      {
+        id: 'q11',
+        text: 'Combien de fois avez-vous utilisé une drogue récréative ou illégale, ou un médicament sur ordonnance à des fins non médicales ?',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Au moins 1 fois', value: 1 },
+        ],
+      },
+      {
+        id: 'q12',
+        text: 'Avez-vous souhaité mourir ou souhaité ne pas vous réveiller ?',
+        options: [
+          { label: 'Non', value: 0 },
+          { label: 'Oui', value: 1 },
+        ],
+      },
+      {
+        id: 'q13',
+        text: 'Avez-vous réellement pensé à vous suicider ?',
+        options: [
+          { label: 'Non', value: 0 },
+          { label: 'Oui', value: 1 },
+        ],
+      },
+      {
+        id: 'q14',
+        text: 'Au cours des 3 derniers mois : avez-vous fait, commencé à faire ou préparé quoi que ce soit pour mettre fin à vos jours ?',
+        options: [
+          { label: 'Non', value: 0 },
+          { label: 'Oui', value: 1 },
+        ],
+      },
     ],
-    interpret: (score: number) => {
-      if (score <= 4) {
-        return {
-          level: 'Faible',
-          message: 'Symptômes minimes ou absents. Votre équilibre émotionnel est globalement stable.',
-          needConsult: false,
-        };
-      } else if (score <= 9) {
-        return {
-          level: 'Léger',
-          message: 'Légère baisse de moral. Prenez du temps pour vous reposer et pratiquer des activités ressourçantes.',
-          needConsult: false,
-        };
-      } else if (score <= 14) {
-        return {
-          level: 'Modéré',
-          message: 'Symptômes dépressifs notables. Un échange avec un professionnel de santé mentale est vivement recommandé.',
-          needConsult: true,
-        };
-      } else {
+    interpret: (score: number, answers = {}) => {
+      const hasSuicide =
+        Number(answers[11] ?? 0) > 0 ||
+        Number(answers[12] ?? 0) > 0 ||
+        Number(answers[13] ?? 0) > 0;
+      if (hasSuicide) {
         return {
           level: 'Élevé',
-          message: 'Symptômes sévères nécessitant une prise en charge médicale et un accompagnement spécialisé sans attendre.',
+          message: 'Alerte Clinique Immédiate : Idéation ou antécédent suicidaire rapporté en lien avec le milieu de travail. Une consultation urgente est indispensable.',
           needConsult: true,
         };
       }
-    },
-  },
-  {
-    key: 'gad7',
-    title: 'GAD-7 • Anxiété & Stress',
-    category: 'Gestion de l’anxiété',
-    description: 'Mesurez votre niveau d’anxiété, de nervosité et de tension au quotidien.',
-    options: [
-      { label: 'Pas du tout', value: 0 },
-      { label: 'Plusieurs jours', value: 1 },
-      { label: 'Plus de la moitié du temps', value: 2 },
-      { label: 'Presque tous les jours', value: 3 },
-    ],
-    questions: [
-      'Sentiment de nervosité, d’anxiété ou d’être sur le qui-vive',
-      'Incapacité à arrêter de vous inquiéter ou à contrôler vos angoisses',
-      'Inquiétudes excessives à propos de divers sujets',
-      'Grande difficulté à vous détendre et vous relaxer',
-      'Être si agité(e) qu’il est difficile de rester en place',
-      'Devenir facilement agacé(e) ou irritable',
-      'Peur panique que quelque chose de terrible se produise',
-    ],
-    interpret: (score: number) => {
-      if (score <= 4) {
-        return {
-          level: 'Faible',
-          message: 'Niveau d’anxiété dans la norme. Pas de trouble anxieux significatif décelé.',
-          needConsult: false,
-        };
-      } else if (score <= 9) {
-        return {
-          level: 'Léger',
-          message: 'Anxiété légère. La relaxation, le sommeil et la respiration peuvent vous aider.',
-          needConsult: false,
-        };
-      } else if (score <= 14) {
-        return {
-          level: 'Modéré',
-          message: 'Niveau d’anxiété significatif impactant votre quotidien. Une téléconsultation est recommandée.',
-          needConsult: true,
-        };
-      } else {
+      if (score >= 14) {
         return {
           level: 'Élevé',
-          message: 'Anxiété sévère. Il est conseillé de consulter rapidement un médecin ou psychologue.',
+          message: 'Niveau élevé de souffrance et de stress au travail. Un échange avec un professionnel de santé mentale est vivement recommandé.',
           needConsult: true,
         };
       }
+      if (score >= 7) {
+        return {
+          level: 'Modéré',
+          message: 'Tensions notables et stress professionnel modéré. Un entretien d’écoute peut vous aider à retrouver votre équilibre.',
+          needConsult: true,
+        };
+      }
+      return {
+        level: 'Faible',
+        message: 'Vos indicateurs sont dans la zone normale d’équilibre professionnel. Continuez à préserver votre bien-être.',
+        needConsult: false,
+      };
     },
   },
   {
-    key: 'ods',
-    title: 'ODS • Bien-être & Santé Globale',
-    category: 'Bilan général TILA',
-    description: 'Outil de dépistage standardisé du bien-être psychologique global.',
+    key: 'bmh_mwt',
+    title: 'ODS • Population Générale (> 18 ans)',
+    category: 'Santé mentale générale',
+    description: 'Questionnaire population générale ODS (OUTIL DE DEPISTAGE SIMPLIFIE) de plus de 18 ans : Dépistage des troubles mentaux courants dans les soins de santé primaires.',
     options: [
-      { label: 'Jamais', value: 0 },
-      { label: 'Parfois', value: 1 },
-      { label: 'Souvent', value: 2 },
-      { label: 'Très souvent', value: 3 },
+      { label: '0 jours', value: 0 },
+      { label: '1-7 jours', value: 1 },
+      { label: '8-11 jours', value: 2 },
+      { label: '12-14 jours', value: 3 },
     ],
     questions: [
-      'Avez-vous ressenti un sentiment de bien-être et de sérénité récemment ?',
-      'Avez-vous réussi à faire face aux difficultés habituelles de la vie ?',
-      'Avez-vous ressenti du soutien de la part de vos proches ?',
-      'Avez-vous souffert d’insomnies ou de cauchemars récurrents ?',
-      'Avez-vous ressenti des douleurs physiques sans cause médicale claire ?',
-      'Avez-vous perdu confiance en vous ou en vos capacités ?',
-      'Avez-vous eu l’impression d’être dépassé(e) par vos obligations ?',
+      {
+        id: 'q1',
+        text: 'Au cours des 2 dernières semaines, à quelle fréquence avez-vous eu peu d’intérêt ou de plaisir à faire les choses ?',
+        options: [
+          { label: '0 jours', value: 0 },
+          { label: '1-7 jours', value: 1 },
+          { label: '8-11 jours', value: 2 },
+          { label: '12-14 jours', value: 3 },
+        ],
+      },
+      {
+        id: 'q2',
+        text: 'Au cours des 2 dernières semaines, à quelle fréquence vous vous êtes senti(e) triste, déprimé(e) ou désespéré(e) ?',
+        options: [
+          { label: '0 jours', value: 0 },
+          { label: '1-7 jours', value: 1 },
+          { label: '8-11 jours', value: 2 },
+          { label: '12-14 jours', value: 3 },
+        ],
+      },
+      {
+        id: 'q3',
+        text: 'Au cours des 2 dernières semaines, à quelle fréquence vous vous êtes senti(e) nerveux(se), anxieux(se) ou sur les nerfs ?',
+        options: [
+          { label: '0 jours', value: 0 },
+          { label: '1-7 jours', value: 1 },
+          { label: '8-11 jours', value: 2 },
+          { label: '12-14 jours', value: 3 },
+        ],
+      },
+      {
+        id: 'q4',
+        text: 'Au cours des 2 dernières semaines, à quelle fréquence vous n’arrivez pas à arrêter ou à contrôler les inquiétudes ?',
+        options: [
+          { label: '0 jours', value: 0 },
+          { label: '1-7 jours', value: 1 },
+          { label: '8-11 jours', value: 2 },
+          { label: '12-14 jours', value: 3 },
+        ],
+      },
+      {
+        id: 'q5',
+        text: 'À quelle fréquence buvez-vous de l’alcool ?',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Mensuel ou moins', value: 1 },
+          { label: '2-4 fois/mois', value: 2 },
+          { label: '2-3 fois/semaine', value: 3 },
+          { label: '4+ fois/semaine', value: 4 },
+        ],
+      },
+      {
+        id: 'q6',
+        text: 'Combien de verres buvez-vous un jour typique ?',
+        options: [
+          { label: '1 ou 2', value: 0 },
+          { label: '3 ou 4', value: 1 },
+          { label: '5 ou 6', value: 2 },
+          { label: '7 à 9', value: 3 },
+          { label: '10 ou plus', value: 4 },
+        ],
+      },
+      {
+        id: 'q7',
+        text: 'À quelle fréquence buvez-vous 6 verres ou plus en une occasion ?',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Moins que mensuel', value: 1 },
+          { label: 'Mensuel', value: 2 },
+          { label: 'Hebdomadaire', value: 3 },
+          { label: 'Quotidien', value: 4 },
+        ],
+      },
+      {
+        id: 'q8',
+        text: 'Au cours de l’année passée, combien de fois avez-vous utilisé une drogue récréative ou illégale ou utilisé un médicament sur ordonnance à des fins non médicales ?',
+        options: [
+          { label: 'Jamais', value: 0 },
+          { label: 'Une ou deux fois', value: 1 },
+          { label: 'Mensuellement', value: 2 },
+          { label: 'Hebdomadairement', value: 3 },
+          { label: 'Quotidiennement', value: 4 },
+        ],
+      },
+      {
+        id: 'q9',
+        text: 'Au cours du dernier mois à ce jour, avez-vous souhaité mourir ou souhaitiez pouvoir vous endormir et ne plus vous réveiller ?',
+        options: [
+          { label: 'Non', value: 0 },
+          { label: 'Oui', value: 1 },
+        ],
+      },
+      {
+        id: 'q10',
+        text: 'Au cours du dernier mois à ce jour, avez-vous réellement pensé à vous suicider ?',
+        options: [
+          { label: 'Non', value: 0 },
+          { label: 'Oui', value: 1 },
+        ],
+      },
+      {
+        id: 'q11',
+        text: 'Au cours des trois derniers mois, avez-vous déjà fait quoi que ce soit, commencé ou préparé quoi que ce soit pour mettre fin à vos jours ?',
+        options: [
+          { label: 'Non', value: 0 },
+          { label: 'Oui', value: 1 },
+        ],
+      },
     ],
-    interpret: (score: number) => {
-      if (score <= 6) {
+    interpret: (score: number, answers = {}) => {
+      const hasSuicide =
+        Number(answers[8] ?? 0) > 0 ||
+        Number(answers[9] ?? 0) > 0 ||
+        Number(answers[10] ?? 0) > 0;
+      if (hasSuicide) {
         return {
-          level: 'Faible',
-          message: 'Bon équilibre global de bien-être mental et psychosocial.',
-          needConsult: false,
+          level: 'Élevé',
+          message: 'Alerte Clinique Immédiate : Idéation ou comportement suicidaire récent. Une prise en charge et un soutien immédiat sont indispensables.',
+          needConsult: true,
         };
-      } else if (score <= 12) {
+      }
+      if (score >= 10) {
+        return {
+          level: 'Élevé',
+          message: 'Niveau de détresse psychologique significatif. Plusieurs indicateurs nécessitent un accompagnement spécialisé sans attendre.',
+          needConsult: true,
+        };
+      }
+      if (score >= 4) {
         return {
           level: 'Modéré',
-          message: 'Présence de tensions modérées. Un bilan avec un professionnel peut vous soulager.',
+          message: 'Présence de tensions psychologiques ou émotionnelles modérées. Un bilan avec un professionnel peut vous soulager.',
+          needConsult: true,
+        };
+      }
+      return {
+        level: 'Faible',
+        message: 'Bon équilibre global de santé mentale et de bien-être.',
+        needConsult: false,
+      };
+    },
+  },
+  {
+    key: 'sdq',
+    title: 'SDQ • Questionnaire Ados & Jeunes (2-17 ans)',
+    category: 'Enfants & Jeunes',
+    description: 'Questionnaire forces et difficultés pour les adolescents et jeunes de 2 à 17 ans : Dépistage des difficultés émotionnelles, relationnelles et comportementales.',
+    options: [
+      { label: 'Non vrai', value: 0 },
+      { label: 'Un peu vrai', value: 1 },
+      { label: 'Certainement vrai', value: 2 },
+    ],
+    questions: [
+      { id: 'q1', text: 'Prend en compte les sentiments d’autrui.' },
+      { id: 'q2', text: 'Agité(e), remuant(e), ne peut pas rester longtemps assis(e).' },
+      { id: 'q3', text: 'Se plaint souvent de maux de tête, de ventre ou de nausées.' },
+      { id: 'q4', text: 'Partage volontiers avec d’autres (bonbons, jouets, crayons).' },
+      { id: 'q5', text: 'Fait souvent de grandes colères ou crises de rage.' },
+      { id: 'q6', text: 'Plutôt solitaire, joue généralement seul(e).' },
+      { id: 'q7', text: 'Généralement obéissant(e), fait ce que les adultes demandent.' },
+      { id: 'q8', text: 'A beaucoup de soucis, paraît souvent inquiet(e).' },
+      { id: 'q9', text: 'Secourable si quelqu’un est blessé, contrarié ou malade.' },
+      { id: 'q10', text: 'Constamment agité(e) ou gigote sans cesse.' },
+      { id: 'q11', text: 'A au moins un(e) bon(ne) ami(e).' },
+      { id: 'q12', text: 'Se bagarre souvent avec d’autres jeunes ou les bouscule.' },
+      { id: 'q13', text: 'Souvent triste, démoralisé(e) ou en larmes.' },
+      { id: 'q14', text: 'Généralement apprécié(e) des autres jeunes.' },
+      { id: 'q15', text: 'Facilement distrait(e), a du mal à se concentrer.' },
+      { id: 'q16', text: 'Nerveux(se) ou collant(e) dans les situations nouvelles.' },
+      { id: 'q17', text: 'Gentil(le) avec les plus jeunes que soi.' },
+      { id: 'q18', text: 'Ment ou triche souvent.' },
+      { id: 'q19', text: 'Pris(e) pour cible ou brimé(e) par d’autres jeunes.' },
+      { id: 'q20', text: 'Propose souvent son aide spontanément.' },
+      { id: 'q21', text: 'Réfléchit avant d’agir.' },
+      { id: 'q22', text: 'Prend des affaires qui ne lui appartiennent pas.' },
+      { id: 'q23', text: 'S’entend mieux avec les adultes qu’avec les jeunes.' },
+      { id: 'q24', text: 'A beaucoup de peurs, s’effraie facilement.' },
+      { id: 'q25', text: 'Va jusqu’au bout de ce qu’il/elle entreprend.' },
+    ],
+    interpret: (score: number) => {
+      if (score >= 17) {
+        return {
+          level: 'Élevé',
+          message: 'Difficultés psycho-comportementales élevées pouvant impacter le quotidien scolaire ou familial. Un bilan avec un spécialiste est fortement recommandé.',
+          needConsult: true,
+        };
+      } else if (score >= 14) {
+        return {
+          level: 'Modéré',
+          message: 'Présence de tensions émotionnelles ou relationnelles modérées. Un échange avec un professionnel de l’enfance/adolescence est conseillé.',
           needConsult: true,
         };
       } else {
         return {
-          level: 'Élevé',
-          message: 'Niveau de détresse psychologique important justifiant un soutien médical.',
-          needConsult: true,
+          level: 'Faible',
+          message: 'Équilibre psycho-émotionnel satisfaisant sans alerte clinique particulière.',
+          needConsult: false,
         };
       }
     },
@@ -194,6 +463,7 @@ const EVALUATION_TOOLS: ToolDef[] = [
 
 export default function PatientEvaluations() {
   const router = useRouter();
+  const { start, tool } = useLocalSearchParams<{ start?: string; tool?: string }>();
   const { colors, isDark } = useTheme();
   const [lang, setLang] = useState<AssessmentLanguage>('fr');
   const [assessments, setAssessments] = useState<AssessmentItem[]>([]);
@@ -218,33 +488,43 @@ export default function PatientEvaluations() {
   const [availableToolKeys, setAvailableToolKeys] = useState<string[] | null>(null);
 
   const fetchAvailableTools = async () => {
+    // Les 3 seuls outils certifiés pour le patient : ODS Monde du Travail, BMH-MWT (> 18 ans), SDQ (Ados 2-17 ans)
+    const ALLOWED_PATIENT_TOOLS = ['ods-monde-du-travail', 'bmh_mwt', 'sdq'];
     try {
       const res: any = await apiClient.get('/api/questionnaires');
       const items = Array.isArray(res) ? res : (res?.items || []);
+      const matchedKeys: string[] = [];
       if (items.length > 0) {
-        const keys = items
-          .filter((item: any) => item.status === 'active' && item.accessMobile !== false)
-          .map((item: any) => {
+        items
+          .filter((item: any) => item.status === undefined || item.status === 'active' || item.accessMobile !== false)
+          .forEach((item: any) => {
             const raw = (item.key || item.code || item.name || '').toLowerCase();
-            if (raw.includes('phq')) return 'phq9';
-            if (raw.includes('gad')) return 'gad7';
-            if (raw.includes('ods') || raw.includes('bmh')) return 'ods';
-            return raw;
+            if (raw === 'ods-monde-du-travail' || raw.includes('monde-du-travail') || raw.includes('travail')) {
+              matchedKeys.push('ods-monde-du-travail');
+            }
+            if (raw === 'bmh_mwt' || raw === 'bmh-mwt' || raw.includes('bmh')) {
+              matchedKeys.push('bmh_mwt');
+            }
+            if (raw.includes('sdq')) {
+              matchedKeys.push('sdq');
+            }
           });
-        setAvailableToolKeys(keys);
-        await AsyncStorage.setItem('@patient_available_tool_keys', JSON.stringify(keys));
       }
+      // Strictement limité aux 3 outils patients
+      const mergedKeys = ALLOWED_PATIENT_TOOLS.filter(
+        (key) => matchedKeys.length === 0 || matchedKeys.includes(key) || ALLOWED_PATIENT_TOOLS.includes(key)
+      );
+      setAvailableToolKeys(ALLOWED_PATIENT_TOOLS);
+      await AsyncStorage.setItem('@patient_available_tool_keys', JSON.stringify(ALLOWED_PATIENT_TOOLS));
     } catch {
+      setAvailableToolKeys(ALLOWED_PATIENT_TOOLS);
       try {
-        const cached = await AsyncStorage.getItem('@patient_available_tool_keys');
-        if (cached) {
-          setAvailableToolKeys(JSON.parse(cached));
-        }
+        await AsyncStorage.setItem('@patient_available_tool_keys', JSON.stringify(ALLOWED_PATIENT_TOOLS));
       } catch {}
     }
   };
 
-  const visibleTools = availableToolKeys
+  const visibleTools = availableToolKeys && availableToolKeys.length > 0
     ? EVALUATION_TOOLS.filter((t) => availableToolKeys.includes(t.key))
     : EVALUATION_TOOLS;
 
@@ -281,6 +561,17 @@ export default function PatientEvaluations() {
     setIsSelectToolOpen(false);
   };
 
+  useEffect(() => {
+    if (tool) {
+      const found = EVALUATION_TOOLS.find((t) => t.key === tool);
+      if (found) {
+        handleStartTool(found);
+      }
+    } else if (start) {
+      setIsSelectToolOpen(true);
+    }
+  }, [tool, start]);
+
   // Enregistrer une réponse
   const handleAnswerQuestion = (value: number) => {
     setAnswers((prev) => ({ ...prev, [currentQuestionIdx]: value }));
@@ -290,24 +581,35 @@ export default function PatientEvaluations() {
   const handleNextQuestion = () => {
     if (!activeTool) return;
     const content = getLocalizedQuestionnaire(activeTool.key, lang);
-    const questionsList = content?.questions || activeTool.questions;
+    const questionsList = content?.questions || (activeTool.questions.map((q, i) => ({ id: `q${i + 1}`, text: q })));
 
     if (currentQuestionIdx < questionsList.length - 1) {
       setCurrentQuestionIdx((prev) => prev + 1);
     } else {
       // Calcul du score final
       let total = 0;
+      let maxScore = 0;
+      const answersObj: Record<string, number> = {};
+
       for (let i = 0; i < questionsList.length; i++) {
-        total += answers[i] ?? 0;
+        const val = answers[i] ?? 0;
+        total += val;
+        const qObj = questionsList[i] as any;
+        const qId = qObj?.id || `q${i + 1}`;
+        answersObj[qId] = val;
+
+        const qOptions = qObj?.options || content?.options || activeTool.options || [];
+        const maxVal = qOptions.length > 0 ? Math.max(...qOptions.map((o: any) => o.value)) : 3;
+        maxScore += maxVal;
       }
-      const maxScore = questionsList.length * 3;
+
       const interpretation = content
-        ? content.interpret(total)
-        : activeTool.interpret(total);
+        ? (content.interpret as any)(total, answersObj)
+        : (activeTool.interpret as any)(total, answersObj);
 
       const result = {
         score: total,
-        maxScore,
+        maxScore: maxScore > 0 ? maxScore : questionsList.length * 3,
         level: (interpretation as any).levelLabel || (interpretation as any).level,
         message: interpretation.message,
         needConsult: interpretation.needConsult,
@@ -389,7 +691,7 @@ export default function PatientEvaluations() {
           </View>
           <Text style={[styles.ctaTitle, isDark && { color: colors.text }]}>Faire un bilan de santé mentale</Text>
           <Text style={[styles.ctaSubtitle, isDark && { color: colors.textSecondary }]}>
-            Évaluez vos ressentis en 3 minutes grâce aux outils médicaux reconnus (PHQ-9, GAD-7, ODS).
+            Évaluez vos ressentis en quelques minutes grâce aux outils officiels TILA (ODS Travail, BMH-MWT, SDQ Ados).
           </Text>
         </View>
 
@@ -570,7 +872,13 @@ export default function PatientEvaluations() {
         <SafeAreaView style={[styles.runnerContainer, isDark && { backgroundColor: colors.bg }]}>
           {(() => {
             const locContent = activeTool ? getLocalizedQuestionnaire(activeTool.key, lang) : null;
-            const currentQuestions = locContent?.questions || (activeTool?.questions.map((q, i) => ({ id: `q${i+1}`, text: q })) || []);
+            const currentQuestions: { id: string; text: string; dimension?: string; options?: ToolOption[] }[] =
+              locContent?.questions ||
+              (activeTool?.questions.map((q, i) =>
+                typeof q === 'string'
+                  ? { id: `q${i + 1}`, text: q }
+                  : { id: q.id || `q${i + 1}`, text: q.text, dimension: q.dimension, options: q.options }
+              ) || []);
             const currentOptions = locContent?.options || activeTool?.options || [];
             const currentTitle = locContent?.title || activeTool?.title || '';
 
@@ -659,7 +967,7 @@ export default function PatientEvaluations() {
                   <TouchableOpacity onPress={handleCloseRunner} style={styles.closeBtn}>
                     <X size={20} color={isDark ? colors.text : '#0f172a'} />
                   </TouchableOpacity>
-                  <Text style={[styles.runnerToolHeader, isDark && { color: colors.text }]}>
+                  <Text style={[styles.runnerToolHeader, isDark && { color: colors.text }]} numberOfLines={1}>
                     {currentTitle}
                   </Text>
                   <Text style={[styles.runnerProgressCounter, isDark && { color: colors.textSecondary }]}>
@@ -688,9 +996,18 @@ export default function PatientEvaluations() {
 
                 {/* Question */}
                 <View style={[styles.questionCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={styles.questionNumberText}>
-                    Question {currentQuestionIdx + 1}
-                  </Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <Text style={styles.questionNumberText}>
+                      Question {currentQuestionIdx + 1}
+                    </Text>
+                    {currentQuestions[currentQuestionIdx]?.dimension ? (
+                      <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: isDark ? colors.textSecondary : '#475569' }}>
+                          {currentQuestions[currentQuestionIdx].dimension}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                   <Text style={[styles.questionText, isDark && { color: colors.text }]}>
                     {currentQuestions[currentQuestionIdx]?.text || ''}
                   </Text>
@@ -698,34 +1015,37 @@ export default function PatientEvaluations() {
 
                 {/* Options de réponse */}
                 <ScrollView contentContainerStyle={styles.optionsList} showsVerticalScrollIndicator={false}>
-                  {currentOptions.map((opt) => {
-                    const isSelected = answers[currentQuestionIdx] === opt.value;
-                    return (
-                      <TouchableOpacity
-                        key={opt.value}
-                        style={[
-                          styles.optionBtn,
-                          isDark && { backgroundColor: colors.card, borderColor: colors.border },
-                          isSelected && styles.optionBtnSelected,
-                        ]}
-                        onPress={() => handleAnswerQuestion(opt.value)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
-                          {isSelected && <View style={styles.radioDot} />}
-                        </View>
-                        <Text
+                  {(() => {
+                    const qOptions = (currentQuestions[currentQuestionIdx] as any)?.options || currentOptions;
+                    return qOptions.map((opt: any, optIdx: number) => {
+                      const isSelected = answers[currentQuestionIdx] === opt.value;
+                      return (
+                        <TouchableOpacity
+                          key={`${opt.value}-${optIdx}`}
                           style={[
-                            styles.optionLabel,
-                            isDark && { color: colors.text },
-                            isSelected && styles.optionLabelSelected,
+                            styles.optionBtn,
+                            isDark && { backgroundColor: colors.card, borderColor: colors.border },
+                            isSelected && styles.optionBtnSelected,
                           ]}
+                          onPress={() => handleAnswerQuestion(opt.value)}
+                          activeOpacity={0.7}
                         >
-                          {opt.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                          <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                            {isSelected && <View style={styles.radioDot} />}
+                          </View>
+                          <Text
+                            style={[
+                              styles.optionLabel,
+                              isDark && { color: colors.text },
+                              isSelected && styles.optionLabelSelected,
+                            ]}
+                          >
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    });
+                  })()}
                 </ScrollView>
 
                 {/* Runner Footer Controls */}
@@ -1145,12 +1465,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 14,
+    paddingRight: 36,
   },
   runnerToolHeader: {
     fontSize: 14,
     fontWeight: '700',
     color: '#0f172a',
     fontFamily: 'Montserrat_700Bold',
+    flex: 1,
+    marginHorizontal: 10,
+    textAlign: 'center',
   },
   runnerProgressCounter: {
     fontSize: 13,

@@ -9,9 +9,16 @@ import {
   Plus, 
   Users, 
   ChevronRight, 
-  ClipboardList,
-  Calendar,
-  Sparkles
+  ClipboardList, 
+  Calendar, 
+  Sparkles,
+  ShieldCheck,
+  CheckCircle2,
+  LifeBuoy,
+  ArrowRight,
+  Clock,
+  MessagesSquare,
+  HeartPulse,
 } from 'lucide-react-native';
 import { agentService } from '../../services/agent';
 import { useRouter } from 'expo-router';
@@ -22,11 +29,23 @@ import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserFirstName } from '../../utils/userUtils';
+import { notificationService } from '../../services/notificationService';
+import { FooterLogos } from '../../components/FooterLogos';
 
 export default function HealthAgentDashboard() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const [agentName, setAgentName] = useState<string>('Agent');
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  const todayFormatted = React.useMemo(() => {
+    try {
+      const raw = format(new Date(), 'EEEE d MMMM yyyy', { locale: fr });
+      return raw.charAt(0).toUpperCase() + raw.slice(1);
+    } catch {
+      return '';
+    }
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -34,6 +53,7 @@ export default function HealthAgentDashboard() {
         const stored = await AsyncStorage.getItem('tila_user_context');
         if (stored) {
           const parsed = JSON.parse(stored);
+          setUserProfile(parsed);
           setAgentName(getUserFirstName(parsed, 'Agent'));
         }
       } catch {}
@@ -96,6 +116,10 @@ export default function HealthAgentDashboard() {
       refetchReferrals(),
       refetchReceived(),
     ]);
+    notificationService.notifyDataReceived({
+      title: '🔔 Données actualisées',
+      body: 'Vos dépistages et cas référés communautaires sont à jour.',
+    });
   };
 
   const submissions = submissionsData?.items || [];
@@ -154,76 +178,98 @@ export default function HealthAgentDashboard() {
             />
           }
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.badgeRole}>
-              <View style={styles.rolePulse} />
-              <Text style={styles.badgeRoleText}>Agent de Santé</Text>
+          {/* 1. En-tête bienveillant avec Action Intelligente */}
+          <View style={[styles.greetingCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.greetingTop}>
+              <View style={[styles.badgeAgent, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
+                <Sparkles size={12} color="#00A651" style={{ marginRight: 4 }} />
+                <Text style={styles.badgeAgentText}>Acteur Communautaire PNSM</Text>
+              </View>
+              <Text style={[styles.dateText, isDark && { color: colors.textSecondary }]}>{todayFormatted}</Text>
             </View>
-            <Text style={[styles.title, isDark && { color: colors.text }]}>Bonjour, {agentName} 👋</Text>
-            <Text style={[styles.subtitle, isDark && { color: colors.textSecondary }]}>Aperçu et actions rapides sur le terrain</Text>
-          </View>
+            <Text style={[styles.greetingTitle, isDark && { color: colors.text }]}>
+              Bonjour, {agentName} 👋
+            </Text>
+            <Text style={[styles.greetingSubtitle, isDark && { color: colors.textSecondary }]}>
+              Bienvenue sur votre espace de dépistage et d'orientation communautaire TILA.
+            </Text>
 
-          {/* Actions Rapides */}
-          <Text style={[styles.sectionTitle, isDark && { color: colors.text }]}>Actions Rapides</Text>
-          <View style={styles.quickActionsContainer}>
-            {/* Nouveau dépistage Card */}
-            <TouchableOpacity 
-              style={styles.primaryActionCard}
+            {/* Bouton d'action dynamique Smart CTA */}
+            <TouchableOpacity
+              style={styles.smartCtaButton}
               onPress={() => router.push('/(health-agent)/assessments')}
               activeOpacity={0.85}
             >
-              <View style={styles.actionCardLeft}>
-                <View style={styles.primaryIconContainer}>
-                  <Plus size={28} color="#ffffff" />
-                </View>
-                <View style={styles.actionTextContainer}>
-                  <Text style={styles.primaryActionTitle}>Nouveau dépistage</Text>
-                  <Text style={styles.primaryActionSubtitle}>Lancer un questionnaire ODS</Text>
-                </View>
-              </View>
-              <ChevronRight size={22} color="#ffffff" />
+              <Plus size={16} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.smartCtaButtonText}>Lancer un nouveau dépistage ODS</Text>
+              <ChevronRight size={16} color="#ffffff" style={{ marginLeft: 4 }} />
             </TouchableOpacity>
-
-            {/* Patients en attente Card (Uniquement si autorisé) */}
-            {canAccessReceived && (
-              <TouchableOpacity 
-                style={[styles.secondaryActionCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => router.push('/(health-agent)/received')}
-                activeOpacity={0.85}
-              >
-                <View style={styles.actionCardLeft}>
-                  <View style={styles.secondaryIconContainer}>
-                    <Users size={24} color="#00A651" />
-                  </View>
-                  <View style={styles.actionTextContainer}>
-                    <Text style={[styles.secondaryActionTitle, isDark && { color: colors.text }]}>Patients en attente</Text>
-                    <Text style={[styles.secondaryActionSubtitle, isDark && { color: colors.textSecondary }]}>
-                      {receivedPatients.length} patient{receivedPatients.length > 1 ? 's' : ''} reçu{receivedPatients.length > 1 ? 's' : ''}
-                    </Text>
-                  </View>
-                </View>
-                <ChevronRight size={20} color={isDark ? colors.textSecondary : '#94a3b8'} />
-              </TouchableOpacity>
-            )}
           </View>
 
-          {/* Métriques / Résumé */}
+          {/* 2. Fiche Identifiant Acteur Communautaire & Agrément */}
+          <View style={[styles.identityCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.identityHeader}>
+              <View style={styles.identityAvatar}>
+                <Text style={styles.identityInitials}>
+                  {agentName ? agentName.substring(0, 2).toUpperCase() : 'AG'}
+                </Text>
+              </View>
+              <View style={styles.identityMeta}>
+                <Text style={[styles.identityName, isDark && { color: colors.text }]} numberOfLines={1}>
+                  Agent {agentName}
+                </Text>
+                <View style={styles.profileBadge}>
+                  <CheckCircle2 size={11} color="#00A651" style={{ marginRight: 4 }} />
+                  <Text style={styles.profileBadgeText}>Acteur Certifié TILA</Text>
+                </View>
+              </View>
+            </View>
+            <View style={[styles.identityDivider, isDark && { backgroundColor: colors.border }]} />
+            <View style={styles.identityRow}>
+              <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Matricule Agent</Text>
+              <Text style={[styles.identityValue, isDark && { color: colors.text }]}>
+                {userProfile?.code || `TILA-AGT-${String(userProfile?.id || '2041').padStart(4, '0')}`}
+              </Text>
+            </View>
+            <View style={styles.identityRow}>
+              <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Secteur d'Action</Text>
+              <Text style={[styles.identityValue, isDark && { color: colors.text }]} numberOfLines={1}>
+                {userProfile?.structure || 'District Sanitaire & Centre Communautaire'}
+              </Text>
+            </View>
+            <View style={styles.identityRow}>
+              <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Déontologie</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ShieldCheck size={13} color="#00A651" style={{ marginRight: 4 }} />
+                <Text style={styles.confidentialityText}>Protocole PNSM & Secret Partagé</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* 3. Métriques d'activité clés */}
           <View style={styles.statsContainer}>
             <View style={[styles.statCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.statIcon, { backgroundColor: 'rgba(0, 166, 81, 0.1)' }]}>
                 <FileText size={18} color="#00A651" />
               </View>
-              <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{submissionsData?.total ?? submissions.length}</Text>
-              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Dépistages</Text>
+              <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+                {submissionsData?.total ?? submissions.length}
+              </Text>
+              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+                Dépistages
+              </Text>
             </View>
             
             <View style={[styles.statCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.statIcon, { backgroundColor: 'rgba(245, 130, 32, 0.1)' }]}>
                 <ArrowRightLeft size={18} color="#F58220" />
               </View>
-              <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{referralsData?.total ?? referrals.length}</Text>
-              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Orientations</Text>
+              <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+                {referralsData?.total ?? referrals.length}
+              </Text>
+              <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+                Orientations
+              </Text>
             </View>
 
             {canAccessReceived && (
@@ -231,11 +277,123 @@ export default function HealthAgentDashboard() {
                 <View style={[styles.statIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
                   <UserCheck size={18} color="#3b82f6" />
                 </View>
-                <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>{receivedData?.total ?? receivedPatients.length}</Text>
-                <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>Reçus</Text>
+                <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+                  {receivedData?.total ?? receivedPatients.length}
+                </Text>
+                <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+                  Reçus
+                </Text>
               </View>
             )}
           </View>
+
+          {/* 4. Grille de 6 Services Clés */}
+          <Text style={[styles.sectionTitle, { marginTop: 8, marginBottom: 12 }, isDark && { color: colors.text }]}>Mes Actions de Terrain</Text>
+          <View style={styles.shortcutsGrid}>
+            {/* Raccourci 1 : Nouveau Dépistage */}
+            <TouchableOpacity
+              style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push('/(health-agent)/assessments')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: '#ecfdf5' }]}>
+                <Plus size={20} color="#00A651" />
+              </View>
+              <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Dépistage ODS</Text>
+              <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Passer un questionnaire terrain</Text>
+            </TouchableOpacity>
+
+            {/* Raccourci 2 : Orientations */}
+            <TouchableOpacity
+              style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push('/(health-agent)/referrals')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: '#fff7ed' }]}>
+                <ArrowRightLeft size={20} color="#ea580c" />
+              </View>
+              <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Orientations</Text>
+              <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Référer vers un centre/pro</Text>
+            </TouchableOpacity>
+
+            {/* Raccourci 3 : Patients Reçus */}
+            {canAccessReceived && (
+              <TouchableOpacity
+                style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.push('/(health-agent)/received')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.shortcutIconWrap, { backgroundColor: '#eff6ff' }]}>
+                  <UserCheck size={20} color="#2563eb" />
+                </View>
+                <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Patients Reçus</Text>
+                <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>File active & confirmation</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Raccourci 4 : Outils Cliniques ODS */}
+            <TouchableOpacity
+              style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push('/(health-agent)/assessments')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: '#fef3c7' }]}>
+                <ClipboardList size={20} color="#d97706" />
+              </View>
+              <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Outils ODS</Text>
+              <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Population générale & travail</Text>
+            </TouchableOpacity>
+
+            {/* Raccourci 5 : Forum & Entraide Communautaire */}
+            <TouchableOpacity
+              style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push('/(health-agent)/forum')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: '#f3e8ff' }]}>
+                <MessagesSquare size={20} color="#7c3aed" />
+              </View>
+              <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Forum & Entraide</Text>
+              <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Échanges entre pairs & retours</Text>
+            </TouchableOpacity>
+
+            {/* Raccourci 6 : Permanence 143 */}
+            <TouchableOpacity
+              style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => router.push('/(health-agent)/dashboard')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: '#fee2e2' }]}>
+                <LifeBuoy size={20} color="#dc2626" />
+              </View>
+              <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Urgence 143</Text>
+              <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Ligne nationale d'urgence PNSM</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 5. CARTE PLEIN FORMAT DU FORUM COMMUNAUTAIRE */}
+          <TouchableOpacity
+            style={[styles.forumSpotlightCard, isDark && { backgroundColor: colors.card, borderColor: '#7c3aed40' }]}
+            onPress={() => router.push('/(health-agent)/forum')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.forumSpotlightTop}>
+              <View style={styles.forumSpotlightBadge}>
+                <MessagesSquare size={13} color="#7c3aed" style={{ marginRight: 6 }} />
+                <Text style={styles.forumSpotlightBadgeText}>Réseau Terrain & Partage d'Expérience</Text>
+              </View>
+              <ChevronRight size={18} color="#7c3aed" />
+            </View>
+            <Text style={[styles.forumSpotlightTitle, isDark && { color: colors.text }]}>
+              Forum & Entraide Communautaire
+            </Text>
+            <Text style={[styles.forumSpotlightSub, isDark && { color: colors.textSecondary }]}>
+              Échangez avec les autres acteurs communautaires et spécialistes. Partagez vos retours du terrain, posez vos questions et découvrez les bonnes pratiques de sensibilisation.
+            </Text>
+            <View style={styles.forumSpotlightBtn}>
+              <Text style={styles.forumSpotlightBtnText}>Participer aux échanges communautaires →</Text>
+            </View>
+          </TouchableOpacity>
 
           {/* Activité Récente : Derniers Dépistages */}
           <View style={styles.section}>
@@ -278,6 +436,24 @@ export default function HealthAgentDashboard() {
               </View>
             )}
           </View>
+
+          {/* Bannière Urgence & Assistance 143 PNSM */}
+          <View style={[styles.emergencyDashCard, isDark && { backgroundColor: '#3f1212', borderColor: '#fca5a5' }]}>
+            <View style={styles.emergencyIconWrapper}>
+              <LifeBuoy size={24} color="#dc2626" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.emergencyDashTitle}>Ligne d'Urgence & Soutien 143</Text>
+              <Text style={styles.emergencyDashSub}>
+                Numéro vert national gratuit PNSM disponible 24h/7j pour orientation et régulation des crises de santé mentale sur le terrain.
+              </Text>
+            </View>
+          </View>
+
+          {/* Logos Partenaires avec Appui UE & Expertise France */}
+          <View style={{ marginTop: 20, marginBottom: 16 }}>
+            <FooterLogos />
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -296,138 +472,270 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 20,
   },
-  badgeRole: {
+  greetingCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  greetingTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  badgeAgent: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#ecfdf5',
+    backgroundColor: 'rgba(0, 166, 81, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#a7f3d0',
+    borderRadius: 12,
   },
-  rolePulse: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#00A651',
-    marginRight: 6,
-  },
-  badgeRoleText: {
+  badgeAgentText: {
     fontSize: 11,
     fontWeight: '700',
     color: '#00A651',
-    textTransform: 'uppercase',
+    fontFamily: 'Montserrat_700Bold',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  dateText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontFamily: 'Montserrat_500Medium',
+  },
+  greetingTitle: {
+    fontSize: 22,
+    fontWeight: '800',
     color: '#0f172a',
     marginBottom: 4,
+    fontFamily: 'Montserrat_800ExtraBold',
   },
-  subtitle: {
-    fontSize: 15,
+  greetingSubtitle: {
+    fontSize: 13,
     color: '#64748b',
+    lineHeight: 18,
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 16,
   },
-  section: {
-    marginTop: 24,
-  },
-  sectionHeader: {
+  smartCtaButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 12,
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#00A651',
-    fontWeight: '600',
-  },
-  quickActionsContainer: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  primaryActionCard: {
-    backgroundColor: '#00A651',
-    borderRadius: 18,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#00A651',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  secondaryActionCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  actionCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  primaryIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    backgroundColor: '#00A651',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
-  secondaryIconContainer: {
+  smartCtaButtonText: {
+    color: '#ffffff',
+    fontSize: 13.5,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  identityCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  identityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  identityAvatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#ecfdf5',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 166, 81, 0.12)',
     justifyContent: 'center',
-    marginRight: 14,
+    alignItems: 'center',
+    marginRight: 12,
   },
-  actionTextContainer: {
+  identityInitials: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#00A651',
+    fontFamily: 'Montserrat_800ExtraBold',
+  },
+  identityMeta: {
     flex: 1,
   },
-  primaryActionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#ffffff',
+  identityName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_700Bold',
     marginBottom: 2,
   },
-  primaryActionSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.85)',
+  profileBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  secondaryActionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 2,
+  profileBadgeText: {
+    fontSize: 11,
+    color: '#00A651',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
   },
-  secondaryActionSubtitle: {
-    fontSize: 13,
+  identityDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginBottom: 10,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    gap: 8,
+  },
+  identityLabel: {
+    fontSize: 12,
     color: '#64748b',
+    fontFamily: 'Montserrat_500Medium',
+    flexShrink: 0,
+  },
+  identityValue: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_600SemiBold',
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  confidentialityText: {
+    fontSize: 12,
+    color: '#00A651',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  shortcutsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  shortcutCard: {
+    width: '48.5%',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  shortcutIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  shortcutTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 2,
+  },
+  shortcutSub: {
+    fontSize: 11,
+    color: '#64748b',
+    lineHeight: 14,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  forumSpotlightCard: {
+    backgroundColor: '#faf5ff',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e9d5ff',
+  },
+  forumSpotlightTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  forumSpotlightBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ede9fe',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  forumSpotlightBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#7c3aed',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  forumSpotlightTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#581c87',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 4,
+  },
+  forumSpotlightSub: {
+    fontSize: 12,
+    color: '#6b21a8',
+    lineHeight: 16,
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 12,
+  },
+  forumSpotlightBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#7c3aed',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  forumSpotlightBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  emergencyDashCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 6,
+    marginBottom: 16,
+    gap: 12,
+  },
+  emergencyIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fee2e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emergencyDashTitle: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#991b1b',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 2,
+  },
+  emergencyDashSub: {
+    fontSize: 11.5,
+    color: '#b91c1c',
+    lineHeight: 15,
+    fontFamily: 'Montserrat_400Regular',
   },
   statsContainer: {
     flexDirection: 'row',

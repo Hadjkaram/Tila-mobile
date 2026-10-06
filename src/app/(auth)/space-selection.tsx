@@ -27,17 +27,6 @@ import { useTheme } from '../../context/ThemeContext';
 
 const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
   {
-    id: 'supervisor',
-    title: 'Superviseur Clinique',
-    subtitle: 'Revue clinique, alertes critiques & supervision d’équipe',
-    badge: 'Supervision',
-    type: 'SUPERVISOR',
-    route: '/(supervisor)/dashboard',
-    color: '#d97706',
-    bgLight: '#fef3c7',
-    icon: ShieldCheck,
-  },
-  {
     id: 'specialist',
     title: 'Spécialiste de Santé Mentale',
     subtitle: 'Consultations, réévaluations médicales & ordonnances',
@@ -80,28 +69,6 @@ const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
     color: '#00A651',
     bgLight: '#ecfdf5',
     icon: Users,
-  },
-  {
-    id: 'ong-manager',
-    title: 'Responsable ONG',
-    subtitle: 'Supervision agents, validations & rapports d’activité',
-    badge: 'ONG',
-    type: 'ONG_MANAGER',
-    route: '/(ong-manager)/dashboard',
-    color: '#ea580c',
-    bgLight: '#fff7ed',
-    icon: Building2,
-  },
-  {
-    id: 'program-agent',
-    title: 'Agent Programme National (PNSM)',
-    subtitle: 'Indicateurs macro, alertes prioritaires & parcours 360°',
-    badge: 'Programme',
-    type: 'PROGRAM_AGENT',
-    route: '/(program-agent)/dashboard',
-    color: '#4f46e5',
-    bgLight: '#eef2ff',
-    icon: ShieldCheck,
   },
   {
     id: 'patient',
@@ -148,20 +115,7 @@ export default function SpaceSelectionScreen() {
             const spacePath = space.path || '';
             const type = space.type || '';
 
-            if (spacePath === '/espace-superviseur' || type === 'SUPERVISOR') {
-              return {
-                id: space.id || 'supervisor',
-                title: space.label || space.name || 'Superviseur Clinique',
-                subtitle: 'Revue clinique, alertes critiques & supervision',
-                badge: 'Supervision',
-                type: 'SUPERVISOR',
-                route: '/(supervisor)/dashboard',
-                color: '#d97706',
-                bgLight: '#fef3c7',
-                icon: ShieldCheck,
-              };
-            }
-            if (spacePath === '/professionnels' || type === 'PRO') {
+            if (spacePath === '/professionnels' || type === 'PRO' || spacePath === '/espace-superviseur' || type === 'SUPERVISOR') {
               return {
                 id: space.id || 'specialist',
                 title: space.label || space.name || 'Spécialiste de Santé',
@@ -174,7 +128,7 @@ export default function SpaceSelectionScreen() {
                 icon: Stethoscope,
               };
             }
-            if (spacePath === '/espace-agent' || type === 'HEALTH_AGENT') {
+            if (spacePath === '/espace-agent' || type === 'HEALTH_AGENT' || type === 'COMMUNITY_ACTOR') {
               return {
                 id: space.id || 'health-agent',
                 title: space.label || space.name || 'Agent de Santé',
@@ -211,32 +165,6 @@ export default function SpaceSelectionScreen() {
                 color: '#00A651',
                 bgLight: '#ecfdf5',
                 icon: Users,
-              };
-            }
-            if (spacePath === '/ong' || type === 'ONG_MANAGER' || type === 'RESPONSABLE_ONG') {
-              return {
-                id: space.id || 'ong-manager',
-                title: space.label || space.name || 'Responsable ONG',
-                subtitle: 'Supervision agents, validations & rapports',
-                badge: 'ONG',
-                type: 'ONG_MANAGER',
-                route: '/(ong-manager)/dashboard',
-                color: '#ea580c',
-                bgLight: '#fff7ed',
-                icon: Building2,
-              };
-            }
-            if (spacePath === '/agent-programme' || type === 'PROGRAM_AGENT') {
-              return {
-                id: space.id || 'program-agent',
-                title: space.label || space.name || 'Agent Programme National',
-                subtitle: 'Macro-surveillance & alertes sanitaires',
-                badge: 'Programme',
-                type: 'PROGRAM_AGENT',
-                route: '/(program-agent)/dashboard',
-                color: '#4f46e5',
-                bgLight: '#eef2ff',
-                icon: ShieldCheck,
               };
             }
             return {

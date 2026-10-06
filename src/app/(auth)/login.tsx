@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { Text } from '../../components/Text';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -48,17 +48,6 @@ export interface DashboardOption {
 }
 
 const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
-  {
-    id: 'supervisor',
-    title: 'Superviseur Clinique',
-    subtitle: 'Revue clinique, alertes critiques & supervision d’équipe',
-    badge: 'Supervision',
-    type: 'SUPERVISOR',
-    route: '/(supervisor)/dashboard',
-    color: '#d97706',
-    bgLight: '#fef3c7',
-    icon: ShieldCheck,
-  },
   {
     id: 'specialist',
     title: 'Spécialiste de Santé Mentale',
@@ -104,28 +93,6 @@ const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
     icon: Users,
   },
   {
-    id: 'ong-manager',
-    title: 'Responsable ONG',
-    subtitle: 'Supervision agents, validations & rapports d’activité',
-    badge: 'ONG',
-    type: 'ONG_MANAGER',
-    route: '/(ong-manager)/dashboard',
-    color: '#ea580c',
-    bgLight: '#fff7ed',
-    icon: Building2,
-  },
-  {
-    id: 'program-agent',
-    title: 'Agent Programme National (PNSM)',
-    subtitle: 'Indicateurs macro, alertes prioritaires & parcours 360°',
-    badge: 'Programme',
-    type: 'PROGRAM_AGENT',
-    route: '/(program-agent)/dashboard',
-    color: '#4f46e5',
-    bgLight: '#eef2ff',
-    icon: ShieldCheck,
-  },
-  {
     id: 'patient',
     title: 'Espace Bénéficiaire / Patient',
     subtitle: 'Auto-évaluation, téléconsultation & ordonnances',
@@ -139,120 +106,76 @@ const ALL_ADMIN_DASHBOARDS: DashboardOption[] = [
 ];
 
 function mapUserSpacesToDashboards(spaces: any[]): DashboardOption[] {
-  return spaces.map((space) => {
-    const spacePath = space.path || '';
-    const type = space.type || '';
+  return spaces
+    .map((space) => {
+      const spacePath = space.path || '';
+      const type = space.type || '';
 
-    if (spacePath === '/espace-superviseur' || type === 'SUPERVISOR') {
+      if (spacePath === '/professionnels' || type === 'PRO' || spacePath === '/espace-superviseur' || type === 'SUPERVISOR') {
+        return {
+          id: space.id || 'specialist',
+          title: space.label || space.name || 'Spécialiste de Santé',
+          subtitle: 'Consultations, réévaluations & prescriptions',
+          badge: 'Clinique',
+          type: 'PRO',
+          route: '/(specialist)/dashboard',
+          color: '#00A651',
+          bgLight: '#ecfdf5',
+          icon: Stethoscope,
+        };
+      }
+      if (spacePath === '/espace-agent' || type === 'HEALTH_AGENT' || type === 'COMMUNITY_ACTOR' || type === 'ROLE_COMMUNITY_ACTOR') {
+        return {
+          id: space.id || 'health-agent',
+          title: space.label || space.name || 'Agent de Santé',
+          subtitle: 'Dépistage communautaire & suivis',
+          badge: 'Communautaire',
+          type: 'HEALTH_AGENT',
+          route: '/(health-agent)/dashboard',
+          color: '#2563eb',
+          bgLight: '#eff6ff',
+          icon: ClipboardList,
+        };
+      }
+      if (spacePath === '/espace-agent-terrain-migrant' || type === 'FIELD_AGENT') {
+        return {
+          id: space.id || 'field-agent',
+          title: space.label || space.name || 'Agent de Terrain',
+          subtitle: 'Maraudes, populations mobiles & vulnérabilités',
+          badge: 'Terrain',
+          type: 'FIELD_AGENT',
+          route: '/(field-agent)/dashboard',
+          color: '#8b5cf6',
+          bgLight: '#f5f3ff',
+          icon: ArrowRightLeft,
+        };
+      }
+      if (spacePath === '/recensement' || type === 'CENSUS_AGENT' || type === 'SENSIBILISATEUR') {
+        return {
+          id: space.id || 'census-agent',
+          title: space.label || space.name || 'Agent Sensibilisateur',
+          subtitle: 'Recensement terrain, ménages & vulnérabilités',
+          badge: 'Recensement',
+          type: 'CENSUS_AGENT',
+          route: '/(census-agent)/dashboard',
+          color: '#00A651',
+          bgLight: '#ecfdf5',
+          icon: Users,
+        };
+      }
       return {
-        id: space.id || 'supervisor',
-        title: space.label || space.name || 'Superviseur Clinique',
-        subtitle: 'Revue clinique, alertes critiques & supervision',
-        badge: 'Supervision',
-        type: 'SUPERVISOR',
-        route: '/(supervisor)/dashboard',
-        color: '#d97706',
-        bgLight: '#fef3c7',
-        icon: ShieldCheck,
+        id: space.id || 'patient',
+        title: space.label || space.name || 'Espace Bénéficiaire',
+        subtitle: 'Auto-évaluation & téléconsultation',
+        badge: 'Patient',
+        type: 'PATIENT',
+        route: '/(patient)/dashboard',
+        color: '#0d9488',
+        bgLight: '#f0fdfa',
+        icon: Heart,
       };
-    }
-    if (spacePath === '/professionnels' || type === 'PRO') {
-      return {
-        id: space.id || 'specialist',
-        title: space.label || space.name || 'Spécialiste de Santé',
-        subtitle: 'Consultations, réévaluations & prescriptions',
-        badge: 'Clinique',
-        type: 'PRO',
-        route: '/(specialist)/dashboard',
-        color: '#00A651',
-        bgLight: '#ecfdf5',
-        icon: Stethoscope,
-      };
-    }
-    if (spacePath === '/espace-agent' || type === 'HEALTH_AGENT') {
-      return {
-        id: space.id || 'health-agent',
-        title: space.label || space.name || 'Agent de Santé',
-        subtitle: 'Dépistage communautaire & suivis',
-        badge: 'Communautaire',
-        type: 'HEALTH_AGENT',
-        route: '/(health-agent)/dashboard',
-        color: '#2563eb',
-        bgLight: '#eff6ff',
-        icon: ClipboardList,
-      };
-    }
-    if (spacePath === '/espace-agent-terrain-migrant' || type === 'FIELD_AGENT') {
-      return {
-        id: space.id || 'field-agent',
-        title: space.label || space.name || 'Agent de Terrain',
-        subtitle: 'Maraudes, populations mobiles & vulnérabilités',
-        badge: 'Terrain',
-        type: 'FIELD_AGENT',
-        route: '/(field-agent)/dashboard',
-        color: '#8b5cf6',
-        bgLight: '#f5f3ff',
-        icon: ArrowRightLeft,
-      };
-    }
-    if (spacePath === '/recensement' || type === 'CENSUS_AGENT' || type === 'SENSIBILISATEUR') {
-      return {
-        id: space.id || 'census-agent',
-        title: space.label || space.name || 'Agent Sensibilisateur',
-        subtitle: 'Recensement terrain, ménages & vulnérabilités',
-        badge: 'Recensement',
-        type: 'CENSUS_AGENT',
-        route: '/(census-agent)/dashboard',
-        color: '#00A651',
-        bgLight: '#ecfdf5',
-        icon: Users,
-      };
-    }
-    if (spacePath === '/ong' || type === 'ONG_MANAGER' || type === 'RESPONSABLE_ONG') {
-      return {
-        id: space.id || 'ong-manager',
-        title: space.label || space.name || 'Responsable ONG',
-        subtitle: 'Supervision agents, validations & rapports',
-        badge: 'ONG',
-        type: 'ONG_MANAGER',
-        route: '/(ong-manager)/dashboard',
-        color: '#ea580c',
-        bgLight: '#fff7ed',
-        icon: Building2,
-      };
-    }
-    if (
-      spacePath === '/agent-programme' ||
-      type === 'PROGRAM_AGENT' ||
-      spacePath === '/centre-pnsm' ||
-      type === 'CENTRE_PNSM' ||
-      spacePath === '/espace-chercheur' ||
-      type === 'CHERCHEUR'
-    ) {
-      return {
-        id: space.id || 'program-agent',
-        title: space.label || space.name || (type === 'CENTRE_PNSM' ? 'Centre PNSM' : type === 'CHERCHEUR' ? 'Espace Chercheur' : 'Agent Programme National'),
-        subtitle: 'Macro-surveillance & alertes sanitaires',
-        badge: 'Programme',
-        type: 'PROGRAM_AGENT',
-        route: '/(program-agent)/dashboard',
-        color: '#4f46e5',
-        bgLight: '#eef2ff',
-        icon: ShieldCheck,
-      };
-    }
-    return {
-      id: space.id || 'patient',
-      title: space.label || space.name || 'Espace Bénéficiaire',
-      subtitle: 'Auto-évaluation & téléconsultation',
-      badge: 'Patient',
-      type: 'PATIENT',
-      route: '/(patient)/dashboard',
-      color: '#0d9488',
-      bgLight: '#f0fdfa',
-      icon: Heart,
-    };
-  });
+    })
+    .filter(Boolean);
 }
 
 export default function LoginScreen() {
@@ -262,8 +185,8 @@ export default function LoginScreen() {
   const isTablet = width >= 768;
   const { isDark, colors } = useTheme();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('patient@demo.tila.com');
+  const [password, setPassword] = useState('password');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -275,7 +198,13 @@ export default function LoginScreen() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [targetLabel, setTargetLabel] = useState('');
 
+  const params = useLocalSearchParams<{ autoLogin?: string }>();
 
+  useEffect(() => {
+    if (params.autoLogin === '1') {
+      handleLogin();
+    }
+  }, [params.autoLogin]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -343,34 +272,20 @@ export default function LoginScreen() {
         } else if (spacePath === '/espace-agent') {
           router.replace('/(health-agent)/dashboard');
         } else if (spacePath === '/espace-superviseur') {
-          router.replace('/(supervisor)/dashboard');
+          router.replace('/(specialist)/dashboard');
         } else if (spacePath === '/espace-agent-terrain-migrant' || space.type === 'FIELD_AGENT') {
           router.replace('/(field-agent)/dashboard');
         } else if (spacePath === '/recensement' || space.type === 'CENSUS_AGENT' || space.type === 'SENSIBILISATEUR') {
           router.replace('/(census-agent)/dashboard');
-        } else if (spacePath === '/ong' || space.type === 'ONG_MANAGER' || space.type === 'RESPONSABLE_ONG') {
-          router.replace('/(ong-manager)/dashboard');
-        } else if (
-          spacePath === '/agent-programme' ||
-          space.type === 'PROGRAM_AGENT' ||
-          spacePath === '/centre-pnsm' ||
-          space.type === 'CENTRE_PNSM' ||
-          spacePath === '/espace-chercheur' ||
-          space.type === 'CHERCHEUR'
-        ) {
-          await tokenService.setActiveContext('PROGRAM_AGENT');
-          router.replace('/(program-agent)/dashboard');
         } else {
           router.replace('/(patient)/dashboard');
         }
-      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_PRO'))) {
+      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_PRO') || r.includes('ROLE_SUPERVISOR'))) {
         router.replace('/(specialist)/dashboard');
       } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_SENSIBILISATEUR') || r.includes('ROLE_CENSUS'))) {
         router.replace('/(census-agent)/dashboard');
-      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_ONG'))) {
-        router.replace('/(ong-manager)/dashboard');
-      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_PROGRAM_AGENT') || r.includes('ROLE_PNSM'))) {
-        router.replace('/(program-agent)/dashboard');
+      } else if (userContext?.roles && userContext.roles.some((r: string) => r.includes('ROLE_HEALTH_AGENT') || r.includes('ROLE_COMMUNITY_ACTOR'))) {
+        router.replace('/(health-agent)/dashboard');
       } else {
         await tokenService.setActiveContext('PATIENT');
         router.replace('/(patient)/dashboard');
@@ -413,11 +328,7 @@ export default function LoginScreen() {
       <TouchableOpacity
         style={[styles.backButton, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.replace('/welcome');
-          }
+          router.replace('/welcome');
         }}
       >
         <ArrowLeft size={24} color={isDark ? colors.text : '#334155'} />

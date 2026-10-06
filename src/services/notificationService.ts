@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 
-// Configuration du comportement quand l'application est ouverte au premier plan
+// Configuration du comportement quand l'application est ouverte au premier plan : SON + VIBREUR + BANNIÈRE
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -14,6 +14,7 @@ Notifications.setNotificationHandler({
 export const NOTIFICATION_CHANNELS = {
   URGENT: 'tila-urgent-alerts',
   APPOINTMENTS: 'tila-appointments',
+  DATA_RECEIVED: 'tila-data-received',
   DEFAULT: 'tila-default',
 };
 
@@ -21,18 +22,18 @@ class NotificationService {
   private isInitialized = false;
 
   /**
-   * Initialise le gestionnaire de notifications et configure les canaux Android haute priorité (Heads-up / WhatsApp style)
+   * Initialise le gestionnaire de notifications et configure les canaux Android haute priorité (Heads-up / WhatsApp style avec son et vibreur)
    */
   async initialize(): Promise<boolean> {
     if (this.isInitialized) return true;
 
     try {
       if (Platform.OS === 'android') {
-        // 1. Canal d'urgence / consultation : priorité MAX, son, vibreur et affichage par dessus les autres apps
+        // 1. Canal d'urgence / consultation : priorité MAX, son, vibreur
         await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.URGENT, {
           name: 'Alertes Urgentes & Consultations TILA',
           importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 400, 200, 400],
+          vibrationPattern: [0, 500, 200, 500],
           lightColor: '#00A651',
           sound: 'default',
           enableLights: true,
@@ -42,11 +43,11 @@ class NotificationService {
           showBadge: true,
         });
 
-        // 2. Canal des rappels de rendez-vous
-        await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.APPOINTMENTS, {
-          name: 'Rappels de Rendez-vous',
-          importance: Notifications.AndroidImportance.HIGH,
-          vibrationPattern: [0, 250, 250, 250],
+        // 2. Canal réception de nouvelles données / messages (Sonnerie + Vibreur actif)
+        await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.DATA_RECEIVED, {
+          name: 'Nouvelles Données & Mises à jour TILA',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 500, 250, 500],
           lightColor: '#00A651',
           sound: 'default',
           enableLights: true,
@@ -55,14 +56,35 @@ class NotificationService {
           showBadge: true,
         });
 
-        // 3. Canal par défaut
+        // 3. Canal des rappels de rendez-vous
+        await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.APPOINTMENTS, {
+          name: 'Rappels de Rendez-vous',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 300, 200, 300],
+          lightColor: '#00A651',
+          sound: 'default',
+          enableLights: true,
+          enableVibrate: true,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          showBadge: true,
+        });
+
+        // 4. Canal par défaut
         await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNELS.DEFAULT, {
           name: 'Notifications Générales',
-          importance: Notifications.AndroidImportance.DEFAULT,
-          vibrationPattern: [0, 200, 200, 200],
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 300, 200, 300],
           sound: 'default',
+          enableVibrate: true,
         });
       }
+
+      // Écouteur global : déclenche la vibration physique du téléphone sur toute notification entrante
+      Notifications.addNotificationReceivedListener(() => {
+        try {
+          Vibration.vibrate([0, 500, 250, 500]);
+        } catch {}
+      });
 
       // Demande de permission utilisateur
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -104,12 +126,17 @@ class NotificationService {
     await this.initialize();
 
     try {
+      // Déclenchement immédiat du vibreur physique du téléphone
+      try {
+        Vibration.vibrate([0, 500, 200, 500]);
+      } catch {}
+
       return await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
           sound: 'default',
-          vibrate: [0, 400, 200, 400],
+          vibrate: [0, 500, 200, 500],
           data,
         },
         trigger: (Platform.OS === 'android'
@@ -120,6 +147,33 @@ class NotificationService {
       console.warn('[NotificationService] Erreur lors de l\'envoi de la notification:', error);
       return null;
     }
+  }
+
+  /**
+   * Notification sonore et vibratoire immédiate déclenchée lors de la réception de nouvelles données ou infos
+   * (nouvelles consultations, messages forum, ordonnances, synchronisation ou résultats)
+   */
+  async notifyDataReceived({
+    title,
+    body,
+    data = {},
+  }: {
+    title: string;
+    body: string;
+    data?: Record<string, any>;
+  }) {
+    // 1. Déclenchement vibration physique matérielle haute intensité
+    try {
+      Vibration.vibrate([0, 500, 250, 500]);
+    } catch {}
+
+    // 2. Émission de la notification avec canal sonore et vibreur
+    return this.sendInstantNotification({
+      title,
+      body,
+      channelId: NOTIFICATION_CHANNELS.DATA_RECEIVED,
+      data: { ...data, receivedAt: new Date().toISOString() },
+    });
   }
 
   /**

@@ -33,6 +33,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { recensementService } from '../../services/recensement';
 import { syncService, SyncStatus } from '../../services/syncService';
 import { getUserDisplayName } from '../../utils/userUtils';
+import { notificationService } from '../../services/notificationService';
+import { FooterLogos } from '../../components/FooterLogos';
 
 type PeriodPreset = 'today' | 'last_7_days' | 'this_month';
 
@@ -100,7 +102,13 @@ export default function CensusAgentDashboard() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
-            onRefresh={refetch}
+            onRefresh={async () => {
+              await refetch();
+              notificationService.notifyDataReceived({
+                title: '🔔 Recensements actualisés',
+                body: 'Vos indicateurs ménages et personnes recensées sont à jour.',
+              });
+            }}
             colors={['#00A651']}
             tintColor="#00A651"
           />
@@ -108,17 +116,14 @@ export default function CensusAgentDashboard() {
       >
         {/* Header Carte Profil */}
         <View style={[styles.headerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.headerTopRow}>
-            <View style={styles.headerTitleGroup}>
-              <Text style={[styles.agentGreeting, { color: colors.textSecondary }]}>Bonjour,</Text>
-              <Text style={[styles.agentName, { color: colors.text }]} numberOfLines={1}>
-                {agentName} 👋
-              </Text>
-            </View>
-            <View style={styles.roleBadge}>
+          <View style={{ marginBottom: 10 }}>
+            <View style={[styles.roleBadge, { alignSelf: 'flex-start', marginBottom: 8 }]}>
               <Sparkles size={13} color="#00A651" style={{ marginRight: 4 }} />
               <Text style={styles.roleBadgeText}>AGENT SENSIBILISATEUR</Text>
             </View>
+            <Text style={[styles.agentName, { color: colors.text, fontSize: 19, letterSpacing: -0.3 }]}>
+              Bonjour, {agentName} 👋
+            </Text>
           </View>
 
           <View style={styles.metaRow}>
@@ -373,6 +378,11 @@ export default function CensusAgentDashboard() {
             </Text>
           </View>
         )}
+
+        {/* Logos Partenaires avec Appui UE & Expertise France */}
+        <View style={{ marginTop: 20, marginBottom: 16 }}>
+          <FooterLogos />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

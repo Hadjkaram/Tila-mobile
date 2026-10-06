@@ -37,6 +37,7 @@ interface QuestionItem {
   id: string;
   text: string;
   dimension?: string;
+  options?: Array<{ value: number; label: string }>;
 }
 
 interface QuestionnaireConfig {
@@ -418,12 +419,16 @@ export default function AssessmentScreen() {
         questions: locConfig.questions,
         calculateScore: (answers: Record<string, number>) => {
           const total = Object.values(answers).reduce((a, b) => a + b, 0);
-          const maxVal = locConfig.options[locConfig.options.length - 1]?.value || 3;
-          const maxScore = locConfig.questions.length * maxVal;
+          let maxScore = 0;
+          for (const q of locConfig.questions) {
+            const qOpts = (q as any).options || locConfig.options || [];
+            const maxVal = qOpts.length > 0 ? Math.max(...qOpts.map((o: any) => o.value)) : 3;
+            maxScore += maxVal;
+          }
           const res = locConfig.interpret(total, answers);
           return {
             total,
-            maxScore,
+            maxScore: maxScore > 0 ? maxScore : locConfig.questions.length * 3,
             level: res.level,
             levelLabel: res.levelLabel,
             levelColor: res.levelColor,
@@ -616,14 +621,15 @@ export default function AssessmentScreen() {
             <View style={styles.recomList}>
               {currentConfig.questions.map((q) => {
                 const ansVal = answers[q.id];
-                const ansLabel = currentConfig.options.find(o => o.value === ansVal)?.label;
+                const qOpts = (q as any).options || currentConfig.options;
+                const ansLabel = qOpts.find((o: any) => o.value === ansVal)?.label;
                 return (
                   <View key={q.id} style={{ marginBottom: 12 }}>
                     <Text style={[{ fontSize: 13, color: isDark ? colors.text : '#334155', fontWeight: '600', marginBottom: 4 }]}>
                       {q.text}
                     </Text>
                     <Text style={[{ fontSize: 12.5, color: isDark ? colors.textSecondary : '#64748b' }]}>
-                      Réponse : {ansLabel} ({ansVal} pt{ansVal > 1 ? 's' : ''})
+                      Réponse : {ansLabel || 'Non renseigné'} ({ansVal ?? 0} pt{(ansVal ?? 0) > 1 ? 's' : ''})
                     </Text>
                   </View>
                 );
@@ -779,12 +785,12 @@ export default function AssessmentScreen() {
 
                 {/* Options de réponse */}
                 <View style={styles.optionsList}>
-                  {currentConfig.options.map((opt) => {
+                  {((q as any).options || currentConfig.options).map((opt: any, optIdx: number) => {
                     const isSelected = currentVal === opt.value;
 
                     return (
                       <TouchableOpacity
-                        key={opt.value}
+                        key={`${opt.value}-${optIdx}`}
                         style={[
                           styles.optionCard,
                           isDark && { backgroundColor: colors.bgSecondary, borderColor: colors.border },

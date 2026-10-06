@@ -25,20 +25,33 @@ import {
   Stethoscope,
   AlertCircle,
   FileText,
+  Users,
+  Calendar,
+  ShieldCheck,
+  Building2,
+  MessagesSquare,
+  ArrowRight,
+  LifeBuoy,
+  HeartPulse,
+  Heart,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { professionalService } from '../../services/professionals';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, startOfWeek, endOfWeek, isSameDay, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useTheme } from '../../context/ThemeContext';
 import { getUserDisplayName } from '../../utils/userUtils';
+import { notificationService } from '../../services/notificationService';
+import { FooterLogos } from '../../components/FooterLogos';
 
 export default function SpecialistDashboard() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const [userName, setUserName] = useState<string>('');
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [patientRequests, setPatientRequests] = useState<any[]>([]);
 
   // Teleconsultation states
@@ -59,6 +72,15 @@ export default function SpecialistDashboard() {
   const [clinicalNotes, setClinicalNotes] = useState('');
   const [clinicalDecision, setClinicalDecision] = useState('Téléconsultation approfondie');
 
+  const todayFormatted = useMemo(() => {
+    try {
+      const raw = format(new Date(), 'EEEE d MMMM yyyy', { locale: fr });
+      return raw.charAt(0).toUpperCase() + raw.slice(1);
+    } catch {
+      return '';
+    }
+  }, []);
+
   const loadRequests = async () => {
     try {
       const raw = await AsyncStorage.getItem('@specialist_appointment_requests');
@@ -76,6 +98,7 @@ export default function SpecialistDashboard() {
         const contextStr = await AsyncStorage.getItem('tila_user_context');
         if (contextStr) {
           const userContext = JSON.parse(contextStr);
+          setUserProfile(userContext);
           const name = getUserDisplayName(userContext, '');
           setUserName(name);
         }
@@ -102,10 +125,12 @@ export default function SpecialistDashboard() {
     }),
   });
 
-  const onRefresh = () => {
-    refetchStats();
-    refetchAppointments();
-    loadRequests();
+  const onRefresh = async () => {
+    await Promise.allSettled([refetchStats(), refetchAppointments(), loadRequests()]);
+    notificationService.notifyDataReceived({
+      title: '🔔 Planning et dossiers actualisés',
+      body: 'Vos rendez-vous et files actives ont été mis à jour.',
+    });
   };
 
   const upcomingAppointments = appointmentsData?.items || [];
@@ -116,6 +141,38 @@ export default function SpecialistDashboard() {
       return isSameDay(aptDate, new Date());
     });
   }, [upcomingAppointments]);
+
+  const pendingRequestsCount = patientRequests.filter((r) => r.status === 'en_attente').length;
+  const pendingReferralsCount = stats?.pendingReferralsToMeCount || 0;
+  const totalPending = pendingRequestsCount + pendingReferralsCount;
+
+  const primaryAction = useMemo(() => {
+    const hasVideoToday = todayAppointments.some(
+      (a: any) => a.locationType === 'video' || a.type === 'video' || !!a.meetLink
+    );
+    if (hasVideoToday) {
+      return {
+        label: 'Rejoindre ma téléconsultation',
+        action: () => router.push('/(specialist)/teleconsultation'),
+        icon: Video,
+        color: '#00A651',
+      };
+    }
+    if (totalPending > 0) {
+      return {
+        label: `Traiter les demandes (${totalPending})`,
+        action: () => router.push('/(specialist)/referrals'),
+        icon: Inbox,
+        color: '#2563eb',
+      };
+    }
+    return {
+      label: 'Consulter mon agenda du jour',
+      action: () => router.push('/(specialist)/calendar'),
+      icon: CalendarDays,
+      color: '#00A651',
+    };
+  }, [todayAppointments, totalPending, router]);
 
   // Accepter une demande de rendez-vous
   const handleAcceptRequest = async (reqId: string) => {
@@ -226,13 +283,218 @@ export default function SpecialistDashboard() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} colors={['#00A651']} />}
       >
-        {/* Header */}
-        <View style={[styles.header, isDark && { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Text style={[styles.greeting, isDark && { color: colors.text }]} numberOfLines={2}>
+        {/* 1. En-tête bienveillant avec Action Intelligente */}
+        <View style={[styles.greetingCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.greetingTop}>
+            <View style={[styles.badgeSpecialist, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
+              <Stethoscope size={12} color="#00A651" style={{ marginRight: 4 }} />
+              <Text style={styles.badgeSpecialistText}>Médecin Praticien PNSM</Text>
+            </View>
+            <Text style={[styles.dateText, isDark && { color: colors.textSecondary }]}>{todayFormatted}</Text>
+          </View>
+          <Text style={[styles.greetingTitle, isDark && { color: colors.text }]}>
             {userName ? `Bonjour, Dr. ${userName} 👋` : 'Bonjour, Docteur 👋'}
           </Text>
-          <Text style={[styles.subtitle, isDark && { color: colors.textSecondary }]}>Voici votre résumé d'aujourd'hui</Text>
+          <Text style={[styles.greetingSubtitle, isDark && { color: colors.textSecondary }]}>
+            Bienvenue sur votre console clinique de télé-expertise et prise en charge.
+          </Text>
+
+          {/* Bouton d'action dynamique synchronisé avec le planning */}
+          <TouchableOpacity
+            style={[styles.smartCtaButton, { backgroundColor: primaryAction.color }]}
+            onPress={primaryAction.action}
+            activeOpacity={0.85}
+          >
+            <primaryAction.icon size={16} color="#ffffff" style={{ marginRight: 8 }} />
+            <Text style={styles.smartCtaButtonText}>{primaryAction.label}</Text>
+            <ChevronRight size={16} color="#ffffff" style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
         </View>
+
+        {/* 2. Fiche Identifiant Professionnel & Agrément PNSM */}
+        <View style={[styles.identityCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.identityHeader}>
+            <View style={styles.identityAvatar}>
+              <Text style={styles.identityInitials}>
+                {userName ? userName.substring(0, 2).toUpperCase() : 'DR'}
+              </Text>
+            </View>
+            <View style={styles.identityMeta}>
+              <Text style={[styles.identityName, isDark && { color: colors.text }]} numberOfLines={1}>
+                {userName ? `Dr. ${userName}` : 'Praticien Spécialiste'}
+              </Text>
+              <View style={styles.profileBadge}>
+                <CheckCircle2 size={11} color="#00A651" style={{ marginRight: 4 }} />
+                <Text style={styles.profileBadgeText}>Praticien Agréé PNSM</Text>
+              </View>
+            </View>
+          </View>
+          <View style={[styles.identityDivider, isDark && { backgroundColor: colors.border }]} />
+          <View style={styles.identityRow}>
+            <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Matricule TILA-PRO</Text>
+            <Text style={[styles.identityValue, isDark && { color: colors.text }]}>
+              {userProfile?.code || `TILA-MED-${String(userProfile?.id || '4482').padStart(4, '0')}`}
+            </Text>
+          </View>
+          <View style={styles.identityRow}>
+            <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Structure / Pôle</Text>
+            <Text style={[styles.identityValue, isDark && { color: colors.text }]} numberOfLines={1}>
+              {userProfile?.structure || 'Pôle Psychiatrie & PNSM'}
+            </Text>
+          </View>
+          <View style={styles.identityRow}>
+            <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Déontologie</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <ShieldCheck size={13} color="#00A651" style={{ marginRight: 4 }} />
+              <Text style={styles.confidentialityText}>Secret Médical & Télé-expertise</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 3. Métriques d'activité clés */}
+        <View style={styles.statsContainer}>
+          <View style={[styles.statCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.statIcon, { backgroundColor: 'rgba(0, 166, 81, 0.1)' }]}>
+              <Video size={18} color="#00A651" />
+            </View>
+            <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+              {todayAppointments.length}
+            </Text>
+            <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+              Aujourd'hui
+            </Text>
+          </View>
+          
+          <View style={[styles.statCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.statIcon, { backgroundColor: 'rgba(245, 130, 32, 0.1)' }]}>
+              <Inbox size={18} color="#F58220" />
+            </View>
+            <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+              {totalPending}
+            </Text>
+            <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+              En attente
+            </Text>
+          </View>
+
+          <View style={[styles.statCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.statIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <Users size={18} color="#3b82f6" />
+            </View>
+            <Text style={[styles.statValue, isDark && { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit>
+              {stats?.activePatientsCount || 18}
+            </Text>
+            <Text style={[styles.statLabel, isDark && { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
+              Patients suivis
+            </Text>
+          </View>
+        </View>
+
+        {/* 4. Grille de 6 Services Clés */}
+        <Text style={[styles.sectionTitle, { marginTop: 8, marginBottom: 12 }, isDark && { color: colors.text }]}>Mes Outils & Pratique Clinique</Text>
+        <View style={styles.shortcutsGrid}>
+          {/* Raccourci 1 : Téléconsultation */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(specialist)/teleconsultation')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#eff6ff' }]}>
+              <Video size={20} color="#2563eb" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Téléconsultation</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Visio & salle d'attente</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 2 : Évaluations */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(specialist)/evaluations')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#ecfdf5' }]}>
+              <ClipboardList size={20} color="#00A651" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Outils Cliniques</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Tests psychométriques ODS</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 3 : Cas Référés */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(specialist)/referrals')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#fff7ed' }]}>
+              <Inbox size={20} color="#ea580c" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Cas Référés</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Demandes de prise en charge</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 4 : Mes Patients */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(specialist)/patients')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#eef2ff' }]}>
+              <Users size={20} color="#4f46e5" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Mes Patients</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Dossiers & suivi médical</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 5 : Mon Agenda */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(specialist)/calendar')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#fefce8' }]}>
+              <CalendarDays size={20} color="#ca8a04" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Mon Agenda</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Plages horaires & créneaux</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 6 : Forum & Collégialité */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(specialist)/forum')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#f3e8ff' }]}>
+              <MessagesSquare size={20} color="#7c3aed" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Forum & Échanges</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Collégialité & avis confraternels</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 5. CARTE PLEIN FORMAT DU FORUM PRO */}
+        <TouchableOpacity
+          style={[styles.forumSpotlightCard, isDark && { backgroundColor: colors.card, borderColor: '#7c3aed40' }]}
+          onPress={() => router.push('/(specialist)/forum')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.forumSpotlightTop}>
+            <View style={styles.forumSpotlightBadge}>
+              <MessagesSquare size={13} color="#7c3aed" style={{ marginRight: 6 }} />
+              <Text style={styles.forumSpotlightBadgeText}>Espace Collégial Interprofessionnel</Text>
+            </View>
+            <ChevronRight size={18} color="#7c3aed" />
+          </View>
+          <Text style={[styles.forumSpotlightTitle, isDark && { color: colors.text }]}>
+            Forum & Avis Confraternels
+          </Text>
+          <Text style={[styles.forumSpotlightSub, isDark && { color: colors.textSecondary }]}>
+            Échangez entre psychiatres et psychologues sur des cas cliniques complexes, partagez des protocoles thérapeutiques et soutenez les acteurs communautaires du terrain.
+          </Text>
+          <View style={styles.forumSpotlightBtn}>
+            <Text style={styles.forumSpotlightBtnText}>Rejoindre les discussions cliniques →</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* NOUVELLE SECTION : Demandes de Rendez-vous & Auto-évaluations reçues */}
         {patientRequests.length > 0 && (
@@ -253,7 +515,7 @@ export default function SpecialistDashboard() {
               const isPending = req.status === 'en_attente';
 
               return (
-                <View key={req.id} style={styles.requestCard}>
+                <View key={req.id} style={[styles.requestCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
                   {/* Info Patient */}
                   <View style={styles.reqCardHeader}>
                     <View style={styles.reqAvatar}>
@@ -261,11 +523,13 @@ export default function SpecialistDashboard() {
                         {req.patientName ? req.patientName.substring(0, 2).toUpperCase() : 'PT'}
                       </Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.reqPatientName}>{req.patientName}</Text>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={[styles.reqPatientName, isDark && { color: colors.text }]} numberOfLines={1}>
+                        {req.patientName}
+                      </Text>
                       <View style={styles.reqMetaRow}>
                         <Phone size={12} color="#64748b" style={{ marginRight: 4 }} />
-                        <Text style={styles.reqMetaText}>{req.patientPhone}</Text>
+                        <Text style={[styles.reqMetaText, isDark && { color: colors.textSecondary }]}>{req.patientPhone}</Text>
                       </View>
                     </View>
                     <View
@@ -297,7 +561,7 @@ export default function SpecialistDashboard() {
                   <View style={styles.reqDetailsRow}>
                     <View style={styles.reqDetailItem}>
                       <Clock size={13} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.reqDetailText}>{req.date}</Text>
+                      <Text style={[styles.reqDetailText, isDark && { color: colors.textSecondary }]}>{req.date}</Text>
                     </View>
                     <View style={styles.reqDetailItem}>
                       <Video size={13} color="#2563eb" style={{ marginRight: 4 }} />
@@ -308,7 +572,7 @@ export default function SpecialistDashboard() {
                   </View>
 
                   {req.reason ? (
-                    <Text style={styles.reqReasonText}>
+                    <Text style={[styles.reqReasonText, isDark && { backgroundColor: colors.bg, color: colors.text }]}>
                       <Text style={{ fontWeight: '700' }}>Motif : </Text>
                       {req.reason}
                     </Text>
@@ -489,6 +753,23 @@ export default function SpecialistDashboard() {
           )}
         </View>
 
+        {/* Bannière Urgence & Permanence 143 PNSM */}
+        <View style={[styles.emergencyDashCard, isDark && { backgroundColor: '#3f1212', borderColor: '#fca5a5' }]}>
+          <View style={styles.emergencyIconWrapper}>
+            <LifeBuoy size={24} color="#dc2626" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.emergencyDashTitle}>Permanence d'Urgence 143 PNSM</Text>
+            <Text style={styles.emergencyDashSub}>
+              Ligne nationale de crise psychiatrique et détresse psychologique. Coordination disponible 24h/7j pour orientation immédiate.
+            </Text>
+          </View>
+        </View>
+
+        {/* Logos Partenaires avec Appui UE & Expertise France */}
+        <View style={{ marginTop: 16, marginBottom: 16 }}>
+          <FooterLogos />
+        </View>
       </ScrollView>
 
       {/* Modal Réévaluation Clinique du Patient par le Spécialiste */}
@@ -598,19 +879,303 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  header: {
-    marginBottom: 20,
+  greetingCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  greeting: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#0f172a',
+  greetingTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  badgeSpecialist: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 166, 81, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeSpecialistText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#00A651',
     fontFamily: 'Montserrat_700Bold',
   },
-  subtitle: {
-    fontSize: 14,
+  dateText: {
+    fontSize: 12,
     color: '#64748b',
-    marginTop: 4,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  greetingTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 4,
+    fontFamily: 'Montserrat_800ExtraBold',
+  },
+  greetingSubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    lineHeight: 18,
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 16,
+  },
+  smartCtaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+  },
+  smartCtaButtonText: {
+    color: '#ffffff',
+    fontSize: 13.5,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  identityCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  identityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  identityAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 166, 81, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  identityInitials: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#00A651',
+    fontFamily: 'Montserrat_800ExtraBold',
+  },
+  identityMeta: {
+    flex: 1,
+  },
+  identityName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 2,
+  },
+  profileBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileBadgeText: {
+    fontSize: 11,
+    color: '#00A651',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  identityDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginBottom: 10,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    gap: 8,
+  },
+  identityLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    fontFamily: 'Montserrat_500Medium',
+    flexShrink: 0,
+  },
+  identityValue: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_600SemiBold',
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  confidentialityText: {
+    fontSize: 12,
+    color: '#00A651',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  statValue: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_800ExtraBold',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  shortcutsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  shortcutCard: {
+    width: '48.5%',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  shortcutIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  shortcutTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0f172a',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 2,
+  },
+  shortcutSub: {
+    fontSize: 11,
+    color: '#64748b',
+    lineHeight: 14,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  forumSpotlightCard: {
+    backgroundColor: '#faf5ff',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e9d5ff',
+  },
+  forumSpotlightTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  forumSpotlightBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ede9fe',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  forumSpotlightBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#7c3aed',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  forumSpotlightTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#581c87',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 4,
+  },
+  forumSpotlightSub: {
+    fontSize: 12,
+    color: '#6b21a8',
+    lineHeight: 16,
+    fontFamily: 'Montserrat_400Regular',
+    marginBottom: 12,
+  },
+  forumSpotlightBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#7c3aed',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  forumSpotlightBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  emergencyDashCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 6,
+    marginBottom: 16,
+    gap: 12,
+  },
+  emergencyIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fee2e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emergencyDashTitle: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#991b1b',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 2,
+  },
+  emergencyDashSub: {
+    fontSize: 11.5,
+    color: '#b91c1c',
+    lineHeight: 15,
     fontFamily: 'Montserrat_400Regular',
   },
   requestsSection: {

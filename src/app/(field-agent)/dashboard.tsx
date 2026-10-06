@@ -35,6 +35,8 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 import { getUserFirstName } from '../../utils/userUtils';
+import { notificationService } from '../../services/notificationService';
+import { FooterLogos } from '../../components/FooterLogos';
 
 type PeriodPreset = 'today' | 'last_7_days' | 'this_month';
 
@@ -180,6 +182,10 @@ export default function FieldAgentDashboard() {
     setIsOnline(online);
     if (online) {
       await Promise.allSettled([refetchDashboard(), refetchSubmissions()]);
+      notificationService.notifyDataReceived({
+        title: '🔔 Données terrain actualisées',
+        body: 'Les évaluations et alertes prioritaires sont à jour.',
+      });
     }
   };
 
@@ -554,6 +560,11 @@ export default function FieldAgentDashboard() {
             <Text style={styles.seeAllBtnText}>Voir toutes les évaluations</Text>
             <ChevronRight size={16} color="#00A651" />
           </TouchableOpacity>
+        </View>
+
+        {/* Logos Partenaires avec Appui UE & Expertise France */}
+        <View style={{ marginTop: 20, marginBottom: 16 }}>
+          <FooterLogos />
         </View>
       </ScrollView>
     </SafeAreaView>

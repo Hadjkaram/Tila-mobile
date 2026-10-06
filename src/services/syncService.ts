@@ -3,6 +3,7 @@ import { NativeModules, AppState, AppStateStatus } from 'react-native';
 import { agentService } from './agent';
 import { professionalService } from './professionals';
 import { apiClient, tokenService } from './apiClient';
+import { notificationService } from './notificationService';
 
 const QUEUE_STORAGE_KEY = '@offline_queue';
 
@@ -228,6 +229,14 @@ class SyncService {
     this.lastSyncSuccess = failedCount === 0 && syncedCount > 0;
     this.lastSyncTime = new Date().toISOString();
     this.notifyListeners();
+
+    if (syncedCount > 0) {
+      notificationService.notifyDataReceived({
+        title: '🔔 Synchronisation réussie',
+        body: `${syncedCount} donnée(s) mise(s) à jour avec le serveur TILA.`,
+        data: { count: syncedCount },
+      });
+    }
 
     console.log(`[SyncService] Sync finished: ${syncedCount} synced, ${failedCount} failed.`);
     return { syncedCount, failedCount };

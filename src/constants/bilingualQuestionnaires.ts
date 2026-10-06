@@ -9,6 +9,7 @@ export interface LocalizedQuestion {
   id: string;
   text: string;
   dimension?: string;
+  options?: LocalizedOption[];
 }
 
 export interface LocalizedQuestionnaireContent {
@@ -35,61 +36,185 @@ export const BILINGUAL_QUESTIONNAIRES: Record<
   string,
   Record<AssessmentLanguage, LocalizedQuestionnaireContent>
 > = {
-  ods: {
+  bmh_mwt: {
     fr: {
-      id: 'ods',
-      title: 'ODS / BMH-MWT',
-      subtitle: 'Dépistage des Troubles Mentaux Courants',
-      category: 'Santé globale',
-      description: 'Dépistage rapide des manifestations anxio-dépressives et de la détresse psychologique.',
+      id: 'bmh_mwt',
+      title: 'ODS / BMH-MWT (Population générale > 18 ans)',
+      subtitle: 'Questionnaire population générale ODS (OUTIL DE DEPISTAGE SIMPLIFIE) de plus de 18 ans',
+      category: 'Santé mentale générale',
+      description: 'Outil de dépistage des troubles mentaux courants dans les soins de santé primaires en Côte d’Ivoire (Dépression, Anxiété, Alcool, Substances, Risque suicidaire).',
       instructions:
-        'Au cours des 2 dernières semaines, à quelle fréquence avez-vous été gêné(e) par les problèmes suivants ?',
+        'Répondez aux questions en fonction de votre ressenti au cours des deux dernières semaines ou de l’année passée selon les sections.',
       options: [
-        { value: 0, label: 'Jamais' },
-        { value: 1, label: 'Quelques jours' },
-        { value: 2, label: 'Plus de la moitié du temps' },
-        { value: 3, label: 'Presque tous les jours' },
+        { value: 0, label: '0 jours' },
+        { value: 1, label: '1-7 jours' },
+        { value: 2, label: '8-11 jours' },
+        { value: 3, label: '12-14 jours' },
       ],
       questions: [
-        { id: 'q1', text: 'Peu d’intérêt ou de plaisir à faire les choses habituelles.', dimension: 'Humeur' },
-        { id: 'q2', text: 'Sentiment d’être triste, déprimé(e) ou désespéré(e).', dimension: 'Humeur' },
-        { id: 'q3', text: 'Difficultés à vous endormir, réveils fréquents ou sommeil excessif.', dimension: 'Sommeil' },
-        { id: 'q4', text: 'Sensation de fatigue permanente ou manque d’énergie au quotidien.', dimension: 'Énergie' },
-        { id: 'q5', text: 'Perte d’appétit ou tendance excessive à trop manger.', dimension: 'Soma' },
-        { id: 'q6', text: 'Mauvaise image de vous-même, sentiment d’échec ou de déception envers vos proches.', dimension: 'Estime' },
-        { id: 'q7', text: 'Difficultés à vous concentrer sur la lecture, le travail ou les discussions.', dimension: 'Cognition' },
-        { id: 'q8', text: 'Lenteur inhabituelle dans vos mouvements ou au contraire agitation motrice.', dimension: 'Moteur' },
-        { id: 'q9', text: 'Sentiment d’angoisse, nervosité ou tension intérieure vive.', dimension: 'Anxiété' },
-        { id: 'q10', text: 'Consommation d’alcool ou de substances pour calmer vos inquiétudes.', dimension: 'Addiction' },
-        { id: 'q11', text: 'Pensées que vous seriez mieux mort(e) ou envie de vous faire du mal.', dimension: 'Urgence' },
+        {
+          id: 'q1',
+          text: 'Au cours des 2 dernières semaines, à quelle fréquence avez-vous eu peu d’intérêt ou de plaisir à faire les choses ?',
+          dimension: 'Dépression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 jours' },
+            { value: 1, label: '1-7 jours' },
+            { value: 2, label: '8-11 jours' },
+            { value: 3, label: '12-14 jours' },
+          ],
+        },
+        {
+          id: 'q2',
+          text: 'Au cours des 2 dernières semaines, à quelle fréquence vous vous êtes senti(e) triste, déprimé(e) ou désespéré(e) ?',
+          dimension: 'Dépression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 jours' },
+            { value: 1, label: '1-7 jours' },
+            { value: 2, label: '8-11 jours' },
+            { value: 3, label: '12-14 jours' },
+          ],
+        },
+        {
+          id: 'q3',
+          text: 'Au cours des 2 dernières semaines, à quelle fréquence vous vous êtes senti(e) nerveux(se), anxieux(se) ou sur les nerfs ?',
+          dimension: 'Anxiété (GAD-2)',
+          options: [
+            { value: 0, label: '0 jours' },
+            { value: 1, label: '1-7 jours' },
+            { value: 2, label: '8-11 jours' },
+            { value: 3, label: '12-14 jours' },
+          ],
+        },
+        {
+          id: 'q4',
+          text: 'Au cours des 2 dernières semaines, à quelle fréquence vous n’arrivez pas à arrêter ou à contrôler les inquiétudes ?',
+          dimension: 'Anxiété (GAD-2)',
+          options: [
+            { value: 0, label: '0 jours' },
+            { value: 1, label: '1-7 jours' },
+            { value: 2, label: '8-11 jours' },
+            { value: 3, label: '12-14 jours' },
+          ],
+        },
+        {
+          id: 'q5',
+          text: 'À quelle fréquence buvez-vous de l’alcool ?',
+          dimension: 'Alcool (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Mensuel ou moins' },
+            { value: 2, label: '2-4 fois/mois' },
+            { value: 3, label: '2-3 fois/semaine' },
+            { value: 4, label: '4+ fois/semaine' },
+          ],
+        },
+        {
+          id: 'q6',
+          text: 'Combien de verres buvez-vous un jour typique ?',
+          dimension: 'Alcool (AUDIT-C)',
+          options: [
+            { value: 0, label: '1 ou 2' },
+            { value: 1, label: '3 ou 4' },
+            { value: 2, label: '5 ou 6' },
+            { value: 3, label: '7 à 9' },
+            { value: 4, label: '10 ou plus' },
+          ],
+        },
+        {
+          id: 'q7',
+          text: 'À quelle fréquence buvez-vous 6 verres ou plus en une occasion ?',
+          dimension: 'Alcool (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Moins que mensuel' },
+            { value: 2, label: 'Mensuel' },
+            { value: 3, label: 'Hebdomadaire' },
+            { value: 4, label: 'Quotidien' },
+          ],
+        },
+        {
+          id: 'q8',
+          text: 'Au cours de l’année passée, combien de fois avez-vous utilisé une drogue récréative ou illégale ou utilisé un médicament sur ordonnance à des fins non médicales ?',
+          dimension: 'Usage de Substances',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Une ou deux fois' },
+            { value: 2, label: 'Mensuellement' },
+            { value: 3, label: 'Hebdomadairement' },
+            { value: 4, label: 'Quotidiennement' },
+          ],
+        },
+        {
+          id: 'q9',
+          text: 'Au cours du dernier mois à ce jour, avez-vous souhaité mourir ou souhaitiez pouvoir vous endormir et ne plus vous réveiller ?',
+          dimension: 'Risque suicidaire',
+          options: [
+            { value: 0, label: 'Non' },
+            { value: 1, label: 'Oui' },
+          ],
+        },
+        {
+          id: 'q10',
+          text: 'Au cours du dernier mois à ce jour, avez-vous réellement pensé à vous suicider ?',
+          dimension: 'Risque suicidaire',
+          options: [
+            { value: 0, label: 'Non' },
+            { value: 1, label: 'Oui' },
+          ],
+        },
+        {
+          id: 'q11',
+          text: 'Au cours des trois derniers mois, avez-vous déjà fait quoi que ce soit, commencé ou préparé quoi que ce soit pour mettre fin à vos jours ?',
+          dimension: 'Risque suicidaire',
+          options: [
+            { value: 0, label: 'Non' },
+            { value: 1, label: 'Oui' },
+          ],
+        },
       ],
       interpret: (score, answers = {}) => {
-        const hasSuicide = Number(answers['q11'] || 0) > 0;
-        if (score >= 16 || hasSuicide) {
+        const hasSuicide =
+          Number(answers['q9'] ?? (answers as any)[8] ?? 0) > 0 ||
+          Number(answers['q10'] ?? (answers as any)[9] ?? 0) > 0 ||
+          Number(answers['q11'] ?? (answers as any)[10] ?? 0) > 0;
+        if (hasSuicide) {
           return {
             level: 'elevated',
-            levelLabel: hasSuicide ? 'Alerte Clinique Immédiate' : 'Détresse Élevée',
+            levelLabel: 'Alerte Clinique Immédiate',
             levelColor: '#ef4444',
             levelBg: '#fef2f2',
-            message: 'Vos réponses indiquent un niveau de détresse psychologique significatif nécessitant une écoute attentive.',
+            message: 'Présence d’idées ou d’antécédents suicidaires récents. Une prise en charge et un soutien immédiat sont indispensables.',
             recommendations: [
-              'Prenez rendez-vous sans attendre avec l’un de nos psychologues ou psychiatres TILA.',
-              'Parlez de ce que vous ressentez à un proche de confiance.',
-              'Ne restez pas seul(e) face à vos pensées sombres.',
+              'Prenez rendez-vous en téléconsultation prioritaire avec un spécialiste TILA.',
+              'Ne restez pas seul(e) et rapprochez-vous immédiatement d’un proche ou du centre de soins le plus proche.',
             ],
             needConsult: true,
           };
         }
-        if (score >= 8) {
+        if (score >= 10) {
+          return {
+            level: 'elevated',
+            levelLabel: 'Détresse Élevée',
+            levelColor: '#ef4444',
+            levelBg: '#fef2f2',
+            message: 'Plusieurs indicateurs (humeur, anxiété ou consommations) dépassent les seuils d’alerte. Un suivi spécialisé est fortement recommandé.',
+            recommendations: [
+              'Consultez un psychologue ou médecin TILA pour un bilan approfondi.',
+              'Parlez de vos difficultés à un soignant de confiance.',
+            ],
+            needConsult: true,
+          };
+        }
+        if (score >= 4) {
           return {
             level: 'moderate',
             levelLabel: 'Détresse Modérée',
             levelColor: '#f59e0b',
             levelBg: '#fffbeb',
-            message: 'Vous traversez une période de vulnérabilité émotionnelle notable avec quelques signes d’inconfort.',
+            message: 'Signes de fragilité émotionnelle ou d’inconfort psychologique modéré détectés.',
             recommendations: [
-              'Une téléconsultation de soutien avec un praticien TILA vous apporterait des clés précieuses.',
-              'Favorisez les temps de repos, l’activité physique douce et le sommeil régulier.',
+              'Un échange avec un praticien TILA vous permettra de faire le point.',
+              'Privilégiez le repos et des activités ressourçantes.',
             ],
             needConsult: true,
           };
@@ -99,69 +224,192 @@ export const BILINGUAL_QUESTIONNAIRES: Record<
           levelLabel: 'Bien-être Stable',
           levelColor: '#00A651',
           levelBg: '#ecfdf5',
-          message: 'Vos résultats se situent dans la zone d’équilibre. Votre santé émotionnelle semble préservée.',
+          message: 'Vos réponses ne mettent en évidence aucun trouble courant significatif. Votre santé mentale est préservée.',
           recommendations: [
-            'Continuez à maintenir vos habitudes de vie saines et vos relations positives.',
-            'Refaites une auto-évaluation dans 1 mois pour suivre votre bien-être.',
+            'Continuez vos habitudes de vie positives et vos relations d’entraide.',
           ],
           needConsult: false,
         };
       },
     },
     en: {
-      id: 'ods',
-      title: 'ODS / BMH-MWT',
-      subtitle: 'Common Mental Health Disorders Screening',
-      category: 'Overall Well-being',
-      description: 'Rapid assessment of anxiety-depression symptoms and emotional distress.',
+      id: 'bmh_mwt',
+      title: 'ODS / BMH-MWT (General Population > 18 y.o.)',
+      subtitle: 'General Population ODS (Simplified Screening Tool) for Adults 18+',
+      category: 'General Mental Health',
+      description: 'Simplified screening tool for common mental disorders in primary care (Depression, Anxiety, Alcohol, Substances, Suicide risk).',
       instructions:
-        'Over the past 2 weeks, how often have you been bothered by any of the following problems?',
+        'Please answer according to how you have felt over the past 2 weeks or past year depending on the sections.',
       options: [
-        { value: 0, label: 'Never' },
-        { value: 1, label: 'A few days' },
-        { value: 2, label: 'More than half the time' },
-        { value: 3, label: 'Almost every day' },
+        { value: 0, label: '0 days' },
+        { value: 1, label: '1-7 days' },
+        { value: 2, label: '8-11 days' },
+        { value: 3, label: '12-14 days' },
       ],
       questions: [
-        { id: 'q1', text: 'Little interest or pleasure in doing everyday activities.', dimension: 'Mood' },
-        { id: 'q2', text: 'Feeling down, depressed, or hopeless.', dimension: 'Mood' },
-        { id: 'q3', text: 'Trouble falling asleep, frequent awakenings, or sleeping too much.', dimension: 'Sleep' },
-        { id: 'q4', text: 'Feeling tired constantly or lacking daily energy.', dimension: 'Energy' },
-        { id: 'q5', text: 'Poor appetite or tendency to overeat.', dimension: 'Soma' },
-        { id: 'q6', text: 'Feeling bad about yourself, feeling like a failure or letting loved ones down.', dimension: 'Self-esteem' },
-        { id: 'q7', text: 'Trouble concentrating on reading, work, or conversations.', dimension: 'Cognition' },
-        { id: 'q8', text: 'Unusual slowness in movement or motor restlessness.', dimension: 'Motor' },
-        { id: 'q9', text: 'Feeling anxious, nervous, or intensely on edge.', dimension: 'Anxiety' },
-        { id: 'q10', text: 'Using alcohol or substances to cope with stress or worries.', dimension: 'Addiction' },
-        { id: 'q11', text: 'Thoughts that you would be better off dead or wanting to hurt yourself.', dimension: 'Urgent' },
+        {
+          id: 'q1',
+          text: 'Over the past 2 weeks, how often have you had little interest or pleasure in doing things?',
+          dimension: 'Depression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q2',
+          text: 'Over the past 2 weeks, how often have you felt down, depressed, or hopeless?',
+          dimension: 'Depression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q3',
+          text: 'Over the past 2 weeks, how often have you felt nervous, anxious, or on edge?',
+          dimension: 'Anxiety (GAD-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q4',
+          text: 'Over the past 2 weeks, how often were you not able to stop or control worrying?',
+          dimension: 'Anxiety (GAD-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q5',
+          text: 'How often do you have a drink containing alcohol?',
+          dimension: 'Alcohol (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Monthly or less' },
+            { value: 2, label: '2-4 times a month' },
+            { value: 3, label: '2-3 times a week' },
+            { value: 4, label: '4+ times a week' },
+          ],
+        },
+        {
+          id: 'q6',
+          text: 'How many drinks containing alcohol do you have on a typical day when you are drinking?',
+          dimension: 'Alcohol (AUDIT-C)',
+          options: [
+            { value: 0, label: '1 or 2' },
+            { value: 1, label: '3 or 4' },
+            { value: 2, label: '5 or 6' },
+            { value: 3, label: '7 to 9' },
+            { value: 4, label: '10 or more' },
+          ],
+        },
+        {
+          id: 'q7',
+          text: 'How often do you have 6 or more drinks on one occasion?',
+          dimension: 'Alcohol (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Less than monthly' },
+            { value: 2, label: 'Monthly' },
+            { value: 3, label: 'Weekly' },
+            { value: 4, label: 'Daily or almost daily' },
+          ],
+        },
+        {
+          id: 'q8',
+          text: 'In the past year, how often have you used a recreational drug or illegal substance, or used prescription medication for non-medical reasons?',
+          dimension: 'Substance Use',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Once or twice' },
+            { value: 2, label: 'Monthly' },
+            { value: 3, label: 'Weekly' },
+            { value: 4, label: 'Daily or almost daily' },
+          ],
+        },
+        {
+          id: 'q9',
+          text: 'In the past month to date, have you wished you were dead or wished you could go to sleep and not wake up?',
+          dimension: 'Suicide Risk',
+          options: [
+            { value: 0, label: 'No' },
+            { value: 1, label: 'Yes' },
+          ],
+        },
+        {
+          id: 'q10',
+          text: 'In the past month to date, have you actually had any thoughts of killing yourself?',
+          dimension: 'Suicide Risk',
+          options: [
+            { value: 0, label: 'No' },
+            { value: 1, label: 'Yes' },
+          ],
+        },
+        {
+          id: 'q11',
+          text: 'In the past 3 months, have you done, begun to do, or prepared anything to end your life?',
+          dimension: 'Suicide Risk',
+          options: [
+            { value: 0, label: 'No' },
+            { value: 1, label: 'Yes' },
+          ],
+        },
       ],
       interpret: (score, answers = {}) => {
-        const hasSuicide = Number(answers['q11'] || 0) > 0;
-        if (score >= 16 || hasSuicide) {
+        const hasSuicide =
+          Number(answers['q9'] ?? (answers as any)[8] ?? 0) > 0 ||
+          Number(answers['q10'] ?? (answers as any)[9] ?? 0) > 0 ||
+          Number(answers['q11'] ?? (answers as any)[10] ?? 0) > 0;
+        if (hasSuicide) {
           return {
             level: 'elevated',
-            levelLabel: hasSuicide ? 'Immediate Clinical Alert' : 'High Distress',
+            levelLabel: 'Immediate Clinical Alert',
             levelColor: '#ef4444',
             levelBg: '#fef2f2',
-            message: 'Your answers indicate a significant level of psychological distress requiring attentive medical care.',
+            message: 'Recent suicidal thoughts or history reported. Prompt professional care and urgent support are essential.',
             recommendations: [
-              'Book an appointment immediately with one of our TILA psychologists or psychiatrists.',
-              'Share how you feel with a trusted family member or friend.',
-              'Do not stay alone with overwhelming dark thoughts.',
+              'Book an immediate priority teleconsultation with a TILA mental health specialist.',
+              'Reach out right away to a trusted person or visit the nearest healthcare facility.',
             ],
             needConsult: true,
           };
         }
-        if (score >= 8) {
+        if (score >= 10) {
+          return {
+            level: 'elevated',
+            levelLabel: 'High Distress',
+            levelColor: '#ef4444',
+            levelBg: '#fef2f2',
+            message: 'Several clinical markers exceed threshold levels. Dedicated professional follow-up is strongly advised.',
+            recommendations: [
+              'Consult a TILA psychologist or medical practitioner for an in-depth assessment.',
+              'Share your situation with a healthcare professional.',
+            ],
+            needConsult: true,
+          };
+        }
+        if (score >= 4) {
           return {
             level: 'moderate',
             levelLabel: 'Moderate Distress',
             levelColor: '#f59e0b',
             levelBg: '#fffbeb',
-            message: 'You are experiencing notable emotional vulnerability with several signs of discomfort.',
+            message: 'Noticeable signs of psychological discomfort and emotional vulnerability.',
             recommendations: [
-              'A teleconsultation with a TILA specialist would provide valuable coping strategies.',
-              'Prioritize quality rest, gentle physical activity, and regular sleep.',
+              'A session with a TILA specialist will help you navigate current challenges.',
+              'Prioritize restorative sleep and gentle daily routines.',
             ],
             needConsult: true,
           };
@@ -171,10 +419,468 @@ export const BILINGUAL_QUESTIONNAIRES: Record<
           levelLabel: 'Stable Well-being',
           levelColor: '#00A651',
           levelBg: '#ecfdf5',
-          message: 'Your results reflect good emotional balance and overall psychological resilience.',
+          message: 'Your answers reflect healthy emotional balance. No significant common mental disorder detected.',
           recommendations: [
-            'Continue nurturing your healthy daily routines and supportive relationships.',
-            'Take another self-assessment in 1 month to monitor your well-being.',
+            'Continue maintaining your positive lifestyle habits and supportive relationships.',
+          ],
+          needConsult: false,
+        };
+      },
+    },
+  },
+
+  'ods-monde-du-travail': {
+    fr: {
+      id: 'ods-monde-du-travail',
+      title: 'ODS • Monde du Travail',
+      subtitle: 'OUTIL DE DÉPISTAGE SIMPLIFIÉ — MONDE DU TRAVAIL',
+      category: 'Santé au travail',
+      description: 'Version professionnelle de dépistage rapide en milieu de travail : dépression (PHQ-2), anxiété (GAD-2), stress professionnel (COPSOQ III adapté), alcool (AUDIT-C), substances et risque suicidaire.',
+      instructions:
+        'Répondez selon votre ressenti dans le cadre professionnel. Dépression et anxiété : 2 dernières semaines. Stress : 4 dernières semaines. Substances : année passée. Risque suicidaire : dernier mois (sauf item 14).',
+      options: [
+        { value: 0, label: '0 jour' },
+        { value: 1, label: '1-7 j' },
+        { value: 2, label: '8-11 j' },
+        { value: 3, label: '12-14 j' },
+      ],
+      questions: [
+        {
+          id: 'q1',
+          text: 'Peu d’intérêt ou de plaisir à faire les choses au travail.',
+          dimension: 'Dépression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 jour' },
+            { value: 1, label: '1-7 j' },
+            { value: 2, label: '8-11 j' },
+            { value: 3, label: '12-14 j' },
+          ],
+        },
+        {
+          id: 'q2',
+          text: 'Vous sentir triste, déprimé(e) ou désespéré(e) en lien avec votre travail.',
+          dimension: 'Dépression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 jour' },
+            { value: 1, label: '1-7 j' },
+            { value: 2, label: '8-11 j' },
+            { value: 3, label: '12-14 j' },
+          ],
+        },
+        {
+          id: 'q3',
+          text: 'Se sentir nerveux, anxieux ou sur les nerfs au travail.',
+          dimension: 'Anxiété (GAD-2)',
+          options: [
+            { value: 0, label: '0 jour' },
+            { value: 1, label: '1-7 j' },
+            { value: 2, label: '8-11 j' },
+            { value: 3, label: '12-14 j' },
+          ],
+        },
+        {
+          id: 'q4',
+          text: 'Ne pas arriver à arrêter ou à contrôler les inquiétudes concernant votre travail.',
+          dimension: 'Anxiété (GAD-2)',
+          options: [
+            { value: 0, label: '0 jour' },
+            { value: 1, label: '1-7 j' },
+            { value: 2, label: '8-11 j' },
+            { value: 3, label: '12-14 j' },
+          ],
+        },
+        {
+          id: 'q5',
+          text: 'Difficultés à vous détendre après ou pendant votre travail.',
+          dimension: 'Stress COPSOQ',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Rarement' },
+            { value: 2, label: 'Parfois' },
+            { value: 3, label: 'Souvent' },
+            { value: 4, label: 'Toujours' },
+          ],
+        },
+        {
+          id: 'q6',
+          text: 'Vous sentir irritable ou facilement agacé(e) à cause de votre travail.',
+          dimension: 'Stress COPSOQ',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Rarement' },
+            { value: 2, label: 'Parfois' },
+            { value: 3, label: 'Souvent' },
+            { value: 4, label: 'Toujours' },
+          ],
+        },
+        {
+          id: 'q7',
+          text: 'Vous sentir tendu(e) ou sous pression au travail.',
+          dimension: 'Stress COPSOQ',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Rarement' },
+            { value: 2, label: 'Parfois' },
+            { value: 3, label: 'Souvent' },
+            { value: 4, label: 'Toujours' },
+          ],
+        },
+        {
+          id: 'q8',
+          text: 'À quelle fréquence buvez-vous de l’alcool ?',
+          dimension: 'Alcool (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: '1 fois/mois ou moins' },
+            { value: 2, label: '2-4 fois/mois' },
+            { value: 3, label: '2-3 fois/semaine' },
+            { value: 4, label: '4 fois/semaine ou plus' },
+          ],
+        },
+        {
+          id: 'q9',
+          text: 'Combien de verres buvez-vous un jour typique ?',
+          dimension: 'Alcool (AUDIT-C)',
+          options: [
+            { value: 0, label: '1-2' },
+            { value: 1, label: '3-4' },
+            { value: 2, label: '5-6' },
+            { value: 3, label: '7-9' },
+            { value: 4, label: '10 ou plus' },
+          ],
+        },
+        {
+          id: 'q10',
+          text: 'À quelle fréquence buvez-vous 6 verres ou plus ?',
+          dimension: 'Alcool (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Moins que mensuel' },
+            { value: 2, label: 'Mensuel' },
+            { value: 3, label: 'Hebdomadaire' },
+            { value: 4, label: 'Quotidien' },
+          ],
+        },
+        {
+          id: 'q11',
+          text: 'Combien de fois avez-vous utilisé une drogue récréative ou illégale, ou un médicament sur ordonnance à des fins non médicales ?',
+          dimension: 'Usage de Substances',
+          options: [
+            { value: 0, label: 'Jamais' },
+            { value: 1, label: 'Au moins 1 fois' },
+          ],
+        },
+        {
+          id: 'q12',
+          text: 'Avez-vous souhaité mourir ou souhaité ne pas vous réveiller ?',
+          dimension: 'Risque suicidaire',
+          options: [
+            { value: 0, label: 'Non' },
+            { value: 1, label: 'Oui' },
+          ],
+        },
+        {
+          id: 'q13',
+          text: 'Avez-vous réellement pensé à vous suicider ?',
+          dimension: 'Risque suicidaire',
+          options: [
+            { value: 0, label: 'Non' },
+            { value: 1, label: 'Oui' },
+          ],
+        },
+        {
+          id: 'q14',
+          text: 'Au cours des 3 derniers mois : avez-vous fait, commencé à faire ou préparé quoi que ce soit pour mettre fin à vos jours ?',
+          dimension: 'Risque suicidaire',
+          options: [
+            { value: 0, label: 'Non' },
+            { value: 1, label: 'Oui' },
+          ],
+        },
+      ],
+      interpret: (score, answers = {}) => {
+        const hasSuicide =
+          Number(answers['q12'] ?? (answers as any)[11] ?? 0) > 0 ||
+          Number(answers['q13'] ?? (answers as any)[12] ?? 0) > 0 ||
+          Number(answers['q14'] ?? (answers as any)[13] ?? 0) > 0;
+        if (hasSuicide) {
+          return {
+            level: 'elevated',
+            levelLabel: 'Alerte Clinique Immédiate',
+            levelColor: '#ef4444',
+            levelBg: '#fef2f2',
+            message: 'Alerte : Idéation ou antécédent suicidaire exprimé dans le cadre professionnel. Une prise en charge immédiate est indispensable.',
+            recommendations: [
+              'Consultez sans attendre un professionnel de santé mentale TILA ou votre service de santé au travail.',
+              'Ne restez pas isolé(e) avec votre souffrance.',
+            ],
+            needConsult: true,
+          };
+        }
+        if (score >= 14) {
+          return {
+            level: 'elevated',
+            levelLabel: 'Stress & Détresse Élevés',
+            levelColor: '#ef4444',
+            levelBg: '#fef2f2',
+            message: 'Niveau élevé de souffrance au travail ou de risques associés (épuisement, anxiété, alcool/substances).',
+            recommendations: [
+              'Prenez rendez-vous en téléconsultation avec un psychologue du travail ou psychiatre TILA.',
+              'Échangez avec le médecin du travail ou les ressources RH bienveillantes.',
+            ],
+            needConsult: true,
+          };
+        }
+        if (score >= 7) {
+          return {
+            level: 'moderate',
+            levelLabel: 'Tension Modérée au Travail',
+            levelColor: '#f59e0b',
+            levelBg: '#fffbeb',
+            message: 'Présence de tensions professionnelles et de stress mesurable. Un accompagnement préventif est recommandé.',
+            recommendations: [
+              'Un entretien de soutien vous aidera à poser des limites et retrouver la sérénité.',
+              'Aménagez des temps de déconnexion et de récupération après votre journée.',
+            ],
+            needConsult: true,
+          };
+        }
+        return {
+          level: 'normal',
+          levelLabel: 'Bien-être au Travail Préservé',
+          levelColor: '#00A651',
+          levelBg: '#ecfdf5',
+          message: 'Vos indicateurs professionnels se situent dans la zone normale d’équilibre et d’épanouissement.',
+          recommendations: [
+            'Continuez à préserver votre équilibre vie professionnelle / vie personnelle.',
+          ],
+          needConsult: false,
+        };
+      },
+    },
+    en: {
+      id: 'ods-monde-du-travail',
+      title: 'ODS • Workplace Screening',
+      subtitle: 'SIMPLIFIED SCREENING TOOL — WORKPLACE',
+      category: 'Occupational Health',
+      description: 'Rapid occupational screening: depression (PHQ-2), anxiety (GAD-2), work-related stress (adapted COPSOQ III), alcohol (AUDIT-C), substances, and suicide risk.',
+      instructions:
+        'Please answer according to how you feel in your work environment. Depression & anxiety: past 2 weeks. Stress: past 4 weeks. Substances: past year. Suicide risk: past month.',
+      options: [
+        { value: 0, label: '0 days' },
+        { value: 1, label: '1-7 days' },
+        { value: 2, label: '8-11 days' },
+        { value: 3, label: '12-14 days' },
+      ],
+      questions: [
+        {
+          id: 'q1',
+          text: 'Little interest or pleasure in doing things at work.',
+          dimension: 'Depression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q2',
+          text: 'Feeling down, depressed, or hopeless in relation to your work.',
+          dimension: 'Depression (PHQ-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q3',
+          text: 'Feeling nervous, anxious, or on edge at work.',
+          dimension: 'Anxiety (GAD-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q4',
+          text: 'Not being able to stop or control worrying about your work.',
+          dimension: 'Anxiety (GAD-2)',
+          options: [
+            { value: 0, label: '0 days' },
+            { value: 1, label: '1-7 days' },
+            { value: 2, label: '8-11 days' },
+            { value: 3, label: '12-14 days' },
+          ],
+        },
+        {
+          id: 'q5',
+          text: 'Trouble relaxing after or during your work.',
+          dimension: 'Stress COPSOQ',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Rarely' },
+            { value: 2, label: 'Sometimes' },
+            { value: 3, label: 'Often' },
+            { value: 4, label: 'Always' },
+          ],
+        },
+        {
+          id: 'q6',
+          text: 'Feeling irritable or easily annoyed due to your work.',
+          dimension: 'Stress COPSOQ',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Rarely' },
+            { value: 2, label: 'Sometimes' },
+            { value: 3, label: 'Often' },
+            { value: 4, label: 'Always' },
+          ],
+        },
+        {
+          id: 'q7',
+          text: 'Feeling tense or under pressure at work.',
+          dimension: 'Stress COPSOQ',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Rarely' },
+            { value: 2, label: 'Sometimes' },
+            { value: 3, label: 'Often' },
+            { value: 4, label: 'Always' },
+          ],
+        },
+        {
+          id: 'q8',
+          text: 'How often do you drink alcohol?',
+          dimension: 'Alcohol (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Monthly or less' },
+            { value: 2, label: '2-4 times a month' },
+            { value: 3, label: '2-3 times a week' },
+            { value: 4, label: '4+ times a week' },
+          ],
+        },
+        {
+          id: 'q9',
+          text: 'How many drinks do you have on a typical day?',
+          dimension: 'Alcohol (AUDIT-C)',
+          options: [
+            { value: 0, label: '1-2' },
+            { value: 1, label: '3-4' },
+            { value: 2, label: '5-6' },
+            { value: 3, label: '7-9' },
+            { value: 4, label: '10 or more' },
+          ],
+        },
+        {
+          id: 'q10',
+          text: 'How often do you have 6 or more drinks on one occasion?',
+          dimension: 'Alcohol (AUDIT-C)',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'Less than monthly' },
+            { value: 2, label: 'Monthly' },
+            { value: 3, label: 'Weekly' },
+            { value: 4, label: 'Daily' },
+          ],
+        },
+        {
+          id: 'q11',
+          text: 'How many times have you used recreational drugs or prescription medicine without a prescription in the past year?',
+          dimension: 'Substance Use',
+          options: [
+            { value: 0, label: 'Never' },
+            { value: 1, label: 'At least once' },
+          ],
+        },
+        {
+          id: 'q12',
+          text: 'Have you wished you were dead or wished you could not wake up?',
+          dimension: 'Suicide Risk',
+          options: [
+            { value: 0, label: 'No' },
+            { value: 1, label: 'Yes' },
+          ],
+        },
+        {
+          id: 'q13',
+          text: 'Have you actually thought about suicide?',
+          dimension: 'Suicide Risk',
+          options: [
+            { value: 0, label: 'No' },
+            { value: 1, label: 'Yes' },
+          ],
+        },
+        {
+          id: 'q14',
+          text: 'In the past 3 months: have you done, prepared, or started anything to end your life?',
+          dimension: 'Suicide Risk',
+          options: [
+            { value: 0, label: 'No' },
+            { value: 1, label: 'Yes' },
+          ],
+        },
+      ],
+      interpret: (score, answers = {}) => {
+        const hasSuicide =
+          Number(answers['q12'] ?? (answers as any)[11] ?? 0) > 0 ||
+          Number(answers['q13'] ?? (answers as any)[12] ?? 0) > 0 ||
+          Number(answers['q14'] ?? (answers as any)[13] ?? 0) > 0;
+        if (hasSuicide) {
+          return {
+            level: 'elevated',
+            levelLabel: 'Immediate Clinical Alert',
+            levelColor: '#ef4444',
+            levelBg: '#fef2f2',
+            message: 'Alert: Suicidal ideation or history reported in the workplace setting. Immediate specialized care is required.',
+            recommendations: [
+              'Consult a TILA mental health specialist or your occupational health service promptly.',
+              'Do not remain isolated with your distress.',
+            ],
+            needConsult: true,
+          };
+        }
+        if (score >= 14) {
+          return {
+            level: 'elevated',
+            levelLabel: 'High Stress & Distress',
+            levelColor: '#ef4444',
+            levelBg: '#fef2f2',
+            message: 'High level of work distress and associated risks (burnout, anxiety, alcohol/substances).',
+            recommendations: [
+              'Schedule a teleconsultation with a TILA occupational psychologist or psychiatrist.',
+              'Discuss accommodations with occupational healthcare or trusted support.',
+            ],
+            needConsult: true,
+          };
+        }
+        if (score >= 7) {
+          return {
+            level: 'moderate',
+            levelLabel: 'Moderate Work Stress',
+            levelColor: '#f59e0b',
+            levelBg: '#fffbeb',
+            message: 'Noticeable work tension and stress. Preventive supportive guidance is recommended.',
+            recommendations: [
+              'A counseling session will help set boundaries and restore peace of mind.',
+              'Incorporate regular breaks and disconnect after work hours.',
+            ],
+            needConsult: true,
+          };
+        }
+        return {
+          level: 'normal',
+          levelLabel: 'Preserved Work Well-being',
+          levelColor: '#00A651',
+          levelBg: '#ecfdf5',
+          message: 'Your occupational markers reflect healthy balance and workplace engagement.',
+          recommendations: [
+            'Continue nurturing a healthy work-life balance.',
           ],
           needConsult: false,
         };
@@ -929,7 +1635,8 @@ export const BILINGUAL_QUESTIONNAIRES: Record<
  */
 export function normalizeToolKey(key: string): string {
   const k = (key || '').toLowerCase().trim();
-  if (k === 'ods' || k === 'bmh_mwt' || k === 'bmh-mwt') return 'ods';
+  if (k === 'ods-monde-du-travail' || k === 'ods_monde_du_travail' || k === 'monde-du-travail' || k === 'monde_du_travail') return 'ods-monde-du-travail';
+  if (k === 'bmh_mwt' || k === 'bmh-mwt' || k === 'ods') return 'bmh_mwt';
   if (k === 'phq9' || k === 'phq-9') return 'phq9';
   if (k === 'gad7' || k === 'gad-7') return 'gad7';
   if (k === 'berger' || k === 'berger-vih' || k === 'berger_scale' || k === 'berger-hiv-stigma') return 'berger';
@@ -938,7 +1645,9 @@ export function normalizeToolKey(key: string): string {
   return k;
 }
 
-// Alias pour pcl-5-terrain et compatibilité directe
+// Alias pour compatibilité directe
+(BILINGUAL_QUESTIONNAIRES as any)['ods'] = BILINGUAL_QUESTIONNAIRES['bmh_mwt'];
+(BILINGUAL_QUESTIONNAIRES as any)['ods_monde_du_travail'] = BILINGUAL_QUESTIONNAIRES['ods-monde-du-travail'];
 (BILINGUAL_QUESTIONNAIRES as any)['pcl-5-terrain'] = BILINGUAL_QUESTIONNAIRES['pcl-5'];
 (BILINGUAL_QUESTIONNAIRES as any)['pcl5-terrain'] = BILINGUAL_QUESTIONNAIRES['pcl-5'];
 
@@ -950,7 +1659,7 @@ export function getLocalizedQuestionnaire(
   lang: AssessmentLanguage = 'fr'
 ): LocalizedQuestionnaireContent | null {
   const normalizedKey = normalizeToolKey(toolKey);
-  const tool = BILINGUAL_QUESTIONNAIRES[normalizedKey] || BILINGUAL_QUESTIONNAIRES['pcl-5'];
+  const tool = BILINGUAL_QUESTIONNAIRES[normalizedKey];
   if (!tool) return null;
   return tool[lang] || tool.fr;
 }

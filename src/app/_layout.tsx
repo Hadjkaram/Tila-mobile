@@ -63,12 +63,9 @@ function ThemedAppContent() {
       >
         <Stack.Screen name="(patient)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(specialist)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="(supervisor)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(health-agent)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(field-agent)" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(census-agent)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="(ong-manager)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="(program-agent)" options={{ gestureEnabled: false }} />
       </Stack>
     </SafeAreaProvider>
   );

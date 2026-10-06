@@ -1,7 +1,7 @@
 import { Drawer } from 'expo-router/drawer';
 import { TouchableOpacity } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
-import { LayoutDashboard, ClipboardList, UserCheck, ArrowRightLeft, Menu, ArrowLeft } from 'lucide-react-native';
+import { LayoutDashboard, ClipboardList, UserCheck, ArrowRightLeft, Menu, ArrowLeft, MessagesSquare } from 'lucide-react-native';
 import { CustomDrawerContent } from '../../components/navigation/CustomDrawerContent';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -88,8 +88,31 @@ export default function HealthAgentLayout() {
           drawerIcon: ({ color, size }) => <ArrowRightLeft size={size} color={color} />,
         }}
       />
+      <Drawer.Screen
+        name="forum"
+        options={{
+          title: 'Forum & Entraide',
+          drawerIcon: ({ color, size }) => <MessagesSquare size={size} color={color} />,
+        }}
+      />
 
       {/* Sub-routes masquées du Drawer */}
+      <Drawer.Screen
+        name="forum/[groupId]"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          title: 'Discussion',
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginLeft: 16 }}
+              activeOpacity={0.7}
+            >
+              <ArrowLeft color="#00A651" size={24} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
       <Drawer.Screen
         name="assessments/new"
         options={{

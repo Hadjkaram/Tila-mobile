@@ -10,6 +10,7 @@ const API_URL =
 
 export const axiosInstance = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -50,7 +51,6 @@ export const tokenService = {
       if (activeContext) {
         switch (activeContext.toUpperCase()) {
           case 'SUPERVISOR':
-            return '/(supervisor)/dashboard';
           case 'PRO':
           case 'SPECIALIST':
             return '/(specialist)/dashboard';
@@ -63,14 +63,8 @@ export const tokenService = {
           case 'CENSUS_AGENT':
           case 'SENSIBILISATEUR':
             return '/(census-agent)/dashboard';
-          case 'ONG_MANAGER':
-          case 'RESPONSABLE_ONG':
-            return '/(ong-manager)/dashboard';
-          case 'PROGRAM_AGENT':
-          case 'CENTRE_PNSM':
-          case 'CHERCHEUR':
-            return '/(program-agent)/dashboard';
           case 'PATIENT':
+          default:
             return '/(patient)/dashboard';
         }
       }
@@ -83,27 +77,14 @@ export const tokenService = {
           const spacePath = space.path || '';
           if (space.type === 'PATIENT' || spacePath === '/mon-espace') {
             return '/(patient)/dashboard';
-          } else if (spacePath === '/professionnels' || space.type === 'PRO') {
+          } else if (spacePath === '/professionnels' || space.type === 'PRO' || spacePath === '/espace-superviseur' || space.type === 'SUPERVISOR') {
             return '/(specialist)/dashboard';
           } else if (spacePath === '/espace-agent' || space.type === 'HEALTH_AGENT') {
             return '/(health-agent)/dashboard';
-          } else if (spacePath === '/espace-superviseur' || space.type === 'SUPERVISOR') {
-            return '/(supervisor)/dashboard';
           } else if (spacePath === '/espace-agent-terrain-migrant' || space.type === 'FIELD_AGENT' || space.type === 'MIGRANT_FIELD_AGENT') {
             return '/(field-agent)/dashboard';
           } else if (spacePath === '/recensement' || space.type === 'CENSUS_AGENT' || space.type === 'SENSIBILISATEUR') {
             return '/(census-agent)/dashboard';
-          } else if (spacePath === '/ong' || space.type === 'ONG_MANAGER' || space.type === 'RESPONSABLE_ONG') {
-            return '/(ong-manager)/dashboard';
-          } else if (
-            spacePath === '/agent-programme' ||
-            space.type === 'PROGRAM_AGENT' ||
-            spacePath === '/centre-pnsm' ||
-            space.type === 'CENTRE_PNSM' ||
-            spacePath === '/espace-chercheur' ||
-            space.type === 'CHERCHEUR'
-          ) {
-            return '/(program-agent)/dashboard';
           }
         }
         if (userContext?.roles?.some((r: string) => r.includes('ROLE_PRO'))) {

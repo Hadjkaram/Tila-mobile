@@ -100,18 +100,6 @@ export default function WelcomeScreen() {
               <Text style={styles.registerLinkHighlight}>Créer un compte</Text>
             </Text>
           </TouchableOpacity>
-
-          {/* Lien Revoir la présentation / Onboarding */}
-          <TouchableOpacity
-            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, paddingVertical: 4 }}
-            onPress={() => router.push('/')}
-            activeOpacity={0.7}
-          >
-            <Sparkles size={13} color="#00A651" style={{ marginRight: 5 }} />
-            <Text style={{ fontSize: 13, color: colors.textSecondary, fontFamily: 'Montserrat_500Medium' }}>
-              Revoir la présentation de la plateforme
-            </Text>
-          </TouchableOpacity>
         </View>
         <FooterLogos />
       </ScrollView>

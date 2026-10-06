@@ -25,14 +25,29 @@ import {
   CheckCircle2,
   TrendingUp,
   Check,
+  MessagesSquare,
+  Stethoscope,
+  User,
+  Route as RouteIcon,
+  LifeBuoy,
+  HeartPulse,
+  BookOpen,
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { patientService, AppointmentItem, AssessmentItem, PatientProfile } from '../../services/patient';
+import {
+  patientService,
+  AppointmentItem,
+  AssessmentItem,
+  PatientProfile,
+  PatientConsultationsView,
+} from '../../services/patient';
 import { format, parseISO, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '../../context/ThemeContext';
 import { getUserFirstName } from '../../utils/userUtils';
+import { FooterLogos } from '../../components/FooterLogos';
+import { notificationService } from '../../services/notificationService';
 
 export interface DailyMoodEntry {
   value: number;
@@ -53,10 +68,23 @@ const MOODS = [
 
 export default function PatientDashboard() {
   const router = useRouter();
+  const navigation = useNavigation<any>();
+  const params = useLocalSearchParams<{ drawer?: string }>();
   const { colors, isDark } = useTheme();
+
+  useEffect(() => {
+    if (params.drawer === '1') {
+      setTimeout(() => {
+        try {
+          navigation.openDrawer();
+        } catch {}
+      }, 350);
+    }
+  }, [params.drawer]);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<AppointmentItem[]>([]);
   const [recentAssessments, setRecentAssessments] = useState<AssessmentItem[]>([]);
+  const [consultationsData, setConsultationsData] = useState<PatientConsultationsView | null>(null);
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [moodHistory, setMoodHistory] = useState<Record<string, DailyMoodEntry>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -104,28 +132,79 @@ export default function PatientDashboard() {
 
   const fetchData = async () => {
     try {
+      // 1. Chargement instantané depuis le cache local (Offline-First)
+      const [storedProfile, localAssessmentsRaw, cachedAssessmentsRaw, cachedAppointmentsRaw, cachedConsultationsRaw] = await Promise.all([
+        AsyncStorage.getItem('tila_user_context'),
+        AsyncStorage.getItem('@patient_self_assessments'),
+        AsyncStorage.getItem('@patient_cached_assessments'),
+        AsyncStorage.getItem('@patient_cached_appointments'),
+        AsyncStorage.getItem('@patient_cached_consultations'),
+      ]);
+
+      if (storedProfile) {
+        try { setProfile(JSON.parse(storedProfile)); } catch {}
+      }
+
+      const initialAssessments = localAssessmentsRaw 
+        ? JSON.parse(localAssessmentsRaw) 
+        : cachedAssessmentsRaw 
+          ? JSON.parse(cachedAssessmentsRaw) 
+          : [];
+      if (Array.isArray(initialAssessments) && initialAssessments.length > 0) {
+        setRecentAssessments(initialAssessments);
+      }
+
+      if (cachedAppointmentsRaw) {
+        try {
+          const parsed = JSON.parse(cachedAppointmentsRaw);
+          if (Array.isArray(parsed)) setUpcomingAppointments(parsed);
+        } catch {}
+      }
+
+      if (cachedConsultationsRaw) {
+        try {
+          setConsultationsData(JSON.parse(cachedConsultationsRaw));
+        } catch {}
+      }
+
       await loadMoodHistory();
-      const [meRes, appointmentsRes, assessmentsRes] = await Promise.allSettled([
+      // Désactiver le spinner immédiatement pour afficher les données locales
+      setIsLoading(false);
+
+      // 2. Synchronisation réseau en tâche de fond (si connecté)
+      const [meRes, appointmentsRes, assessmentsRes, consultationsRes] = await Promise.allSettled([
         patientService.me(),
         patientService.upcomingAppointments(),
         patientService.recentAssessments(),
+        patientService.consultations(),
       ]);
 
-      if (meRes.status === 'fulfilled') {
+      if (meRes.status === 'fulfilled' && meRes.value) {
         setProfile(meRes.value);
-      } else {
-        const stored = await AsyncStorage.getItem('tila_user_context');
-        if (stored) {
-          try { setProfile(JSON.parse(stored)); } catch {}
-        }
+        AsyncStorage.setItem('tila_user_context', JSON.stringify(meRes.value));
       }
       if (appointmentsRes.status === 'fulfilled') {
         const val: any = appointmentsRes.value;
-        setUpcomingAppointments(Array.isArray(val) ? val : (val?.items || []));
+        const items = Array.isArray(val) ? val : (val?.items || []);
+        setUpcomingAppointments(items);
+        AsyncStorage.setItem('@patient_cached_appointments', JSON.stringify(items));
       }
       if (assessmentsRes.status === 'fulfilled') {
         const val: any = assessmentsRes.value;
-        setRecentAssessments(Array.isArray(val) ? val : (val?.items || []));
+        const apiItems = Array.isArray(val) ? val : (val?.items || []);
+        let localList: any[] = [];
+        try {
+          const raw = await AsyncStorage.getItem('@patient_self_assessments');
+          if (raw) localList = JSON.parse(raw);
+        } catch {}
+        const merged = [...localList, ...apiItems.filter((a: any) => !localList.some((l) => l.id === a.id))];
+        const finalList = merged.length > 0 ? merged : apiItems;
+        setRecentAssessments(finalList);
+        AsyncStorage.setItem('@patient_cached_assessments', JSON.stringify(finalList));
+      }
+      if (consultationsRes.status === 'fulfilled' && consultationsRes.value) {
+        setConsultationsData(consultationsRes.value);
+        AsyncStorage.setItem('@patient_cached_consultations', JSON.stringify(consultationsRes.value));
       }
     } catch (e) {
       console.warn('[PatientDashboard] Erreur chargement:', e);
@@ -139,9 +218,13 @@ export default function PatientDashboard() {
     fetchData();
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    fetchData();
+    await fetchData();
+    notificationService.notifyDataReceived({
+      title: '🔔 Données actualisées',
+      body: 'Vos rendez-vous, consultations et évaluations sont à jour.',
+    });
   };
 
   const handleSelectMood = async (m: typeof MOODS[0]) => {
@@ -206,6 +289,52 @@ export default function PatientDashboard() {
 
   const firstName = getUserFirstName(profile, 'Bienvenue');
 
+  const openTele = safeAppointments.find((a) => a.type === 'video' && a.meetLink);
+  const primaryAction = openTele
+    ? {
+        label: 'Rejoindre ma téléconsultation',
+        subtitle: 'Séance visio avec votre spécialiste',
+        icon: Video,
+        action: () => router.push('/(patient)/teleconsultation'),
+        color: '#00A651', // Bouton vert direct
+        bg: '#ecfdf5',
+      }
+    : nextAppointment
+      ? {
+          label: 'Voir mon prochain rendez-vous',
+          subtitle: `${nextAppointment.date || ''} à ${nextAppointment.time || '10:00'}`,
+          icon: Calendar,
+          action: () => router.push('/(patient)/appointments'),
+          color: '#2563eb',
+          bg: '#eff6ff',
+        }
+      : {
+          label: 'Faire une auto-évaluation',
+          subtitle: 'Bilan de bien-être en quelques minutes',
+          icon: Sparkles,
+          action: () => router.push({ pathname: '/(patient)/evaluations', params: { start: '1' } }),
+          color: '#7c3aed',
+          bg: '#f3e8ff',
+        };
+
+  const activities = useMemo(() => {
+    const list: Array<{ date?: string | null; label: string; isTele: boolean }> = [
+      ...safeAssessments.map((e) => ({
+        date: e.date,
+        label: `Évaluation : ${e.type || 'Questionnaire clinique'}`,
+        isTele: false,
+      })),
+      ...(consultationsData?.consultations ?? []).map((c) => ({
+        date: c.date,
+        label: (c.mode === 'teleconsultation' || c.kind === 'teleconsultation')
+          ? `Téléconsultation — ${c.professionalName || 'Spécialiste'}`
+          : `Consultation — ${c.professionalName || 'Spécialiste'}`,
+        isTele: c.mode === 'teleconsultation' || c.kind === 'teleconsultation',
+      })),
+    ];
+    return list.slice(0, 4);
+  }, [safeAssessments, consultationsData]);
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, isDark && { backgroundColor: colors.bg }, styles.centered]} edges={['bottom']}>
@@ -224,7 +353,7 @@ export default function PatientDashboard() {
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#00A651" />
         }
       >
-        {/* 1. En-tête bienveillant */}
+        {/* 1. En-tête bienveillant avec Action Intelligente */}
         <View style={[styles.greetingCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.greetingTop}>
             <View style={[styles.badgePatient, isDark && { backgroundColor: 'rgba(0,166,81,0.15)' }]}>
@@ -237,6 +366,61 @@ export default function PatientDashboard() {
           <Text style={[styles.greetingSubtitle, isDark && { color: colors.textSecondary }]}>
             Bienvenue sur votre espace santé mentale et bien-être TILA.
           </Text>
+
+          {/* Bouton d'action dynamique synchronisé avec le parcours clinique */}
+          <TouchableOpacity
+            style={[styles.smartCtaButton, { backgroundColor: primaryAction.color }]}
+            onPress={primaryAction.action}
+            activeOpacity={0.85}
+          >
+            <primaryAction.icon size={16} color="#ffffff" style={{ marginRight: 8 }} />
+            <Text style={styles.smartCtaButtonText}>{primaryAction.label}</Text>
+            <ChevronRight size={16} color="#ffffff" style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Fiche Identifiant & CMU (Identique au Web) */}
+        <View style={[styles.identityCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.identityHeader}>
+            <View style={styles.identityAvatar}>
+              <Text style={styles.identityInitials}>
+                {`${(profile?.firstName || 'P').charAt(0)}${(profile?.lastName || '').charAt(0)}`.toUpperCase() || '•'}
+              </Text>
+            </View>
+            <View style={styles.identityMeta}>
+              <Text style={[styles.identityName, isDark && { color: colors.text }]} numberOfLines={1}>
+                {profile?.firstName ? `${profile.firstName} ${profile.lastName || ''}`.trim() : firstName}
+              </Text>
+              <View style={styles.profileBadge}>
+                <CheckCircle2 size={11} color="#00A651" style={{ marginRight: 4 }} />
+                <Text style={styles.profileBadgeText}>
+                  {profile?.phoneNumber ? 'Profil renseigné' : 'Profil actif TILA'}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={[styles.identityDivider, isDark && { backgroundColor: colors.border }]} />
+          <View style={styles.identityRow}>
+            <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Identifiant TILA</Text>
+            <Text style={[styles.identityValue, isDark && { color: colors.text }]}>
+              {profile?.internalPatientCode || profile?.code || `TILA-${String(profile?.id || 'BEN').padStart(5, '0')}`}
+            </Text>
+          </View>
+          <View style={styles.identityRow}>
+            <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>N° CMU</Text>
+            <TouchableOpacity onPress={() => router.push('/(patient)/profile')} activeOpacity={0.7}>
+              <Text style={[styles.identityValue, { color: profile?.cmu ? '#00A651' : colors.textSecondary }]}>
+                {profile?.cmu ? `•••• ${String(profile.cmu).slice(-4)}` : 'Renseigner au profil →'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.identityRow}>
+            <Text style={[styles.identityLabel, isDark && { color: colors.textSecondary }]}>Confidentialité</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <ShieldCheck size={13} color="#00A651" style={{ marginRight: 4 }} />
+              <Text style={styles.confidentialityText}>Données protégées PNSM</Text>
+            </View>
+          </View>
         </View>
 
         {/* 2. Suivi de l'Humeur du jour & Progression Quotidienne */}
@@ -464,7 +648,7 @@ export default function PatientDashboard() {
           </View>
         )}
 
-        {/* 4. Raccourcis Rapides (Grille 2x2 propre) */}
+        {/* 4. Raccourcis Rapides (Grille complète des services) */}
         <Text style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}>Mes Services de Santé</Text>
         <View style={styles.shortcutsGrid}>
           {/* Raccourci 1 : Téléconsultation */}
@@ -493,7 +677,33 @@ export default function PatientDashboard() {
             <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Questionnaires & suivi bien-être</Text>
           </TouchableOpacity>
 
-          {/* Raccourci 3 : Mon Dossier */}
+          {/* Raccourci 3 : Mon Parcours */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(patient)/parcours' as any)}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#f0fdf4' }]}>
+              <RouteIcon size={20} color="#00A651" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Mon Parcours</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Étapes de prise en charge PNSM</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 4 : Mes Soins & Santé */}
+          <TouchableOpacity
+            style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/(patient)/soins' as any)}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.shortcutIconWrap, { backgroundColor: '#fee2e2' }]}>
+              <HeartPulse size={20} color="#dc2626" />
+            </View>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Soins & Santé</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Constantes, allergies & soins</Text>
+          </TouchableOpacity>
+
+          {/* Raccourci 5 : Mon Dossier */}
           <TouchableOpacity
             style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.push('/(patient)/dossier')}
@@ -506,24 +716,78 @@ export default function PatientDashboard() {
             <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Historique & fiches médicales</Text>
           </TouchableOpacity>
 
-          {/* Raccourci 4 : Annuaire Centres */}
+          {/* Raccourci 6 : Forum & Entraide */}
           <TouchableOpacity
             style={[styles.shortcutCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push('/(patient)/directory')}
+            onPress={() => router.push('/(patient)/forum')}
             activeOpacity={0.8}
           >
             <View style={[styles.shortcutIconWrap, { backgroundColor: '#f3e8ff' }]}>
-              <Building2 size={20} color="#7c3aed" />
+              <MessagesSquare size={20} color="#7c3aed" />
             </View>
-            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Centres & Soins</Text>
-            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Annuaire des structures TILA</Text>
+            <Text style={[styles.shortcutTitle, isDark && { color: colors.text }]}>Forum & Échanges</Text>
+            <Text style={[styles.shortcutSub, isDark && { color: colors.textSecondary }]}>Groupes de parole & entraide</Text>
           </TouchableOpacity>
         </View>
 
-        {/* 5. Évaluations & Dépistages récents */}
+        {/* Bannière Urgence & Aide 143 PNSM */}
+        <TouchableOpacity
+          style={[styles.emergencyDashCard, isDark && { backgroundColor: '#3f1212', borderColor: '#fca5a5' }]}
+          onPress={() => router.push('/(patient)/aide' as any)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.emergencyIconWrapper}>
+            <LifeBuoy size={24} color="#dc2626" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.emergencyDashTitle}>Aide & Urgence 143</Text>
+            <Text style={styles.emergencyDashSub}>
+              Ligne d'écoute et d'orientation gratuite PNSM disponible 24h/7j. Demander un rappel ou appeler directement.
+            </Text>
+          </View>
+          <ArrowRight size={18} color="#dc2626" />
+        </TouchableOpacity>
+
+        {/* 5. Dernières Activités (Flux unifié : consultations & bilans) */}
         <View style={[styles.sectionCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeaderRow}>
             <Sparkles size={18} color="#00A651" />
+            <Text style={[styles.sectionTitle, isDark && { color: colors.text }]}>Dernières Activités</Text>
+          </View>
+
+          {activities.length === 0 ? (
+            <Text style={[styles.emptyAssessmentsText, isDark && { color: colors.textSecondary }]}>
+              Vos activités et consultations récentes apparaîtront ici.
+            </Text>
+          ) : (
+            <View style={styles.activitiesList}>
+              {activities.map((act, idx) => (
+                <View key={idx} style={[styles.activityRow, isDark && { borderBottomColor: colors.border }]}>
+                  <View style={[styles.activityIconWrap, { backgroundColor: act.isTele ? '#eff6ff' : '#ecfdf5' }]}>
+                    {act.isTele ? (
+                      <Video size={16} color="#2563eb" />
+                    ) : (
+                      <ClipboardList size={16} color="#00A651" />
+                    )}
+                  </View>
+                  <View style={styles.activityContent}>
+                    <Text style={[styles.activityLabel, isDark && { color: colors.text }]} numberOfLines={1}>
+                      {act.label}
+                    </Text>
+                    <Text style={[styles.activityDate, isDark && { color: colors.textSecondary }]}>
+                      {act.date || 'Récemment'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* 6. Évaluations & Dépistages récents */}
+        <View style={[styles.sectionCard, isDark && { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.sectionHeaderRow}>
+            <ClipboardList size={18} color="#00A651" />
             <Text style={[styles.sectionTitle, isDark && { color: colors.text }]}>Mes Dernières Évaluations</Text>
             <TouchableOpacity
               onPress={() => router.push('/(patient)/evaluations')}
@@ -542,7 +806,7 @@ export default function PatientDashboard() {
               {safeAssessments.slice(0, 3).map((assessment, i) => (
                 <View key={assessment.id || i} style={[styles.assessmentItem, isDark && { borderBottomColor: colors.border }]}>
                   <View style={styles.assessmentLeft}>
-                    <Text style={[styles.assessmentType, isDark && { color: colors.text }]}>
+                    <Text style={[styles.assessmentType, isDark && { color: colors.text }]} numberOfLines={1}>
                       {assessment.type || assessment.questionnaireKey || 'Évaluation clinique'}
                     </Text>
                     <Text style={[styles.assessmentDate, isDark && { color: colors.textSecondary }]}>{assessment.date || 'Récemment'}</Text>
@@ -558,6 +822,11 @@ export default function PatientDashboard() {
               ))}
             </View>
           )}
+        </View>
+
+        {/* 7. Logos Officiels Partenaires avec Appui UE & Expertise France */}
+        <View style={{ marginTop: 10, marginBottom: 12 }}>
+          <FooterLogos />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -1047,5 +1316,163 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#d97706',
     fontFamily: 'Montserrat_700Bold',
+  },
+  smartCtaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 14,
+  },
+  smartCtaButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  identityCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  identityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  identityAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#00A651',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  identityInitials: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+  },
+  identityMeta: {
+    flex: 1,
+  },
+  identityName: {
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+    marginBottom: 4,
+  },
+  profileBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ecfdf5',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  profileBadgeText: {
+    color: '#00A651',
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  identityDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginBottom: 10,
+  },
+  identityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  identityLabel: {
+    fontSize: 12,
+    fontFamily: 'Montserrat_500Medium',
+  },
+  identityValue: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  confidentialityText: {
+    fontSize: 11.5,
+    color: '#00A651',
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  activitiesList: {
+    gap: 10,
+    marginTop: 6,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  activityIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
+  },
+  activityDate: {
+    fontSize: 11,
+    marginTop: 2,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  emergencyDashCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+    marginBottom: 6,
+    gap: 12,
+  },
+  emergencyIconWrapper: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#fee2e2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emergencyDashTitle: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    fontFamily: 'Montserrat_700Bold',
+    color: '#dc2626',
+    marginBottom: 2,
+  },
+  emergencyDashSub: {
+    fontSize: 11.5,
+    color: '#b91c1c',
+    fontFamily: 'Montserrat_400Regular',
+    lineHeight: 16,
   },
 });

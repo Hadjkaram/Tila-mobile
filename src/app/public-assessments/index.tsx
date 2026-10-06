@@ -38,16 +38,39 @@ export interface AssessmentMeta {
 
 export const OFFICIAL_ASSESSMENTS: AssessmentMeta[] = [
   {
+    id: 'ods-monde-du-travail',
+    title: 'ODS • MONDE DU TRAVAIL',
+    subtitle: 'Outil de dépistage simplifié — Milieu professionnel',
+    description: 'Dépistage en milieu professionnel : stress au travail (COPSOQ III), anxiété (GAD-2), dépression (PHQ-2), alcool et risque suicidaire.',
+    duration: '5 à 8 min',
+    questionsCount: 14,
+    badge: 'Santé au travail',
+    color: '#0284c7',
+    bgLight: '#e0f2fe',
+    isRecommended: true,
+  },
+  {
+    id: 'bmh_mwt',
+    title: 'ODS / BMH-MWT (Population générale > 18 ans)',
+    subtitle: 'Questionnaire population générale ODS de plus de 18 ans',
+    description: 'Dépistage des troubles mentaux courants dans les soins de santé primaires (PHQ-2, GAD-2, AUDIT-C, drogues et risque suicidaire).',
+    duration: '5 à 7 min',
+    questionsCount: 11,
+    badge: 'Recommandé',
+    color: '#00A651',
+    bgLight: '#ecfdf5',
+    isRecommended: true,
+  },
+  {
     id: 'ods',
     title: 'POPULATION GÉNÉRALE - ODS / BMH-MWT',
     subtitle: 'Dépistage des Troubles Mentaux Courants',
     description: 'Dépression, anxiété, consommation d’alcool, détresse émotionnelle et idées suicidaires.',
     duration: '5 à 10 min',
     questionsCount: 11,
-    badge: 'Recommandé',
+    badge: 'Standard',
     color: '#00A651',
     bgLight: '#ecfdf5',
-    isRecommended: true,
   },
   {
     id: 'sdq',
@@ -79,12 +102,17 @@ export default function AssessmentsListScreen() {
         const items = Array.isArray(res) ? res : (res?.items || []);
         if (items.length > 0 && isMounted) {
           const allowedKeys = items
-            .filter((item: any) => item.status === 'active' && item.accessMobile !== false)
+            .filter((item: any) => item.status === undefined || item.status === 'active' || item.accessMobile !== false)
             .map((item: any) => (item.key || item.code || item.name || '').toLowerCase());
 
           const filtered = OFFICIAL_ASSESSMENTS.filter((meta) => {
             const mId = meta.id.toLowerCase();
-            return allowedKeys.some((k: string) => k.includes(mId) || mId.includes(k));
+            return (
+              mId === 'ods-monde-du-travail' ||
+              mId === 'bmh_mwt' ||
+              mId === 'ods' ||
+              allowedKeys.some((k: string) => k.includes(mId) || mId.includes(k))
+            );
           });
           if (filtered.length > 0) {
             setAssessmentsList(filtered);
@@ -96,7 +124,8 @@ export default function AssessmentsListScreen() {
           const cached = await AsyncStorage.getItem('@public_assessments_filtered');
           if (cached && isMounted) {
             const ids: string[] = JSON.parse(cached);
-            setAssessmentsList(OFFICIAL_ASSESSMENTS.filter(a => ids.includes(a.id)));
+            const filtered = OFFICIAL_ASSESSMENTS.filter(a => ids.includes(a.id) || a.id === 'ods-monde-du-travail' || a.id === 'bmh_mwt');
+            setAssessmentsList(filtered.length > 0 ? filtered : OFFICIAL_ASSESSMENTS);
           }
         } catch {}
       }

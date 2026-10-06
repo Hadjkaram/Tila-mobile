@@ -115,7 +115,7 @@ export default function ProLayout() {
         }}
       />
       <Drawer.Screen
-        name="forum"
+        name="forum/index"
         options={{
           title: 'Forum',
           drawerIcon: ({ color, size }) => <MessagesSquare size={size} color={color} />,

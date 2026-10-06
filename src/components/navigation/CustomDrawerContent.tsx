@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, Modal, Pressable } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Image,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   DrawerContentScrollView, 
@@ -14,14 +26,93 @@ import {
   User, 
   LogOut, 
   ChevronRight, 
+  ChevronDown,
   RefreshCw, 
   Sun, 
   Moon, 
   Monitor,
+  Home,
+  UserCircle2,
+  Route as RouteIcon,
+  ClipboardList,
+  Stethoscope,
+  Video,
+  Calendar,
+  HeartPulse,
+  FileText,
+  FileCheck,
+  Sparkles,
+  BookOpen,
+  MessagesSquare,
+  LifeBuoy,
+  ShieldCheck,
+  Users,
+  LayoutDashboard,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { syncService, SyncStatus } from '../../services/syncService';
 import { useTheme } from '../../context/ThemeContext';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+interface PatientMenuGroup {
+  id: string;
+  title: string;
+  headerIcon: any;
+  items: {
+    name: string;
+    label: string;
+    icon: any;
+  }[];
+}
+
+const PATIENT_GROUPS: PatientMenuGroup[] = [
+  {
+    id: 'mon-espace',
+    title: 'Mon Espace',
+    headerIcon: LayoutDashboard,
+    items: [
+      { name: 'dashboard', label: 'Accueil', icon: Home },
+      { name: 'parcours', label: 'Mon parcours', icon: RouteIcon },
+      { name: 'evaluations', label: 'Mes évaluations', icon: ClipboardList },
+    ],
+  },
+  {
+    id: 'mes-soins',
+    title: 'Mes Soins',
+    headerIcon: HeartPulse,
+    items: [
+      { name: 'dossier', label: 'Mes consultations', icon: Stethoscope },
+      { name: 'teleconsultation', label: 'Mes téléconsultations', icon: Video },
+      { name: 'appointments', label: 'Mes rendez-vous', icon: Calendar },
+      { name: 'soins', label: 'Mes soins & santé', icon: HeartPulse },
+      { name: 'documents', label: 'Documents', icon: FileText },
+      { name: 'prescriptions', label: 'Ordonnances', icon: FileCheck },
+    ],
+  },
+  {
+    id: 'bien-etre',
+    title: 'Bien-être & Soutien',
+    headerIcon: Sparkles,
+    items: [
+      { name: 'bien-etre', label: 'Mon bien-être', icon: Sparkles },
+      { name: 'ressources', label: 'Ressources', icon: BookOpen },
+      { name: 'forum', label: 'Forum & Entraide', icon: MessagesSquare },
+      { name: 'aide', label: 'Aide & urgence (143)', icon: LifeBuoy },
+    ],
+  },
+  {
+    id: 'confidentialite',
+    title: 'Confidentialité',
+    headerIcon: ShieldCheck,
+    items: [
+      { name: 'autorisations', label: 'Mes autorisations', icon: ShieldCheck },
+      { name: 'famille', label: 'Ma famille', icon: Users },
+    ],
+  },
+];
 
 interface CustomDrawerContentProps extends DrawerContentComponentProps {
   profileRoute: string;
@@ -77,6 +168,34 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // État accordéon pour les menus du profil patient
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    'mon-espace': true,
+  });
+
+  const currentRouteName = props.state.routes[props.state.index]?.name;
+
+  useEffect(() => {
+    if (!currentRouteName) return;
+    const activeGroup = PATIENT_GROUPS.find((group) =>
+      group.items.some((item) => item.name === currentRouteName)
+    );
+    if (activeGroup) {
+      setExpandedGroups((prev) => ({
+        ...prev,
+        [activeGroup.id]: true,
+      }));
+    }
+  }, [currentRouteName]);
+
+  const toggleGroup = (groupId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -212,7 +331,151 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
 
         {/* Navigation Items */}
         <View style={styles.drawerItemsContainer}>
-          <DrawerItemList {...props} />
+          {props.profileRoute?.includes('(patient)') ? (
+            <View style={styles.patientGroupsWrapper}>
+              {PATIENT_GROUPS.map((group) => {
+                const isExpanded = !!expandedGroups[group.id];
+                const hasActiveChild = group.items.some((item) => item.name === currentRouteName);
+                const GroupHeaderIcon = group.headerIcon;
+
+                return (
+                  <View key={group.id} style={styles.patientGroupContainer}>
+                    {/* En-tête principal accordéon */}
+                    <TouchableOpacity
+                      style={[
+                        styles.patientAccordionHeader,
+                        {
+                          backgroundColor: isDark
+                            ? hasActiveChild
+                              ? 'rgba(0,166,81,0.12)'
+                              : '#1e293b'
+                            : hasActiveChild
+                            ? '#f0fdf4'
+                            : '#f8fafc',
+                          borderColor: hasActiveChild
+                            ? (isDark ? '#00A651' : '#86efac')
+                            : (isDark ? '#334155' : '#e2e8f0'),
+                        },
+                      ]}
+                      onPress={() => toggleGroup(group.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.patientAccordionHeaderLeft}>
+                        <View
+                          style={[
+                            styles.accordionIconCircle,
+                            {
+                              backgroundColor: hasActiveChild
+                                ? (isDark ? 'rgba(0,166,81,0.25)' : '#dcfce7')
+                                : (isDark ? '#334155' : '#e2e8f0'),
+                            },
+                          ]}
+                        >
+                          <GroupHeaderIcon
+                            size={18}
+                            color={hasActiveChild ? '#00A651' : (isDark ? '#cbd5e1' : '#475569')}
+                          />
+                        </View>
+                        <Text
+                          style={[
+                            styles.patientAccordionTitle,
+                            {
+                              color: hasActiveChild ? (isDark ? '#4ade80' : '#15803d') : colors.text,
+                              fontWeight: hasActiveChild ? '700' : '600',
+                              fontFamily: hasActiveChild ? 'Montserrat_700Bold' : 'Montserrat_600SemiBold',
+                            },
+                          ]}
+                        >
+                          {group.title}
+                        </Text>
+                      </View>
+
+                      <View style={styles.patientAccordionHeaderRight}>
+                        {hasActiveChild && (
+                          <View style={styles.activePillDot} />
+                        )}
+                        <ChevronDown
+                          size={18}
+                          color={hasActiveChild ? '#00A651' : colors.textMuted}
+                          style={{
+                            transform: [{ rotate: isExpanded ? '180deg' : '0deg' }],
+                          }}
+                        />
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Sous-menus déroulants */}
+                    {isExpanded && (
+                      <View style={[styles.patientSubItemsContainer, { borderLeftColor: isDark ? 'rgba(0,166,81,0.3)' : '#bbf7d0' }]}>
+                        {group.items.map((item) => {
+                          const isActive = currentRouteName === item.name;
+                          const ItemIcon = item.icon;
+
+                          return (
+                            <TouchableOpacity
+                              key={item.name}
+                              style={[
+                                styles.patientSubItem,
+                                isActive && [
+                                  styles.patientSubItemActive,
+                                  {
+                                    backgroundColor: isDark
+                                      ? 'rgba(0,166,81,0.18)'
+                                      : '#ecfdf5',
+                                  },
+                                ],
+                              ]}
+                              onPress={() => {
+                                props.navigation.navigate(item.name);
+                                props.navigation.closeDrawer();
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <View style={styles.patientSubItemLeft}>
+                                <View
+                                  style={[
+                                    styles.subItemBranchDot,
+                                    {
+                                      backgroundColor: isActive
+                                        ? '#00A651'
+                                        : (isDark ? '#64748b' : '#94a3b8'),
+                                    },
+                                  ]}
+                                />
+                                <ItemIcon
+                                  size={16}
+                                  color={isActive ? '#00A651' : colors.textSecondary}
+                                  style={{ marginRight: 10 }}
+                                />
+                                <Text
+                                  style={[
+                                    styles.patientSubItemText,
+                                    {
+                                      color: isActive ? '#00A651' : colors.text,
+                                      fontWeight: isActive ? '700' : '500',
+                                      fontFamily: isActive ? 'Montserrat_700Bold' : 'Montserrat_500Medium',
+                                    },
+                                  ]}
+                                >
+                                  {item.label}
+                                </Text>
+                              </View>
+
+                              {isActive && (
+                                <View style={styles.activeSubItemIndicator} />
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <DrawerItemList {...props} />
+          )}
         </View>
       </DrawerContentScrollView>
 
@@ -279,7 +542,7 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
           </TouchableOpacity>
         </View>
 
-        {/* Logos officiels partenaires libres (sans bloc, sans texte) */}
+        {/* Logos officiels partenaires libres */}
         <View style={styles.logosRow}>
           <Image 
             source={require('../../../assets/images/ministere.jpg')} 
@@ -296,6 +559,23 @@ export function CustomDrawerContent(props: CustomDrawerContentProps) {
             style={styles.partnerLogo}
             resizeMode="contain"
           />
+        </View>
+
+        {/* Mention Avec l'appui de : et logos partenaires techniques */}
+        <View style={styles.drawerSupportSection}>
+          <Text style={[styles.drawerSupportText, { color: colors.textSecondary }]}>Avec l'appui de :</Text>
+          <View style={styles.drawerSupportLogosRow}>
+            <Image 
+              source={require('../../../assets/images/ue.jpeg')} 
+              style={styles.drawerUeLogo}
+              resizeMode="contain"
+            />
+            <Image 
+              source={require('../../../assets/images/expertise_france.jpeg')} 
+              style={styles.drawerExpertiseLogo}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
         <TouchableOpacity 
@@ -527,6 +807,31 @@ const styles = StyleSheet.create({
     height: 30,
     width: 58,
   },
+  drawerSupportSection: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 8,
+  },
+  drawerSupportText: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_500Medium',
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  drawerSupportLogosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  drawerExpertiseLogo: {
+    height: 24,
+    width: 72,
+  },
+  drawerUeLogo: {
+    height: 28,
+    width: 48,
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -623,5 +928,88 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
+  },
+  patientGroupsWrapper: {
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  patientGroupContainer: {
+    marginBottom: 4,
+  },
+  patientAccordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  patientAccordionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  accordionIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  patientAccordionTitle: {
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  patientAccordionHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activePillDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#00A651',
+  },
+  patientSubItemsContainer: {
+    marginTop: 4,
+    marginLeft: 16,
+    paddingLeft: 10,
+    borderLeftWidth: 2,
+    paddingVertical: 2,
+    gap: 2,
+  },
+  patientSubItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+  patientSubItemActive: {
+    backgroundColor: '#ecfdf5',
+  },
+  patientSubItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  subItemBranchDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginRight: 10,
+  },
+  patientSubItemText: {
+    fontSize: 13,
+  },
+  activeSubItemIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#00A651',
   },
 });

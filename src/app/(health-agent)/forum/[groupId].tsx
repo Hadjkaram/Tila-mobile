@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Text } from '../../../components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Send, ArrowLeft, Shield, User, Users, Stethoscope } from 'lucide-react-native';
+import { Send, ArrowLeft, Shield, User, Users, HeartHandshake } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { forumService, ForumDiscussion } from '../../../services/forum';
@@ -34,7 +34,7 @@ function cleanHtmlText(raw: string = ''): string {
     .trim();
 }
 
-export default function SpecialistForumChatScreen() {
+export default function HealthAgentForumChatScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { groupId } = useLocalSearchParams();
@@ -46,14 +46,14 @@ export default function SpecialistForumChatScreen() {
 
   // Informations sur le groupe
   const { data: group } = useQuery({
-    queryKey: ['specialist_forum_group', parsedGroupId],
+    queryKey: ['health_agent_forum_group', parsedGroupId],
     queryFn: () => forumService.getGroup(parsedGroupId),
     enabled: !isNaN(parsedGroupId),
   });
 
   // Discussions du groupe
   const { data: discussionsData, isLoading } = useQuery({
-    queryKey: ['specialist_forum_discussions', parsedGroupId],
+    queryKey: ['health_agent_forum_discussions', parsedGroupId],
     queryFn: () => forumService.listDiscussions(parsedGroupId, 1, 50),
     enabled: !isNaN(parsedGroupId),
     refetchInterval: 10000,
@@ -69,11 +69,11 @@ export default function SpecialistForumChatScreen() {
       }),
     onSuccess: () => {
       setMessage('');
-      queryClient.invalidateQueries({ queryKey: ['specialist_forum_discussions', parsedGroupId] });
-      queryClient.invalidateQueries({ queryKey: ['specialist_forum_groups'] });
+      queryClient.invalidateQueries({ queryKey: ['health_agent_forum_discussions', parsedGroupId] });
+      queryClient.invalidateQueries({ queryKey: ['health_agent_forum_groups'] });
       notificationService.notifyDataReceived({
         title: '💬 Message envoyé',
-        body: 'Votre intervention clinique a été partagée dans le groupe.',
+        body: 'Votre retour communautaire a été partagé sur le forum.',
         data: { groupId: parsedGroupId },
       });
     },
@@ -90,7 +90,7 @@ export default function SpecialistForumChatScreen() {
     const isMine = item.isMine;
     const authorName = item.isAnonymous
       ? 'Anonyme'
-      : item.author || 'Professionnel de santé';
+      : item.author || 'Acteur communautaire';
 
     const formattedDate = (() => {
       if (!item.createdAt) return '';
@@ -112,13 +112,13 @@ export default function SpecialistForumChatScreen() {
           <View
             style={[
               styles.avatarWrap,
-              { backgroundColor: item.isAnonymous ? '#94a3b8' : '#00A651' },
+              { backgroundColor: item.isAnonymous ? '#94a3b8' : '#2563eb' },
             ]}
           >
             {item.isAnonymous ? (
               <Shield size={14} color="#ffffff" />
             ) : (
-              <Stethoscope size={14} color="#ffffff" />
+              <HeartHandshake size={14} color="#ffffff" />
             )}
           </View>
         )}
@@ -143,8 +143,8 @@ export default function SpecialistForumChatScreen() {
                 {authorName}
               </Text>
               {!item.isAnonymous && (
-                <View style={styles.badgeProTag}>
-                  <Text style={styles.badgeProTagText}>Praticien</Text>
+                <View style={styles.badgeAgentTag}>
+                  <Text style={styles.badgeAgentTagText}>Communautaire</Text>
                 </View>
               )}
             </View>
@@ -204,7 +204,7 @@ export default function SpecialistForumChatScreen() {
             {group?.name || 'Groupe de discussion'}
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-            {group?.membersCount ?? 0} participants • Échanges cliniques
+            {group?.membersCount ?? 0} participants • Échanges terrain
           </Text>
         </View>
       </View>
@@ -232,7 +232,7 @@ export default function SpecialistForumChatScreen() {
                   Aucun message pour l'instant dans ce groupe.
                 </Text>
                 <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-                  Initiez la discussion en publiant une question ou un retour clinique.
+                  Partagez une situation de terrain ou posez une question.
                 </Text>
               </View>
             }
@@ -386,15 +386,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_600SemiBold',
     marginRight: 6,
   },
-  badgeProTag: {
-    backgroundColor: 'rgba(0,166,81,0.12)',
+  badgeAgentTag: {
+    backgroundColor: 'rgba(37,99,235,0.12)',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
   },
-  badgeProTagText: {
+  badgeAgentTagText: {
     fontSize: 9.5,
-    color: '#00A651',
+    color: '#2563eb',
     fontWeight: '700',
     fontFamily: 'Montserrat_700Bold',
   },
